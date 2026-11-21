@@ -12,6 +12,7 @@ export function registerFriendLinkRoutes(router) {
 
   // 管理接口
   router.get('/api/admin/friend-links', adminAuth, controller.handleAdminList)
+  router.post('/api/admin/friend-links', adminAuth, controller.handleCreate)
   router.patch('/api/admin/friend-links/:id/review', adminAuth, controller.handleReview)
   router.put('/api/admin/friend-links/:id', adminAuth, controller.handleUpdate)
   router.delete('/api/admin/friend-links/:id', adminAuth, controller.handleDelete)

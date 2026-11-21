@@ -37,6 +37,11 @@ const reviewSchema = z.object({
   status: z.enum(['approved', 'rejected'], { message: '审核状态不正确' }),
 })
 
+const createSchema = applySchema.extend({
+  sort: z.coerce.number().int().min(0).max(9999).optional(),
+  status: z.enum(['pending', 'approved', 'rejected']).optional(),
+})
+
 /**
  * GET /api/friend-links
  */
@@ -63,6 +68,17 @@ export async function handleAdminList(ctx) {
   const friendLinks = await service.listAllFriendLinks()
 
   ok(ctx, friendLinks)
+}
+
+/**
+ * POST /api/admin/friend-links
+ * 管理员直接新增友链（默认 approved，不受访客限频影响）。
+ */
+export async function handleCreate(ctx) {
+  const payload = parseInput(createSchema, ctx.request.body)
+  const friendLink = await service.createFriendLink(payload)
+
+  ok(ctx, friendLink, '友链已创建')
 }
 
 /**

@@ -94,6 +94,7 @@
 | PATCH | `/api/admin/articles/:id/flags` | A! | body `{isRecommend?, isTop?, status?}` 局部更新 |
 | DELETE | `/api/admin/articles/:id` | A! | 连带清理评论与点赞 |
 | GET | `/api/admin/articles` | A | query 额外 `status(draft\|published)`、`keyword`；按 `updatedAt` 倒序 |
+| GET | `/api/admin/articles/:id` | A | 编辑器回显用：任意状态均可读，含完整 `content` 与 `tags[]`（`tagIds` 由前端从 `tags` 取 id） |
 
 文章写入 body：`{title(1-100), summary(≤200), content, cover, categoryId, tagIds:[], status, isRecommend, isTop, readingTime?}`；`readingTime` 缺省由正文长度估算（每 400 字 1 分钟，最少 1）。`summary` 为空时取正文前 160 字。
 
@@ -168,7 +169,8 @@
 | --- | --- | --- | --- |
 | GET | `/api/friend-links` | — | 仅 approved，按 sort |
 | POST | `/api/friend-links` | — | 访客申请 `{name, url, avatar?, description?}` → pending + 通知；同 URL 每 IP 每天 1 次 |
-| GET | `/api/admin/friend-links` | A | 全部 |
+| GET | `/api/admin/friend-links` | A | 全部（待审核优先） |
+| POST | `/api/admin/friend-links` | A! | `{name,url,avatar?,description?,sort?,status?}`；管理员直接新增，默认 approved，不受访客限频 |
 | PATCH | `/api/admin/friend-links/:id/review` | A! | `{status}` |
 | PUT | `/api/admin/friend-links/:id` | A! | `{name,url,avatar,description,sort,status}` |
 | DELETE | `/api/admin/friend-links/:id` | A! | |

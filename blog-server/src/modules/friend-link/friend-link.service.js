@@ -71,6 +71,27 @@ export async function applyFriendLink(input, ip) {
 }
 
 /**
+ * 管理员新增友链：跳过访客限频，默认直接通过审核。
+ * @param {{ name: string, url: string, avatar?: string, description?: string, sort?: number, status?: string }} input
+ */
+export async function createFriendLink(input) {
+  const existed = await FriendLink.findOne({ where: { url: input.url } })
+  if (existed) throw conflict('该站点已存在，请直接编辑原记录')
+
+  const friendLink = await FriendLink.create({
+    name: input.name,
+    url: input.url,
+    avatar: input.avatar ?? '',
+    description: input.description ?? '',
+    sort: input.sort ?? 0,
+    status: input.status ?? 'approved',
+    ip: '',
+  })
+
+  return toFriendLinkJSON(friendLink)
+}
+
+/**
  * 后台友链列表（全部状态，待审核优先展示）。
  */
 export async function listAllFriendLinks() {
