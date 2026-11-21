@@ -6,7 +6,7 @@
  * `typescript/lib/tsc` JS API，因此 vue-tsc 无法直接与它配合。
  * 这里显式把 `typescript6`（官方提供的 6.x 兼容包，经典 JS API 布局）
  * 作为 vue-tsc 的宿主编译器，只用于 .vue 单文件组件的类型检查；
- * 纯 .ts 代码仍由 TS 7 的 `tsc` 检查（见 package.json 的 typecheck 脚本）。
+ * 纯 .ts 代码仍由 TS 7 的 `tsc` 检查（见 scripts/check.cjs）。
  */
 const { run } = require('vue-tsc')
 
