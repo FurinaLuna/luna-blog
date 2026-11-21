@@ -1,82 +1,136 @@
-# luna-blog 视觉与工程约定
+# luna-blog 视觉与交互规范
 
-两个前端都按本文档实现，保证同源观感；Tailwind v4 CSS-first（无 tailwind.config.js），Element Plus 只做行为组件、外观用 token 覆盖。
+> 设计原则：**长相沿用原型，代码全部重写。**
+> 前台还原原 `vue3-blog/blog-v3` 的外观与交互（蓝色主色、全屏天空首页、卡片化内容、波浪过渡、
+> 常驻音乐播放器）；后台还原原 `vue3-blog/blog-v3-admin`（pure-admin 观感：深色侧栏 + 标签页 +
+> 表格化内容页）。技术栈是新的一套（Vue 3.5 / Vite 8 / TS 7 / Pinia 4 / Tailwind 4 / Element Plus 2.14），
+> 只换实现不换长相，便于从旧站平滑迁移。
+>
+> 逐像素的考古数据（原始 SCSS 变量、尺寸、keyframe、图标清单）见：
+> - [`docs/PROTOTYPE-web.md`](PROTOTYPE-web.md) —— 前台 600 行原型档案
+> - [`docs/PROTOTYPE-admin.md`](PROTOTYPE-admin.md) —— 后台 357 行原型档案
+>
+> 本文是实现侧的落地约定，与代码一一对应。
 
-## 1. 设计基调
+---
 
-个人技术博客 + 数字花园：**留白克制、字重对比强、单一重点色、暗色一等公民**。不要 Element Plus 默认蓝、不要渐变滥用到满屏、不要圆角过大。
+## 1. 前台（blog-web）
 
-- 主色 `brand`：青蓝 `#2f8f83`（暗色下提亮为 `#5ec9b8`）。只用于链接、激活态、按钮主色、重点数字。
-- 辅助色：`--accent` 暖橙 `#e07a3f`，仅用于「推荐 / 置顶 / 未读」这类徽标。
-- 中性色：亮色背景 `#faf9f7`（暖白，不用纯白），卡片 `#ffffff`，边框 `#e7e3dc`，正文 `#23211d`，次要文字 `#6f6a62`。
-- 暗色背景 `#12130f`（微绿黑），卡片 `#1b1d18`，边框 `#2b2e26`，正文 `#e8e6df`，次要 `#9c9a90`。
-- 字体：正文 `system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`；标题同族但 `font-weight:700` + `letter-spacing:-0.02em`；代码 `ui-monospace, "JetBrains Mono", Consolas, monospace`。**不引入网络字体**（离线可用）。
-- 圆角：卡片 14px，按钮 10px，徽标 6px，头像 999px。
-- 阴影：仅卡片 hover 与浮层使用，`0 1px 2px rgba(0,0,0,.04), 0 8px 24px -12px rgba(0,0,0,.18)`；暗色改用边框区分，几乎不用阴影。
-- 布局宽度：前台内容 `max-w-6xl`（1152px），阅读正文 `max-w-3xl`；后台内容 `max-w-[1400px]`，侧栏 220px。
+### 1.1 全局 Token
 
-## 2. Tailwind 主题（blog-web/src/styles/index.css 内定义，blog-admin 同构）
+定义位置：`blog-web/src/styles/index.css`（Tailwind 4 CSS-first，`@theme` + `:root`/`html.dark` 双套变量）。
 
-```css
-@import 'tailwindcss';
-@theme {
-  --color-brand-50: #eef7f5;  --color-brand-100: #d7ece8;
-  --color-brand-400: #5ec9b8; --color-brand-500: #2f8f83; --color-brand-600: #26766c;
-  --color-accent-500: #e07a3f;
-  --font-sans: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-mono: ui-monospace, 'JetBrains Mono', Consolas, monospace;
-  --radius-card: 14px;
-}
+| 变量 | 浅色 | 深色 | 用途 |
+| --- | --- | --- | --- |
+| `--primary-blue` | `#49b1f5` | `#3f9ee0` | 主色：链接、激活态、按钮 |
+| `--primary-blue-hover` | `#6cc0f7` | `#5fb1e8` | hover |
+| `--bg` | `#f7f9fe` | `#1f1f1f` | 页面底色 |
+| `--bg-card` | `#ffffff` | `#2d2d2d` | 卡片 |
+| `--text` | `#4c4948` | `#d0d0d0` | 正文 |
+| `--meta-color` | `#858585` | `#909090` | 次级信息、日期 |
+| `--border` | `#e6e8ed` | `#3d3d3d` | 分割线、边框 |
+| `--shadow-card` | `0 1px 20px -8px rgba(0,0,0,.1), 0 .5rem 1rem rgba(0,0,0,.09)` | 同浅色加深 | 卡片阴影 |
+
+关键约定：
+
+- **根字号 14px**（`html { font-size: 14px }`）。原型全站 rem 按 14px 计算，漏设会整体放大 14%。
+- **字体**：`"HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif`；
+  数字与代码用等宽字体。
+- **圆角**：卡片 8px、按钮/标签 6px、头像与唱片圆形。
+- **过渡**：统一 `0.3s ease`；卡片 hover 上浮 4px + 阴影增强。
+
+### 1.2 页面骨架
+
+```
+AppHeader（固定顶部：左头像 / 右图标+文字导航；首页与内页 banner 上透明，滚动后白底+阴影）
+RouterView
+AppFooter（三行：版权 / ICP / 技术栈彩色徽章）
+MusicPlayer（左下角常驻圆形唱片，hover 展开胶囊）
+BackToTop（右下角，非首页显示）
 ```
 
-语义变量放 `:root` / `html.dark`：`--bg, --bg-soft, --card, --border, --text, --text-2, --brand, --shadow`。组件里用 `var(--card)` 这类语义变量，避免到处写 `dark:`。
+- 桌面断点 `768px`，移动端折叠为汉堡抽屉（导航 + 搜索 + 分类 + 标签）。
+- 导航项：搜索、主页、时间轴、更多（归档/资源/关于）、分类（下拉）、相册、说说、友链、留言、主题切换。
+  「标签」入口在移动抽屉与「更多」中。
 
-## 3. 前台 blog-web 结构
+### 1.3 首页
 
-Layout：`AppHeader`（sticky，`backdrop-blur`，scroll 后加边框）— `<RouterView>` — `AppFooter` — `MusicPlayer`（右下角悬浮，可折叠）+ `BackToTop`。
+1. **欢迎区（100vh）**：天空渐变 + 云层纹理（`src/assets/img/clouds.png` 叠加，纯 CSS 保证离线可看）
+   → 居中站名 + 打字机副标题（循环打字，末尾光标闪烁）→ 向下箭头。
+2. **波浪过渡**：`PrototypeWaves.vue` 白浪 SVG 压住欢迎区底部。
+3. **内容区（浅灰底）**：文章卡网格 3/2/1 列，卡片含封面（16:9，无封面走蓝系渐变占位 + 首字）、
+   标题、摘要、分类/标签、日期、浏览量、评论数。
 
-- 首页 `/`：Hero（站点名、一句话介绍、社交图标、滚动提示）→ 推荐位（2 张横向卡）→ 主列表（左：文章卡流 + 分页；右：sticky 侧栏 = 作者卡 / 分类 / 标签云 / 最新文章 / 站点统计）→ 分页器。
-- 文章卡：封面（可选，16:9，hover 轻微 scale）、标题 2 行截断、摘要 2 行、元信息（日期 · 分类 · 阅读时长 · 浏览量 · 评论数）、标签 chip。
-- 详情 `/article/:id`：顶部标题 + 元信息 + 封面 → 正文（md-editor-v3 的 `MdPreview` 只读渲染，代码高亮、目录 `MdCatalog` 右侧 sticky，移动端抽屉）→ 标签 → 点赞按钮（乐观更新）→ 上下篇 → 评论区。
-- 分类 `/category/:id`、标签 `/tag/:id`：页头（名称 + 计数 + 描述）+ 文章列表。
-- 归档 `/archives`：按年分组，左侧时间轴，右侧条目。
-- 搜索 `/search?keyword=`：大输入框 + 结果列表 + 空状态。
-- 说说 `/talks`：卡片流，图片九宫格（点击预览），点赞，评论按钮展开该说说的评论。
-- 相册 `/albums` → `/albums/:id`：相册卡（封面 + 数量），详情为瀑布列（CSS `columns`）+ 图片预览 `el-image`。
-- 留言板 `/message`：顶部模式切换（卡片 / 弹幕），卡片模式 = 留言卡 + 发布表单；弹幕模式 = 全宽区域滚动弹幕（vue3-danmaku），底部小表单。
-- 资源 `/resources`：分类分组卡片网格。
-- 友链 `/friends`：友链卡网格 + 「申请友链」弹窗（表单 + 提示待审核）。
-- 关于 `/about`：头像 + Markdown 渲染 `about` 配置 + 站点统计数字。
-- 404：大号 404 + 返回首页。
+### 1.4 其余页面
 
-组件：`ArticleCard`、`SectionTitle`、`Pagination`、`EmptyState`、`SkeletonList`、`TagChip`、`CommentSection`（表单 + 两级列表 + 审核提示）、`LikeButton`、`ThemeToggle`、`MusicPlayer`、`BackToTop`。
+统一「暗色天空 banner + 白色波浪 + 浅灰内容区 + 白卡」骨架，页面头部左侧是大标题与描述：
 
-## 4. 后台 blog-admin 结构
+| 页面 | 关键结构 |
+| --- | --- |
+| 文章详情 `/article/:id` | banner 含标题/meta/标签 → 白卡 Markdown 正文（代码高亮、行号、复制）→ 右侧 sticky 目录（蓝色激活条）→ 点赞 → 上下篇 → 二级评论气泡列表 |
+| 归档 `/archives` | 时间轴竖线 + 年/月分组圆点 |
+| 分类 `/category/:id`、标签 `/tag/:id` | banner + 文章列表卡 |
+| 搜索 `/search` | 大输入框 + 结果卡片列表 |
+| 说说 `/talks` | 微博式卡片流（头像、时间、正文、九宫格图、点赞、评论） |
+| 相册 `/albums`、`/albums/:id` | 相册卡片网格（封面 16:10）→ 详情瀑布流 + `el-image` 大图预览 |
+| 留言板 `/message` | 卡片 / 弹幕双模式切换；弹幕区固定 420px 高、夜空底色；访客仅需昵称 + 内容，可选弹幕颜色 |
+| 友链 `/friends` | 卡片墙 + 「申请友链」弹窗（访客免登录） |
+| 资源 `/resources` | 按分组（前端/后端/工具…）的卡片列表 |
+| 关于 `/about` | 站点信息、社交链接、统计 |
+| 404 | 插画 + 「这一页走丢了」+ 3 秒自动回首页 |
 
-外壳：左侧固定侧栏（logo + 分组菜单 + 折叠按钮 + 底部主题切换/退出），顶部条（面包屑 + 未读通知铃铛 + 用户下拉），内容区。
+### 1.5 交互与状态
 
-- 登录 `/login`：左品牌区（站点名 + 装饰）+ 右表单卡；`needPasswordChange` 时跳 `/change-password`（不可跳过）。
-- 仪表盘：4 张统计卡（文章/评论/留言/浏览量，含环比或「今日」小字）→ 近 7 天双折线或柱状（用纯 CSS/SVG 手写，不引图表库）→ 最新评论列表 → 最近文章表格。
-- 文章管理：筛选条（状态 tabs、分类、关键词）+ 表格（标题/分类/标签/状态/推荐/浏览/时间/操作）+ 抽屉或独立页编辑器（md-editor-v3 `MdEditor`，左编辑右预览，封面用上传组件，标签多选，保存草稿/发布）。
-- 分类/标签：表格 + 对话框表单（标签带颜色选择）。
-- 评论管理：状态 tabs（待审核/已通过/已拒绝）+ 表格（内容摘要/作者/所属文章/时间/操作：通过、拒绝、回复、删除）+ 回复抽屉。
-- 说说：列表卡 + 编辑对话框（文本域 + 多图上传）。
-- 相册：相册表格 + 进入相册管理照片（上传、排序、删除）。
-- 留言管理、友链管理（审核）、资源管理、站点配置（分组表单 tabs：基础信息 / 首页 Hero / 关于 / 社交链接 / 其它）、个人中心（改密码、资料）。
-- 通知：铃铛下拉（最近 5 条 + 未读数）+ `/notifications` 列表页（全部已读）。
+- 所有列表：加载骨架屏 → 空态（`EmptyState`）→ 错误提示，均不白屏。
+- 访客评论：昵称 + 邮箱必填，提交后提示「已提交，待站长审核」；列表只显示已审核内容。
+- 点赞：同 IP 幂等（重复点击不重复计数），乐观更新后以接口返回计数为准。
+- 音乐播放器：`/wapi` 3 秒超时或返回空歌单时**整体不渲染**，不出现空壳按钮。
+- 深色模式：跟随系统 / 手动浅色 / 手动深色三态，持久化到 localStorage，`html.dark` 驱动变量。
 
-菜单分组：内容（文章、分类、标签、说说、相册、资源）｜互动（评论、留言、友链）｜站点（站点配置、通知）｜账户（个人中心）。
+---
 
-## 5. 交互与工程细则
+## 2. 后台（blog-admin）
 
-- 所有列表接口有 loading 骨架；空态统一 `EmptyState`（图标 + 一句提示 + 可选按钮）。
-- 表单校验用 Element Plus `Form` 规则；提交按钮 loading + 防重复点击。
-- 时间统一 `dayjs` 格式化（列表 `YYYY-MM-DD`，详情 `YYYY年M月D日 HH:mm`，相对时间用于说说/评论）。
-- 图片统一 `object-cover` + 圆角；加载失败显示占位底色。
-- 请求层：`src/api/http.ts` 单例 axios（`baseURL: '/api'`，`timeout: 15000`，请求带 token，响应统一解包 + 错误弹窗）；`src/api/*.ts` 按域导出函数与 TS 类型（`src/api/types.ts` 放全部接口类型）。
-- 状态：pinia 存 `auth`（admin）、`site`（前台站点配置+主题）、`theme`。前台用 `@pinia/colada` 处理文章列表等查询缓存（`useQuery`）；后台直接用 axios + ref（更简单可控）。
-- 路由：前台 history 模式，滚动行为 `scrollBehavior` 回顶部；后台 history 模式，守卫检查 token + `needPasswordChange`。
-- 深浅色：`theme` store 持久化到 localStorage，`html.dark` 切换；Element Plus 暗色通过自定义 CSS 变量覆盖主要组件背景/边框/文字。
-- 音乐播放器：`/wapi` 代理网易云 API（`/wapi/personalized/newsong`、`/wapi/song/url?id=`）；请求 3 秒超时、失败即整体隐藏（不显示空壳），成功则迷你条 + 播放列表抽屉；播放态用单例 `Audio`。
-- TypeScript：`strict`，禁止 `any` 逃逸（用 `unknown` + 收窄）；`verbatimModuleSyntax` 下类型导入必须 `import type`。
-- 构建/检查命令（两端一致）：`npx tsc --noEmit`（TS7 检查 .ts）、`node scripts/check-vue.cjs --noEmit`（TS6 宿主检查 .vue）、`npx vite build`。`package.json` 的 `build` 脚本串联三者。
+### 2.1 布局壳
+
+| 区块 | 尺寸 / 样式 |
+| --- | --- |
+| 侧栏 | 宽 210px（折叠 54px），底色 `#001529`，logo 区 68px 底色 `#002140`，菜单项 50px，激活项整条 `#4091f7`，文字 `rgba(254,254,254,.65)` |
+| 顶栏 | 48px：折叠按钮、面包屑、未读通知铃铛、主题切换、用户下拉（退出） |
+| 标签页 tags-view | 38px：打开过的路由标签，点击切换，右键关闭当前/其他/全部/刷新 |
+| 内容区 | 页面底色 `#f0f2f5`，`margin: 12px`，`padding-top: 85px` 让出固定顶栏 |
+| 路由过渡 | `fade-transform` 0.5s，位移 ±30px |
+
+### 2.2 Token
+
+- Element Plus 主色 `#409EFF`（及 `--el-color-primary-light-1..9` 派生），成功 `#67c23a`、
+  警告 `#e6a23c`、危险 `#f56c6c`，正文 `#606266`，边框 `#e4e7ed`。
+- 卡片：白底、4px 圆角、轻阴影；表格表头 `#fafafa`、行 hover 淡蓝、操作列 `link` 按钮。
+- 暗色：内容区 `#020409`、卡片 `#141414`，侧栏保持深色。
+
+### 2.3 页面清单（20 路由）
+
+登录 / 强制改密 / 仪表盘 / 文章管理 / 文章编辑 / 分类 / 标签 / 说说 / 相册 / 相册详情（图片）/
+资源 / 评论管理 / 留言管理 / 友链 / 站点配置（5 页签）/ 通知中心 / 个人中心 / 403 / 404。
+
+- 登录页：左侧蓝色波浪背景 + 插画与品牌区，右侧 360px 白卡表单；保留「首次登录需修改初始密码」提示。
+- 仪表盘：4 张统计卡（文章 / 评论待审 / 留言 / 浏览量）+ 近 7 天趋势（手写 SVG 折线，不引入 ECharts）+
+  最新评论 + 最近文章表格。
+- 文章编辑：大标题输入 + `md-editor-v3`（高度 `calc(100vh - 260px)`）+ 右侧发布设置（分类、标签、
+  封面、摘要、推荐位、置顶、状态）。
+- 相册/图片：相册卡片封面 200px、照片 108px 网格，卡片阴影 `0 0 12px rgba(0,0,0,.12)`。
+
+---
+
+## 3. 前端工程约定（两端通用）
+
+- **目录按 feature 组织**：`src/api`（接口层，与 `docs/API.md` 一一对应）、`src/stores`（auth/site/theme）、
+  `src/components`（可复用）、`src/views|pages`（路由页）、`src/styles`（全局样式与 token）。
+- **类型严格**：`tsconfig` strict + `noUnusedLocals`，禁止 `any`；接口响应在 `api/types.ts` 定义。
+- **构建前必过类型检查**：
+  - blog-web：`npx tsc --noEmit` + `node scripts/check-vue.cjs --noEmit` + `vite build`
+  - blog-admin：`node scripts/check.cjs`（TS7 管 `.ts`、TS6+vue-tsc 管 `.vue`）+ `vite build`
+- **Element Plus 与 Tailwind 4 共存**：EP 样式按 `@layer` 顺序导入，Tailwind preflight 不得重置 EP
+  组件；改样式后要实际点开 `el-select`/`el-dialog`/`el-table`/`el-pagination` 验证。
+- **素材来源**：`clouds.png`、页面图标 SVG、后台登录插画与状态插画来自原型项目，随仓库提供；
+  不引用任何外链图片，保证离线可用。

@@ -5,6 +5,10 @@
 设计目标：访客无需注册即可评论（默认进入审核队列），只有管理员登录后台；前台以阅读体验为先，
 后台以内容维护效率为先，接口契约、数据模型与设计规范全部文档化。
 
+视觉上**沿用原型、代码全部重写**：前台还原原 `vue3-blog` 的外观（蓝色主色、全屏天空首页、
+卡片化内容、波浪过渡、常驻音乐播放器），后台还原原 `pure-admin` 观感（深色侧栏、标签页、
+表格化内容页），技术栈则是全新的一套，便于从旧站平滑迁移。
+
 - 前台：分页文章列表 + 推荐位、Markdown 详情（代码高亮 / 目录 / 点赞 / 评论）、分类 / 标签 / 归档 / 搜索、
   说说、相册（照片墙 + 大图预览）、留言板（卡片 / 弹幕双模式）、资源、友链、关于、RSS、404
 - 后台：登录 + 首次登录强制改密、仪表盘、文章（md-editor-v3 编辑、草稿 / 发布 / 推荐）、分类、标签、
@@ -39,7 +43,8 @@ luna-blog/
 │   └── scripts/       # db:init 初始化、build 静态检查
 ├── docs/
 │   ├── API.md         # 接口契约（响应包、分页、鉴权、限频、字段）
-│   ├── DESIGN.md      # 设计规范（色板、排版、组件、交互）
+│   ├── DESIGN.md      # 视觉与交互规范（前后台 token、布局、页面结构）
+│   ├── PROTOTYPE-*.md # 原型考古档案（前台 / 后台逐像素说明，实现依据）
 │   └── reference-*.md # 原项目结构参考（重写前调研留档）
 ├── scripts/smoke-api.mjs  # 端到端接口冒烟（33 项断言）
 └── deploy/            # Nginx / systemd 部署样例
@@ -180,7 +185,9 @@ NODE_ENV=production node src/server.js
 | 文档 | 作用 |
 | --- | --- |
 | [`docs/API.md`](docs/API.md) | 全部接口：响应包、分页协议、鉴权与错误码、限频表、14 张表字段、接口分组总表 |
-| [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉与交互规范：色板、排版、布局骨架、组件与状态、前后台页面清单 |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉与交互规范：前后台 token、布局骨架、页面结构、工程约定 |
+| [`docs/PROTOTYPE-web.md`](docs/PROTOTYPE-web.md) | 前台原型档案：原始变量、尺寸、动画、图标与换栈要点 |
+| [`docs/PROTOTYPE-admin.md`](docs/PROTOTYPE-admin.md) | 后台原型档案：pure-admin 布局尺寸、17 个业务页、交互与素材清单 |
 
 改接口先改 `docs/API.md`，改样式先改 `docs/DESIGN.md`，再同步实现。
 
@@ -198,6 +205,10 @@ NODE_ENV=production node src/server.js
 - **弹幕容器必须有显式高度**：`vue3-danmaku` 需要拿到容器宽高，留言板弹幕区固定 420px 高。
 - **Windows 换行**：仓库带 `.gitattributes`（`* text=auto eol=lf`），提交前无需手动处理。
 - **历史路由部署**：两个 SPA 都是 history 模式，Nginx 必须配置 `try_files` 回退到 `index.html`。
+- **首页背景不依赖外部图床**：天空/云海由 CSS 多层渐变叠加本地 `clouds.png` 实现，离线可用；
+  与原型使用的实景照片相比，天空略深、云层更平滑。
+- **原型素材随仓库提供**：`clouds.png`、导航图标 SVG、后台登录插画与 403/404/500 插画来自原项目，
+  用于保持原型观的感；未引入 iconfont / iconify / ECharts 等额外依赖，仪表盘趋势图是手写 SVG。
 
 ## License
 
