@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Plus, Refresh } from '@element-plus/icons-vue'
+import { Picture, Plus, Refresh } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import ImageUpload from '@/components/ImageUpload.vue'
@@ -125,70 +125,58 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader title="相册" description="按主题整理照片，封面会展示在相册列表">
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-      <el-button type="primary" :icon="Plus" @click="openCreate">新建相册</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card admin-card--auto">
+      <template #header>
+        <PageHeader title="相册" description="按主题整理照片，封面会展示在相册列表">
+          <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+          <el-button type="primary" :icon="Plus" @click="openCreate">新建相册</el-button>
+        </PageHeader>
+      </template>
 
-    <div class="panel overflow-hidden">
-      <el-table v-loading="loading" :data="rows" row-key="id" style="width: 100%">
-        <el-table-column label="封面" width="96">
-          <template #default="{ row }">
-            <el-image
-              v-if="row.cover"
-              :src="resolveAssetUrl(row.cover)"
-              fit="cover"
-              class="h-[46px] w-[64px] rounded-md"
-              :preview-src-list="[resolveAssetUrl(row.cover)]"
-              preview-teleported
-              hide-on-click-modal
-            />
-            <div
-              v-else
-              class="flex h-[46px] w-[64px] items-center justify-center rounded-md text-[16px]"
-              :style="{ background: 'var(--bg-soft)', color: 'var(--text-3)' }"
-            >🖼️</div>
-          </template>
-        </el-table-column>
-        <el-table-column label="相册" min-width="240">
-          <template #default="{ row }">
-            <div class="py-1">
-              <button
-                type="button"
-                class="text-[13px] font-medium hover:underline"
-                :style="{ color: 'var(--text)' }"
-                @click="openDetail(row)"
-              >{{ row.name }}</button>
-              <p class="clamp-1 mt-0.5 text-[12px]" :style="{ color: 'var(--text-2)' }">{{ row.description || '—' }}</p>
+      <div v-loading="loading" class="min-h-[200px]">
+        <div v-if="rows.length > 0" class="album-grid">
+          <div v-for="row in rows" :key="row.id" class="album-card">
+            <div class="album-card__head">
+              <button type="button" class="album-card__title" @click="openDetail(row)">{{ row.name }}</button>
+              <div class="flex shrink-0 items-center">
+                <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+                <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+              </div>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="照片数" width="96" align="right">
-          <template #default="{ row }">
-            <span class="text-[12px] tabular-nums" :style="{ color: 'var(--text-2)' }">{{ row.photoCount }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="创建时间" width="160">
-          <template #default="{ row }">
-            <span class="text-[12px]" :style="{ color: 'var(--text-2)' }">{{ formatDateTime(row.createdAt) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="210" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openDetail(row)">照片</el-button>
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-        <template #empty>
-          <EmptyState title="还没有相册" description="把同一主题的照片放进一个相册，读者可以从相册页浏览。">
-            <el-button type="primary" size="small" @click="openCreate">新建相册</el-button>
-          </EmptyState>
-        </template>
-      </el-table>
-    </div>
+            <p class="album-card__desc">
+              {{ row.description || `${row.photoCount} 张照片 · ${formatDateTime(row.createdAt)}` }}
+            </p>
+            <div class="album-card__cover" @click="openDetail(row)">
+              <el-image
+                v-if="row.cover"
+                :src="resolveAssetUrl(row.cover)"
+                :alt="row.name"
+                fit="cover"
+                :preview-src-list="[resolveAssetUrl(row.cover)]"
+                preview-teleported
+                hide-on-click-modal
+              />
+              <div v-else class="album-card__cover-empty">
+                <el-icon :size="34"><Picture /></el-icon>
+                <span>暂无封面</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑相册' : '新建相册'" width="500px" destroy-on-close>
+        <EmptyState v-else-if="!loading" title="还没有相册" description="把同一主题的照片放进一个相册，读者可以从相册页浏览。">
+          <el-button type="primary" size="small" @click="openCreate">新建相册</el-button>
+        </EmptyState>
+      </div>
+    </el-card>
+
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editing ? '编辑相册' : '新建相册'"
+      width="500px"
+      draggable
+      destroy-on-close
+    >
       <el-alert v-if="dialogError" :title="dialogError" type="error" show-icon :closable="false" class="mb-4" />
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="submit">
         <el-form-item label="相册名称" prop="name">
@@ -208,3 +196,9 @@ onMounted(load)
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.album-card__cover {
+  cursor: pointer;
+}
+</style>

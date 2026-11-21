@@ -121,49 +121,59 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader title="分类管理" description="为文章建立清晰的归类，数量少的分类更适合作为主题">
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-      <el-button type="primary" :icon="Plus" @click="openCreate">新建分类</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card">
+      <template #header>
+        <PageHeader title="分类管理" description="为文章建立清晰的归类，数量少的分类更适合作为主题">
+          <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+          <el-button type="primary" :icon="Plus" @click="openCreate">新建分类</el-button>
+        </PageHeader>
+      </template>
 
-    <div class="panel overflow-hidden">
-      <el-table v-loading="loading" :data="rows" row-key="id" style="width: 100%">
-        <el-table-column prop="name" label="名称" min-width="180">
-          <template #default="{ row }">
-            <span class="text-[13px] font-medium" :style="{ color: 'var(--text)' }">{{ row.name }}</span>
+      <div class="table-flex">
+        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%">
+          <el-table-column prop="name" label="名称" min-width="180">
+            <template #default="{ row }">
+              <span class="text-[13px] font-medium text-[var(--text)]">{{ row.name }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="slug" label="别名" min-width="160" align="center">
+            <template #default="{ row }">
+              <code class="text-[12px] text-[var(--text-2)]">{{ row.slug || '—' }}</code>
+            </template>
+          </el-table-column>
+          <el-table-column prop="description" label="描述" min-width="240">
+            <template #default="{ row }">
+              <span class="clamp-1 text-[12px] text-[var(--text-2)]">{{ row.description || '—' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="文章数" width="90" align="center">
+            <template #default="{ row }">
+              <span class="text-[12px] tabular-nums text-[var(--text-2)]">{{ row.articleCount }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="sort" label="排序" width="80" align="center" />
+          <el-table-column label="操作" width="130" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+          <template #empty>
+            <EmptyState title="还没有分类" description="创建几个分类，让文章更有条理。">
+              <el-button type="primary" size="small" @click="openCreate">新建分类</el-button>
+            </EmptyState>
           </template>
-        </el-table-column>
-        <el-table-column prop="slug" label="别名" min-width="160">
-          <template #default="{ row }">
-            <code class="text-[12px]" :style="{ color: 'var(--text-2)' }">{{ row.slug || '—' }}</code>
-          </template>
-        </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="240">
-          <template #default="{ row }">
-            <span class="clamp-1 text-[12px]" :style="{ color: 'var(--text-2)' }">{{ row.description || '—' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="文章数" width="90" align="right">
-          <template #default="{ row }">
-            <span class="text-[12px] tabular-nums" :style="{ color: 'var(--text-2)' }">{{ row.articleCount }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="sort" label="排序" width="80" align="center" />
-        <el-table-column label="操作" width="130" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-        <template #empty>
-          <EmptyState title="还没有分类" description="创建几个分类，让文章更有条理。">
-            <el-button type="primary" size="small" @click="openCreate">新建分类</el-button>
-          </EmptyState>
-        </template>
-      </el-table>
-    </div>
+        </el-table>
+      </div>
+    </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑分类' : '新建分类'" width="480px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editing ? '编辑分类' : '新建分类'"
+      width="480px"
+      draggable
+      destroy-on-close
+    >
       <el-alert v-if="dialogError" :title="dialogError" type="error" show-icon :closable="false" class="mb-4" />
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="submit">
         <el-form-item label="名称" prop="name">

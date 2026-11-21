@@ -86,6 +86,11 @@ function handleReset(): void {
   void load()
 }
 
+function handleSizeChange(): void {
+  query.page = 1
+  void load()
+}
+
 async function review(row: Comment, status: ReviewStatus): Promise<void> {
   const action = status === 'approved' ? '通过' : '拒绝'
   try {
@@ -162,90 +167,97 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader title="评论管理" description="审核读者评论，回复后会自动以管理员身份展示">
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card">
+      <template #header>
+        <PageHeader title="评论管理" description="审核读者评论，回复后会自动以管理员身份展示">
+          <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+        </PageHeader>
+      </template>
 
-    <div class="panel panel--pad">
-      <div class="filter-bar">
+      <div class="table-toolbar">
         <el-tabs :model-value="query.status" class="min-w-0 flex-1" @tab-change="onTabChange">
           <el-tab-pane v-for="tab in TABS" :key="tab.value || 'all'" :label="tab.label" :name="tab.value" />
         </el-tabs>
-        <el-select v-model="query.targetType" class="w-[132px]" placeholder="全部来源" clearable @change="handleSearch">
-          <el-option label="文章评论" value="article" />
-          <el-option label="说说评论" value="talk" />
-        </el-select>
-        <el-input
-          v-model="query.keyword"
-          class="w-[200px]"
-          placeholder="昵称 / 邮箱 / 内容"
-          clearable
-          :prefix-icon="Search"
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
-        />
-        <el-button @click="handleReset">重置</el-button>
+        <div class="flex flex-wrap items-center gap-2">
+          <el-select v-model="query.targetType" class="w-[132px]" placeholder="全部来源" clearable @change="handleSearch">
+            <el-option label="文章评论" value="article" />
+            <el-option label="说说评论" value="talk" />
+          </el-select>
+          <el-input
+            v-model="query.keyword"
+            class="w-[200px]"
+            placeholder="昵称 / 邮箱 / 内容"
+            clearable
+            :prefix-icon="Search"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          />
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </div>
       </div>
 
-      <el-table v-loading="loading" :data="rows" row-key="id" style="width: 100%">
-        <el-table-column label="评论内容" min-width="300">
-          <template #default="{ row }">
-            <div class="py-1">
-              <p class="clamp-2 text-[13px] leading-5" :style="{ color: 'var(--text)' }">{{ row.content }}</p>
-              <div class="mt-1 flex flex-wrap items-center gap-2 text-[12px]" :style="{ color: 'var(--text-2)' }">
-                <span>{{ row.nickname }}</span>
-                <span v-if="row.replyTo" class="opacity-80">回复 {{ row.replyTo.nickname }}</span>
-                <el-tag v-if="row.isAdmin" size="small" type="success" effect="plain" disable-transitions>管理员</el-tag>
-                <span v-if="row.replies && row.replies.length > 0" class="opacity-80">
-                  · {{ row.replies.length }} 条回复
-                </span>
+      <div class="table-flex">
+        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%">
+          <el-table-column label="评论内容" min-width="300">
+            <template #default="{ row }">
+              <div class="py-1">
+                <p class="clamp-2 text-[13px] leading-5 text-[var(--text)]">{{ row.content }}</p>
+                <div class="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-[var(--text-2)]">
+                  <span>{{ row.nickname }}</span>
+                  <span v-if="row.replyTo" class="opacity-80">回复 {{ row.replyTo.nickname }}</span>
+                  <el-tag v-if="row.isAdmin" size="small" type="success" effect="plain" disable-transitions>管理员</el-tag>
+                  <span v-if="row.replies && row.replies.length > 0" class="opacity-80">
+                    · {{ row.replies.length }} 条回复
+                  </span>
+                </div>
               </div>
-            </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="作者" min-width="170">
+            <template #default="{ row }">
+              <div class="text-[12px] leading-5">
+                <div class="text-[var(--text)]">{{ row.nickname }}</div>
+                <div class="text-[var(--text-3)]">{{ row.email }}</div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="所属" width="110" align="center">
+            <template #default="{ row }">
+              <span class="text-[12px] text-[var(--text-2)]">{{ targetLabel(row) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="96" align="center">
+            <template #default="{ row }">
+              <StatusTag :status="row.status" />
+            </template>
+          </el-table-column>
+          <el-table-column label="IP" width="130" align="center">
+            <template #default="{ row }">
+              <span class="text-[12px] tabular-nums text-[var(--text-2)]">{{ row.ip || '—' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="时间" width="150" align="center">
+            <template #default="{ row }">
+              <span class="text-[12px] text-[var(--text-2)]">{{ formatDateTime(row.createdAt) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="188" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button v-if="row.status !== 'approved'" link type="success" size="small" @click="review(row, 'approved')">通过</el-button>
+              <el-button v-if="row.status !== 'rejected'" link type="warning" size="small" @click="review(row, 'rejected')">拒绝</el-button>
+              <el-button link type="primary" size="small" :icon="ChatLineRound" @click="openReply(row)">回复</el-button>
+              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+          <template #empty>
+            <EmptyState
+              :title="hasRows ? '暂无匹配评论' : '暂无评论'"
+              :description="query.status === 'pending' ? '所有评论都处理完了，做得不错。' : '读者评论会出现在这里。'"
+            />
           </template>
-        </el-table-column>
-        <el-table-column label="作者" min-width="170">
-          <template #default="{ row }">
-            <div class="text-[12px] leading-5">
-              <div :style="{ color: 'var(--text)' }">{{ row.nickname }}</div>
-              <div class="opacity-80" :style="{ color: 'var(--text-2)' }">{{ row.email }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="所属" width="110">
-          <template #default="{ row }">
-            <span class="text-[12px]" :style="{ color: 'var(--text-2)' }">{{ targetLabel(row) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="96">
-          <template #default="{ row }">
-            <StatusTag :status="row.status" />
-          </template>
-        </el-table-column>
-        <el-table-column label="IP" width="130">
-          <template #default="{ row }">
-            <span class="text-[12px] tabular-nums" :style="{ color: 'var(--text-2)' }">{{ row.ip || '—' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="时间" width="150">
-          <template #default="{ row }">
-            <span class="text-[12px]" :style="{ color: 'var(--text-2)' }">{{ formatDateTime(row.createdAt) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="188" fixed="right">
-          <template #default="{ row }">
-            <el-button v-if="row.status !== 'approved'" link type="success" size="small" @click="review(row, 'approved')">通过</el-button>
-            <el-button v-if="row.status !== 'rejected'" link type="warning" size="small" @click="review(row, 'rejected')">拒绝</el-button>
-            <el-button link type="primary" size="small" :icon="ChatLineRound" @click="openReply(row)">回复</el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-        <template #empty>
-          <EmptyState
-            :title="hasRows ? '暂无匹配评论' : '暂无评论'"
-            :description="query.status === 'pending' ? '所有评论都处理完了，做得不错。' : '读者评论会出现在这里。'"
-          />
-        </template>
-      </el-table>
+        </el-table>
+      </div>
 
       <div class="pager">
         <el-pagination
@@ -256,15 +268,19 @@ onMounted(load)
           layout="total, sizes, prev, pager, next"
           background
           @current-change="load"
-          @size-change="() => { query.page = 1; load() }"
+          @size-change="handleSizeChange"
         />
       </div>
-    </div>
+    </el-card>
 
-    <el-dialog v-model="replyVisible" title="回复评论" width="520px" destroy-on-close>
-      <div v-if="replyTarget" class="mb-3 rounded-[10px] px-3 py-2 text-[12px] leading-5" :style="{ background: 'var(--bg-soft)', color: 'var(--text-2)' }">
-        <span class="font-medium" :style="{ color: 'var(--text)' }">{{ replyTarget.nickname }}</span>
-        <p class="mt-1 clamp-2">{{ replyTarget.content }}</p>
+    <el-dialog v-model="replyVisible" title="回复评论" width="520px" draggable destroy-on-close>
+      <div
+        v-if="replyTarget"
+        class="mb-3 rounded px-3 py-2 text-[12px] leading-5 text-[var(--text-2)]"
+        style="background: var(--bg-soft)"
+      >
+        <span class="font-medium text-[var(--text)]">{{ replyTarget.nickname }}</span>
+        <p class="clamp-2 mt-1">{{ replyTarget.content }}</p>
       </div>
       <el-input
         v-model="replyContent"

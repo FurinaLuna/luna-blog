@@ -9,16 +9,12 @@ withDefaults(
 </script>
 
 <template>
-  <div class="flex flex-wrap items-end justify-between gap-3">
-    <div class="min-w-0">
-      <h1 class="m-0 text-[20px] font-bold tracking-tight" :style="{ color: 'var(--text)' }">
-        {{ title }}
-      </h1>
-      <p v-if="description" class="mt-1 mb-0 text-[13px]" :style="{ color: 'var(--text-2)' }">
-        {{ description }}
-      </p>
+  <div class="page-header">
+    <div class="page-header__main">
+      <h1 class="page-header__title">{{ title }}</h1>
+      <p v-if="description" class="page-header__desc">{{ description }}</p>
     </div>
-    <div class="toolbar-actions">
+    <div v-if="$slots.default" class="toolbar-actions">
       <slot />
     </div>
   </div>

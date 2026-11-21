@@ -165,176 +165,181 @@ onMounted(() => {
 
 <template>
   <div class="page">
-    <PageHeader title="文章管理" description="撰写、发布与整理站点的全部文章">
-      <el-button type="primary" :icon="Plus" @click="router.push({ name: 'ArticleCreate' })">写文章</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card">
+      <template #header>
+        <PageHeader title="文章管理" description="撰写、发布与整理站点的全部文章">
+          <el-button type="primary" :icon="Plus" @click="router.push({ name: 'ArticleCreate' })">写文章</el-button>
+        </PageHeader>
+      </template>
 
-    <div class="filter-bar">
-      <el-tabs v-model="query.status" class="min-w-[260px] flex-1" @tab-change="handleFilterChange">
-        <el-tab-pane label="全部" name="" />
-        <el-tab-pane label="已发布" name="published" />
-        <el-tab-pane label="草稿" name="draft" />
-      </el-tabs>
+      <div class="table-toolbar">
+        <el-tabs v-model="query.status" class="min-w-[260px] flex-1" @tab-change="handleFilterChange">
+          <el-tab-pane label="全部" name="" />
+          <el-tab-pane label="已发布" name="published" />
+          <el-tab-pane label="草稿" name="draft" />
+        </el-tabs>
 
-      <el-select
-        v-model="query.categoryId"
-        placeholder="全部分类"
-        clearable
-        class="w-[150px]"
-        @change="handleFilterChange"
-      >
-        <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
-      </el-select>
+        <div class="flex flex-wrap items-center gap-2">
+          <el-select
+            v-model="query.categoryId"
+            placeholder="全部分类"
+            clearable
+            class="w-[150px]"
+            @change="handleFilterChange"
+          >
+            <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+          </el-select>
 
-      <el-input
-        v-model="query.keyword"
-        placeholder="搜索标题或摘要"
-        clearable
-        :prefix-icon="Search"
-        class="w-[220px]"
-        @keyup.enter="handleSearch"
-        @clear="handleSearch"
-      />
-      <el-button :icon="Search" @click="handleSearch">搜索</el-button>
-      <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-    </div>
-
-    <div class="panel overflow-hidden">
-      <el-table v-loading="loading" :data="rows" row-key="id" style="width: 100%">
-        <el-table-column label="封面" width="76">
-          <template #default="{ row }">
-            <div class="h-10 w-14 overflow-hidden rounded-md" :style="{ background: 'var(--bg-soft)' }">
-              <img
-                v-if="row.cover"
-                :src="resolveAssetUrl(row.cover)"
-                :alt="row.title"
-                class="h-full w-full object-cover"
-              />
-              <div v-else class="grid h-full w-full place-items-center text-[10px]" :style="{ color: 'var(--text-3)' }">
-                无封面
-              </div>
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="标题" min-width="240">
-          <template #default="{ row }">
-            <div class="flex items-start gap-1.5">
-              <button
-                type="button"
-                class="clamp-1 cursor-pointer border-0 bg-transparent p-0 text-left text-[13px] font-semibold transition-colors hover:text-[var(--brand)]"
-                :style="{ color: 'var(--text)' }"
-                @click="router.push(`/articles/${row.id}/edit`)"
-              >
-                {{ row.title }}
-              </button>
-              <el-tag v-if="row.isTop" size="small" type="warning" effect="plain" disable-transitions>顶</el-tag>
-              <el-tag v-if="row.isRecommend" size="small" effect="plain" disable-transitions>荐</el-tag>
-            </div>
-            <p class="clamp-1 mt-0.5 mb-0 text-[11px]" :style="{ color: 'var(--text-3)' }">
-              {{ row.summary || '暂无摘要' }}
-            </p>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="分类" width="96">
-          <template #default="{ row }">
-            <span class="text-[12px]" :style="{ color: 'var(--text-2)' }">{{ row.category?.name ?? '未分类' }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="标签" width="132">
-          <template #default="{ row }">
-            <div class="flex flex-wrap gap-1">
-              <el-tag
-                v-for="tag in row.tags.slice(0, 2)"
-                :key="tag.id"
-                size="small"
-                effect="plain"
-                disable-transitions
-                :style="tag.color ? { color: tag.color, borderColor: tag.color } : undefined"
-              >
-                {{ tag.name }}
-              </el-tag>
-              <el-tag v-if="row.tags.length > 2" size="small" effect="plain" disable-transitions>+{{ row.tags.length - 2 }}</el-tag>
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="状态" width="88">
-          <template #default="{ row }"><StatusTag :status="row.status" kind="article" /></template>
-        </el-table-column>
-
-        <el-table-column label="推荐 / 置顶" width="112" align="center">
-          <template #default="{ row }">
-            <div class="flex items-center justify-center gap-2.5">
-              <el-tooltip content="推荐到首页" placement="top" :show-after="300">
-                <el-switch
-                  v-model="row.isRecommend"
-                  size="small"
-                  :loading="busyKey === `${row.id}-isRecommend`"
-                  @change="onSwitchChange(row, 'isRecommend')"
-                />
-              </el-tooltip>
-              <el-tooltip content="置顶" placement="top" :show-after="300">
-                <el-switch
-                  v-model="row.isTop"
-                  size="small"
-                  :loading="busyKey === `${row.id}-isTop`"
-                  @change="onSwitchChange(row, 'isTop')"
-                />
-              </el-tooltip>
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="浏览" width="76" align="right">
-          <template #default="{ row }">
-            <span class="text-[12px] tabular-nums" :style="{ color: 'var(--text-2)' }">{{ formatNumber(row.views) }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="更新时间" width="118">
-          <template #default="{ row }">
-            <span class="text-[12px] whitespace-nowrap" :style="{ color: 'var(--text-2)' }">{{ fromNow(row.updatedAt) }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="操作" width="168" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="router.push(`/articles/${row.id}/edit`)">编辑</el-button>
-            <el-button
-              link
-              :type="row.status === 'published' ? 'info' : 'success'"
-              size="small"
-              :loading="busyKey === `${row.id}-status`"
-              @click="toggleStatus(row)"
-            >
-              {{ row.status === 'published' ? '转草稿' : '发布' }}
-            </el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-
-        <template #empty>
-          <EmptyState title="没有找到文章" description="调整筛选条件，或写下第一篇。">
-            <el-button type="primary" size="small" @click="router.push({ name: 'ArticleCreate' })">写文章</el-button>
-          </EmptyState>
-        </template>
-      </el-table>
-
-      <div v-if="total > 0" class="pager">
-        <el-pagination
-          v-model:current-page="query.page"
-          v-model:page-size="query.pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 30, 50]"
-          layout="total, sizes, prev, pager, next"
-          background
-          @current-change="handlePageChange"
-          @size-change="handleSizeChange"
-        />
+          <el-input
+            v-model="query.keyword"
+            placeholder="搜索标题或摘要"
+            clearable
+            :prefix-icon="Search"
+            class="w-[220px]"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          />
+          <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
+          <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+        </div>
       </div>
-    </div>
+
+      <div class="table-flex">
+        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%">
+          <el-table-column label="封面" width="82" align="center">
+            <template #default="{ row }">
+              <div class="mx-auto h-10 w-14 overflow-hidden rounded" :style="{ background: 'var(--el-fill-color-light)' }">
+                <img
+                  v-if="row.cover"
+                  :src="resolveAssetUrl(row.cover)"
+                  :alt="row.title"
+                  class="h-full w-full object-cover"
+                />
+                <div v-else class="grid h-full w-full place-items-center text-[10px] text-[var(--text-3)]">无封面</div>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="标题" min-width="240">
+            <template #default="{ row }">
+              <div class="flex items-start gap-1.5">
+                <button
+                  type="button"
+                  class="clamp-1 cursor-pointer border-0 bg-transparent p-0 text-left text-[13px] font-semibold text-[var(--text)] transition-colors hover:text-[var(--el-color-primary)]"
+                  @click="router.push(`/articles/${row.id}/edit`)"
+                >
+                  {{ row.title }}
+                </button>
+                <el-tag v-if="row.isTop" size="small" type="warning" effect="plain" disable-transitions>顶</el-tag>
+                <el-tag v-if="row.isRecommend" size="small" effect="plain" disable-transitions>荐</el-tag>
+              </div>
+              <p class="clamp-1 mt-0.5 mb-0 text-[11px] text-[var(--text-3)]">{{ row.summary || '暂无摘要' }}</p>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="分类" width="100" align="center">
+            <template #default="{ row }">
+              <span class="text-[12px] text-[var(--text-2)]">{{ row.category?.name ?? '未分类' }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="标签" width="132" align="center">
+            <template #default="{ row }">
+              <div class="flex flex-wrap items-center justify-center gap-1">
+                <el-tag
+                  v-for="tag in row.tags.slice(0, 2)"
+                  :key="tag.id"
+                  size="small"
+                  effect="plain"
+                  disable-transitions
+                  :style="tag.color ? { color: tag.color, borderColor: tag.color } : undefined"
+                >
+                  {{ tag.name }}
+                </el-tag>
+                <el-tag v-if="row.tags.length > 2" size="small" effect="plain" disable-transitions>
+                  +{{ row.tags.length - 2 }}
+                </el-tag>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="状态" width="90" align="center">
+            <template #default="{ row }"><StatusTag :status="row.status" kind="article" /></template>
+          </el-table-column>
+
+          <el-table-column label="推荐 / 置顶" width="112" align="center">
+            <template #default="{ row }">
+              <div class="flex items-center justify-center gap-2.5">
+                <el-tooltip content="推荐到首页" placement="top" :show-after="300">
+                  <el-switch
+                    v-model="row.isRecommend"
+                    size="small"
+                    :loading="busyKey === `${row.id}-isRecommend`"
+                    @change="onSwitchChange(row, 'isRecommend')"
+                  />
+                </el-tooltip>
+                <el-tooltip content="置顶" placement="top" :show-after="300">
+                  <el-switch
+                    v-model="row.isTop"
+                    size="small"
+                    :loading="busyKey === `${row.id}-isTop`"
+                    @change="onSwitchChange(row, 'isTop')"
+                  />
+                </el-tooltip>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="浏览" width="78" align="center">
+            <template #default="{ row }">
+              <span class="text-[12px] tabular-nums text-[var(--text-2)]">{{ formatNumber(row.views) }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="更新时间" width="112" align="center">
+            <template #default="{ row }">
+              <span class="whitespace-nowrap text-[12px] text-[var(--text-2)]">{{ fromNow(row.updatedAt) }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="操作" width="168" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" size="small" @click="router.push(`/articles/${row.id}/edit`)">
+                编辑
+              </el-button>
+              <el-button
+                link
+                :type="row.status === 'published' ? 'info' : 'success'"
+                size="small"
+                :loading="busyKey === `${row.id}-status`"
+                @click="toggleStatus(row)"
+              >
+                {{ row.status === 'published' ? '转草稿' : '发布' }}
+              </el-button>
+              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+
+          <template #empty>
+            <EmptyState title="没有找到文章" description="调整筛选条件，或写下第一篇。">
+              <el-button type="primary" size="small" @click="router.push({ name: 'ArticleCreate' })">写文章</el-button>
+            </EmptyState>
+          </template>
+        </el-table>
+
+        <div v-if="total > 0" class="pager">
+          <el-pagination
+            v-model:current-page="query.page"
+            v-model:page-size="query.pageSize"
+            :total="total"
+            :page-sizes="[10, 20, 30, 50]"
+            layout="total, sizes, prev, pager, next"
+            background
+            @current-change="handlePageChange"
+            @size-change="handleSizeChange"
+          />
+        </div>
+      </div>
+    </el-card>
   </div>
 </template>

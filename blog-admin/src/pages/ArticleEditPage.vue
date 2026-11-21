@@ -266,26 +266,35 @@ onMounted(() => {
 
 <template>
   <div class="page">
-    <PageHeader :title="isEdit ? '编辑文章' : '写文章'" :description="isEdit ? `文章 ID #${articleId}` : '支持 Markdown 与图片上传，保存后可随时继续编辑'">
-      <el-button :icon="ArrowLeft" @click="handleBack">返回列表</el-button>
-      <el-button :loading="saving === 'draft'" :disabled="saving !== ''" @click="save('draft')">保存草稿</el-button>
-      <el-button type="primary" :loading="saving === 'published'" :disabled="saving !== ''" @click="save('published')">发布</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="mb-3">
+      <PageHeader
+        :title="isEdit ? '编辑文章' : '写文章'"
+        :description="isEdit ? `文章 ID #${articleId}` : '支持 Markdown 与图片上传，保存后可随时继续编辑'"
+      >
+        <el-button :icon="ArrowLeft" @click="handleBack">返回列表</el-button>
+        <el-button :loading="saving === 'draft'" :disabled="saving !== ''" @click="save('draft')">
+          保存草稿
+        </el-button>
+        <el-button type="primary" :loading="saving === 'published'" :disabled="saving !== ''" @click="save('published')">
+          发布
+        </el-button>
+      </PageHeader>
+    </el-card>
 
-    <div v-if="loadFailed" class="panel panel--pad">
+    <el-card v-if="loadFailed" shadow="never" class="admin-card--auto">
       <el-result icon="error" title="文章加载失败" sub-title="未能读取文章内容，请确认后端服务与接口是否可用。">
         <template #extra>
           <el-button @click="handleBack">返回列表</el-button>
           <el-button type="primary" @click="init">重新加载</el-button>
         </template>
       </el-result>
-    </div>
+    </el-card>
 
-    <div v-else v-loading="loading" class="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <div v-else v-loading="loading" class="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div class="flex min-w-0 flex-col gap-3">
-        <div class="panel p-3">
+        <el-card shadow="never">
           <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent>
-            <el-form-item prop="title" class="!mb-0">
+            <el-form-item prop="title" class="mb-0!">
               <el-input
                 v-model="form.title"
                 size="large"
@@ -296,26 +305,29 @@ onMounted(() => {
               />
             </el-form-item>
           </el-form>
-        </div>
+        </el-card>
 
-        <div class="panel overflow-hidden">
-          <MdEditor
-            v-model="form.content"
-            :theme="editorTheme"
-            :preview-theme="previewTheme"
-            :code-theme="codeTheme"
-            language="zh-CN"
-            :toolbars-exclude="['github', 'save', 'catalog']"
-            :on-upload-img="onUploadImg"
-            style="height: 62vh; min-height: 420px"
-          />
-        </div>
-
-        <div class="panel p-4">
-          <div class="section-title">
-            <h2>摘要</h2>
-            <span class="hint">留空时会自动截取正文前 160 字</span>
+        <el-card shadow="never" class="editor-card overflow-hidden">
+          <div class="article-editor">
+            <MdEditor
+              v-model="form.content"
+              :theme="editorTheme"
+              :preview-theme="previewTheme"
+              :code-theme="codeTheme"
+              language="zh-CN"
+              :toolbars-exclude="['github', 'save', 'catalog']"
+              :on-upload-img="onUploadImg"
+            />
           </div>
+        </el-card>
+
+        <el-card shadow="never">
+          <template #header>
+            <div class="flex items-center justify-between">
+              <span class="text-[14px] font-semibold text-[var(--text-2)]">摘要</span>
+              <span class="text-[12px] text-[var(--text-3)]">留空时会自动截取正文前 160 字</span>
+            </div>
+          </template>
           <el-input
             v-model="form.summary"
             type="textarea"
@@ -324,14 +336,18 @@ onMounted(() => {
             show-word-limit
             placeholder="一句话概括这篇文章，用于列表与分享卡片"
           />
-          <p class="hint mt-2 mb-0">正文 {{ charCount }} 字 · 预计阅读 {{ autoReadingTime }} 分钟</p>
-        </div>
+          <p class="mt-2 mb-0 text-[12px] text-[var(--text-3)]">
+            正文 {{ charCount }} 字 · 预计阅读 {{ autoReadingTime }} 分钟
+          </p>
+        </el-card>
       </div>
 
-      <aside class="flex flex-col gap-3 xl:sticky xl:top-[76px]">
-        <section class="panel panel--pad">
-          <div class="section-title"><h2>发布设置</h2></div>
-          <el-form label-position="top" size="default">
+      <aside class="flex flex-col gap-3 xl:sticky xl:top-3">
+        <el-card shadow="never">
+          <template #header>
+            <span class="text-[14px] font-semibold text-[var(--text-2)]">发布设置</span>
+          </template>
+          <el-form label-position="top">
             <el-form-item label="状态">
               <el-radio-group v-model="form.status">
                 <el-radio-button value="draft">草稿</el-radio-button>
@@ -340,37 +356,47 @@ onMounted(() => {
             </el-form-item>
 
             <div class="flex items-center justify-between py-1">
-              <span class="text-[13px]" :style="{ color: 'var(--text-2)' }">推荐到首页</span>
+              <span class="text-[13px] text-[var(--text-2)]">推荐到首页</span>
               <el-switch v-model="form.isRecommend" />
             </div>
             <div class="flex items-center justify-between py-1">
-              <span class="text-[13px]" :style="{ color: 'var(--text-2)' }">置顶文章</span>
+              <span class="text-[13px] text-[var(--text-2)]">置顶文章</span>
               <el-switch v-model="form.isTop" />
             </div>
 
-            <el-form-item label="阅读时长（分钟）" class="mt-3">
-              <el-input-number v-model="form.readingTime" :min="1" :max="999" :value-on-clear="null" placeholder="自动" class="w-full" />
+            <el-form-item label="阅读时长（分钟）" class="mt-3 mb-0!">
+              <el-input-number
+                v-model="form.readingTime"
+                :min="1"
+                :max="999"
+                :value-on-clear="null"
+                placeholder="自动"
+                class="w-full"
+              />
             </el-form-item>
           </el-form>
+        </el-card>
 
-          <div class="mt-2 flex flex-col gap-2">
-            <el-button type="primary" :loading="saving === 'published'" :disabled="saving !== ''" @click="save('published')">
-              发布
-            </el-button>
-            <el-button :loading="saving === 'draft'" :disabled="saving !== ''" @click="save('draft')">保存草稿</el-button>
-          </div>
-        </section>
-
-        <section class="panel panel--pad">
-          <div class="section-title"><h2>分类与标签</h2></div>
+        <el-card shadow="never">
+          <template #header>
+            <span class="text-[14px] font-semibold text-[var(--text-2)]">分类与标签</span>
+          </template>
           <el-form label-position="top">
             <el-form-item label="分类">
               <el-select v-model="form.categoryId" placeholder="选择分类" clearable class="w-full">
                 <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
               </el-select>
             </el-form-item>
-            <el-form-item label="标签" class="!mb-0">
-              <el-select v-model="form.tagIds" multiple filterable collapse-tags collapse-tags-tooltip placeholder="选择标签（可多选）" class="w-full">
+            <el-form-item label="标签" class="mb-0!">
+              <el-select
+                v-model="form.tagIds"
+                multiple
+                filterable
+                collapse-tags
+                collapse-tags-tooltip
+                placeholder="选择标签（可多选）"
+                class="w-full"
+              >
                 <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id">
                   <span class="flex items-center gap-2">
                     <span v-if="tag.color" class="h-2.5 w-2.5 rounded-full" :style="{ background: tag.color }" />
@@ -380,12 +406,14 @@ onMounted(() => {
               </el-select>
             </el-form-item>
           </el-form>
-        </section>
+        </el-card>
 
-        <section class="panel panel--pad">
-          <div class="section-title"><h2>封面</h2></div>
+        <el-card shadow="never">
+          <template #header>
+            <span class="text-[14px] font-semibold text-[var(--text-2)]">封面</span>
+          </template>
           <ImageUpload v-model="form.cover" :limit="1" :size="140" tip="建议 16:9，大小不超过 5MB" />
-        </section>
+        </el-card>
       </aside>
     </div>
   </div>
@@ -402,5 +430,15 @@ onMounted(() => {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+.article-editor :deep(.md-editor) {
+  height: calc(100vh - 260px);
+  min-height: 420px;
+  border: 0;
+}
+
+.editor-card :deep(.el-card__body) {
+  padding: 0;
 }
 </style>

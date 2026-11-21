@@ -83,62 +83,61 @@ function toggleUnreadOnly(value: string | number | boolean): void {
   void load()
 }
 
+function handleSizeChange(): void {
+  query.page = 1
+  void load()
+}
+
 onMounted(load)
 </script>
 
 <template>
   <div class="page">
-    <PageHeader title="通知中心" description="评论、留言与友链申请产生的提醒">
-      <el-switch
-        :model-value="query.unreadOnly"
-        active-text="只看未读"
-        @change="toggleUnreadOnly"
-      />
-      <el-button :icon="Check" :disabled="unreadCount === 0" @click="markAllRead">全部已读</el-button>
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card">
+      <template #header>
+        <PageHeader title="通知中心" description="评论、留言与友链申请产生的提醒">
+          <el-switch :model-value="query.unreadOnly" active-text="只看未读" @change="toggleUnreadOnly" />
+          <el-button :icon="Check" :disabled="unreadCount === 0" @click="markAllRead">全部已读</el-button>
+          <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+        </PageHeader>
+      </template>
 
-    <div class="panel panel--pad">
-      <div v-loading="loading" class="flex flex-col gap-2">
-        <div
-          v-for="item in rows"
-          :key="item.id"
-          class="flex items-start gap-3 rounded-[10px] border px-4 py-3 transition-colors"
-          :style="{
-            borderColor: 'var(--border)',
-            background: item.isRead ? 'transparent' : 'var(--brand-soft)',
-          }"
-        >
-          <span
-            class="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full"
-            :style="{ background: item.isRead ? 'transparent' : 'var(--brand)' }"
-          />
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2">
-              <el-tag size="small" :type="TYPE_META[item.type].type" effect="light" disable-transitions>
-                {{ TYPE_META[item.type].label }}
-              </el-tag>
-              <span class="text-[13px] font-medium" :style="{ color: 'var(--text)' }">{{ item.title }}</span>
-              <span class="text-[12px]" :style="{ color: 'var(--text-3)' }">{{ formatDateTime(item.createdAt) }}</span>
-              <span v-if="!item.isRead" class="text-[11px] font-medium" :style="{ color: 'var(--accent)' }">未读</span>
+      <div class="notice-scroll">
+        <div v-loading="loading" class="flex flex-col gap-2">
+          <div
+            v-for="item in rows"
+            :key="item.id"
+            class="notice-item"
+            :class="{ 'is-unread': !item.isRead }"
+          >
+            <span class="notice-item__dot" :class="{ 'is-visible': !item.isRead }" />
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <el-tag size="small" :type="TYPE_META[item.type].type" effect="light" disable-transitions>
+                  {{ TYPE_META[item.type].label }}
+                </el-tag>
+                <span class="text-[13px] font-medium text-[var(--text)]">{{ item.title }}</span>
+                <span class="text-[12px] text-[var(--text-3)]">{{ formatDateTime(item.createdAt) }}</span>
+                <span v-if="!item.isRead" class="text-[11px] font-medium text-[var(--el-color-primary)]">未读</span>
+              </div>
+              <p class="mt-1 text-[12px] leading-5 text-[var(--text-2)]">{{ item.content }}</p>
             </div>
-            <p class="mt-1 text-[12px] leading-5" :style="{ color: 'var(--text-2)' }">{{ item.content }}</p>
+            <el-button
+              v-if="!item.isRead"
+              link
+              type="primary"
+              size="small"
+              class="shrink-0"
+              @click="markRead(item)"
+            >标为已读</el-button>
           </div>
-          <el-button
-            v-if="!item.isRead"
-            link
-            type="primary"
-            size="small"
-            class="shrink-0"
-            @click="markRead(item)"
-          >标为已读</el-button>
-        </div>
 
-        <EmptyState
-          v-if="!loading && rows.length === 0"
-          :title="query.unreadOnly ? '没有未读通知' : '暂无通知'"
-          description="有新的评论、留言或友链申请时会在这里提醒你。"
-        />
+          <EmptyState
+            v-if="!loading && rows.length === 0"
+            :title="query.unreadOnly ? '没有未读通知' : '暂无通知'"
+            description="有新的评论、留言或友链申请时会在这里提醒你。"
+          />
+        </div>
       </div>
 
       <div v-if="total > 0" class="pager">
@@ -150,9 +149,9 @@ onMounted(load)
           layout="total, sizes, prev, pager, next"
           background
           @current-change="load"
-          @size-change="() => { query.page = 1; load() }"
+          @size-change="handleSizeChange"
         />
       </div>
-    </div>
+    </el-card>
   </div>
 </template>

@@ -127,22 +127,22 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader title="站点配置" description="博客前台展示的基础信息、首页文案与页脚">
-      <el-button type="primary" :loading="saving" :disabled="loadFailed" @click="save">保存全部更改</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card admin-card--auto">
+      <template #header>
+        <PageHeader title="站点配置" description="博客前台展示的基础信息、首页文案与页脚">
+          <el-button type="primary" :loading="saving" :disabled="loadFailed" @click="save">保存全部更改</el-button>
+        </PageHeader>
+      </template>
 
-    <el-skeleton v-if="loading" :rows="8" animated class="panel panel--pad" />
+      <el-skeleton v-if="loading" :rows="8" animated />
 
-    <div v-else-if="loadFailed" class="panel panel--pad">
-      <el-result icon="error" title="配置加载失败" sub-title="请检查后端服务后重试">
+      <el-result v-else-if="loadFailed" icon="error" title="配置加载失败" sub-title="请检查后端服务后重试">
         <template #extra>
           <el-button type="primary" @click="load">重试</el-button>
         </template>
       </el-result>
-    </div>
 
-    <div v-else class="panel panel--pad">
-      <el-tabs v-model="activeTab">
+      <el-tabs v-else v-model="activeTab">
         <el-tab-pane label="基础信息" name="basic">
           <div class="max-w-[640px] pt-2">
             <el-form label-position="top">
@@ -176,7 +176,7 @@ onMounted(load)
               </el-form-item>
               <el-form-item label="评论需要审核">
                 <el-switch v-model="form.commentNeedReview" />
-                <span class="hint ml-3">开启后前台新评论会进入待审核列表</span>
+                <span class="ml-3 text-[12px] text-[var(--text-3)]">开启后前台新评论会进入待审核列表</span>
               </el-form-item>
             </el-form>
           </div>
@@ -192,16 +192,16 @@ onMounted(load)
                 <el-input v-model="form.heroSubtitle" type="textarea" :rows="2" maxlength="120" show-word-limit placeholder="一句话介绍这个博客" />
               </el-form-item>
             </el-form>
-            <div class="mt-2 rounded-[12px] border px-5 py-8 text-center" :style="{ borderColor: 'var(--border)', background: 'var(--bg-soft)' }">
-              <div class="text-[20px] font-semibold" :style="{ color: 'var(--text)' }">{{ form.heroTitle || '主标题预览' }}</div>
-              <p class="mt-2 text-[13px]" :style="{ color: 'var(--text-2)' }">{{ form.heroSubtitle || '副标题预览' }}</p>
+            <div class="mt-2 rounded border px-5 py-8 text-center" style="border-color: var(--border); background: var(--bg-soft)">
+              <div class="text-[20px] font-semibold text-[var(--text)]">{{ form.heroTitle || '主标题预览' }}</div>
+              <p class="mt-2 text-[13px] text-[var(--text-2)]">{{ form.heroSubtitle || '副标题预览' }}</p>
             </div>
           </div>
         </el-tab-pane>
 
         <el-tab-pane label="关于页面" name="about">
           <div class="pt-2">
-            <p class="hint mb-2">支持 Markdown，会渲染在博客「关于」页</p>
+            <p class="mb-2 text-[12px] text-[var(--text-3)]">支持 Markdown，会渲染在博客「关于」页</p>
             <MdEditor
               v-model="form.about"
               :theme="editorTheme"
@@ -234,22 +234,24 @@ onMounted(load)
 
         <el-tab-pane label="社交链接" name="social">
           <div class="max-w-[760px] pt-2">
-            <p class="hint mb-3">图标填 emoji 或图标名（如 Github、Mail），会显示在页脚与关于页</p>
+            <p class="mb-3 text-[12px] text-[var(--text-3)]">图标填 emoji 或图标名（如 Github、Mail），会显示在页脚与关于页</p>
             <div
               v-for="(link, index) in form.socialLinks"
               :key="index"
               class="mb-2 flex items-end gap-2"
             >
-              <el-input v-model="link.icon" class="!w-[92px]" placeholder="图标" maxlength="16" />
-              <el-input v-model="link.name" class="!w-[160px]" placeholder="名称" maxlength="24" />
+              <el-input v-model="link.icon" class="w-[92px]!" placeholder="图标" maxlength="16" />
+              <el-input v-model="link.name" class="w-[160px]!" placeholder="名称" maxlength="24" />
               <el-input v-model="link.url" class="flex-1" placeholder="example.com" />
               <el-button :icon="Delete" :disabled="form.socialLinks.length <= 1" @click="removeSocialLink(index)" />
             </div>
             <el-button :icon="Plus" class="mt-2" @click="addSocialLink">添加社交链接</el-button>
-            <div v-if="form.socialLinks.length === 0" class="hint mt-2">还没有社交链接，点击上方按钮添加。</div>
+            <div v-if="form.socialLinks.length === 0" class="mt-2 text-[12px] text-[var(--text-3)]">
+              还没有社交链接，点击上方按钮添加。
+            </div>
           </div>
         </el-tab-pane>
       </el-tabs>
-    </div>
+    </el-card>
   </div>
 </template>

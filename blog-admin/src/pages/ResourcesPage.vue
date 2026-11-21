@@ -180,84 +180,97 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader title="资源推荐" description="收藏的站点与工具，按分类展示在博客资源页">
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-      <el-button type="primary" :icon="Plus" @click="openCreate">新增资源</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card">
+      <template #header>
+        <PageHeader title="资源推荐" description="收藏的站点与工具，按分类展示在博客资源页">
+          <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+          <el-button type="primary" :icon="Plus" @click="openCreate">新增资源</el-button>
+        </PageHeader>
+      </template>
 
-    <div class="panel panel--pad">
-      <div class="filter-bar">
-        <el-input
-          v-model="keyword"
-          class="w-[240px]"
-          placeholder="搜索名称 / 地址 / 描述"
-          clearable
-          :prefix-icon="Search"
-        />
-        <el-select v-model="categoryFilter" class="w-[160px]" placeholder="全部分类" clearable>
-          <el-option v-for="item in categories" :key="item" :label="item" :value="item" />
-        </el-select>
-        <span class="hint ml-auto">{{ filtered.length }} 条</span>
+      <div class="table-toolbar">
+        <div class="flex flex-wrap items-center gap-2">
+          <el-input
+            v-model="keyword"
+            class="w-[240px]"
+            placeholder="搜索名称 / 地址 / 描述"
+            clearable
+            :prefix-icon="Search"
+          />
+          <el-select v-model="categoryFilter" class="w-[160px]" placeholder="全部分类" clearable>
+            <el-option v-for="item in categories" :key="item" :label="item" :value="item" />
+          </el-select>
+        </div>
+        <span class="text-[12px] text-[var(--text-3)]">共 {{ filtered.length }} 条</span>
       </div>
 
-      <el-table v-loading="loading" :data="filtered" row-key="id" style="width: 100%">
-        <el-table-column label="图标" width="76" align="center">
-          <template #default="{ row }">
-            <img
-              v-if="isImageIcon(row.icon)"
-              :src="resolveAssetUrl(row.icon)"
-              alt=""
-              class="mx-auto h-8 w-8 rounded-md object-cover"
-            />
-            <span v-else class="text-[18px]">{{ row.icon || '🔗' }}</span>
+      <div class="table-flex">
+        <el-table v-loading="loading" :data="filtered" row-key="id" height="100%" border style="width: 100%">
+          <el-table-column label="图标" width="76" align="center">
+            <template #default="{ row }">
+              <img
+                v-if="isImageIcon(row.icon)"
+                :src="resolveAssetUrl(row.icon)"
+                alt=""
+                class="mx-auto h-8 w-8 rounded object-cover"
+              />
+              <span v-else class="text-[18px]">{{ row.icon || '🔗' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="名称" min-width="180">
+            <template #default="{ row }">
+              <a
+                class="text-[13px] font-medium text-[var(--text)] hover:text-[var(--el-color-primary)]"
+                :href="row.url"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ row.name }}
+              </a>
+            </template>
+          </el-table-column>
+          <el-table-column label="地址" min-width="220" align="center">
+            <template #default="{ row }">
+              <span class="clamp-1 text-[12px] text-[var(--text-2)]">{{ row.url }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="描述" min-width="220">
+            <template #default="{ row }">
+              <span class="clamp-1 text-[12px] text-[var(--text-2)]">{{ row.description || '—' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="分类" width="120" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.category" size="small" effect="plain" disable-transitions>{{ row.category }}</el-tag>
+              <span v-else class="text-[12px] text-[var(--text-3)]">—</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="sort" label="排序" width="76" align="center" />
+          <el-table-column label="操作" width="130" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+          <template #empty>
+            <EmptyState
+              :title="rows.length === 0 ? '还没有资源' : '没有匹配的资源'"
+              description="把常去的站点和好用的工具整理到这里。"
+            >
+              <el-button v-if="rows.length === 0" type="primary" size="small" @click="openCreate">新增资源</el-button>
+            </EmptyState>
           </template>
-        </el-table-column>
-        <el-table-column label="名称" min-width="180">
-          <template #default="{ row }">
-            <a
-              class="text-[13px] font-medium hover:underline"
-              :style="{ color: 'var(--text)' }"
-              :href="row.url"
-              target="_blank"
-              rel="noopener noreferrer"
-            >{{ row.name }}</a>
-          </template>
-        </el-table-column>
-        <el-table-column label="地址" min-width="220">
-          <template #default="{ row }">
-            <span class="clamp-1 text-[12px]" :style="{ color: 'var(--text-2)' }">{{ row.url }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="描述" min-width="220">
-          <template #default="{ row }">
-            <span class="clamp-1 text-[12px]" :style="{ color: 'var(--text-2)' }">{{ row.description || '—' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="分类" width="120">
-          <template #default="{ row }">
-            <el-tag v-if="row.category" size="small" effect="plain" disable-transitions>{{ row.category }}</el-tag>
-            <span v-else class="text-[12px]" :style="{ color: 'var(--text-3)' }">—</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="sort" label="排序" width="76" align="center" />
-        <el-table-column label="操作" width="130" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-        <template #empty>
-          <EmptyState
-            :title="rows.length === 0 ? '还没有资源' : '没有匹配的资源'"
-            description="把常去的站点和好用的工具整理到这里。"
-          >
-            <el-button v-if="rows.length === 0" type="primary" size="small" @click="openCreate">新增资源</el-button>
-          </EmptyState>
-        </template>
-      </el-table>
-    </div>
+        </el-table>
+      </div>
+    </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑资源' : '新增资源'" width="520px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editing ? '编辑资源' : '新增资源'"
+      width="520px"
+      draggable
+      destroy-on-close
+    >
       <el-alert v-if="dialogError" :title="dialogError" type="error" show-icon :closable="false" class="mb-4" />
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="submit">
         <div class="grid grid-cols-2 gap-x-4">
@@ -282,7 +295,7 @@ onMounted(load)
             </el-radio-group>
             <div v-if="iconMode === 'emoji'" class="flex items-center gap-3">
               <el-input v-model="form.icon" class="w-[140px]" placeholder="🔗" maxlength="8" />
-              <span class="hint">输入一个 emoji，例如 🔗 📚 🎨</span>
+              <span class="text-[12px] text-[var(--text-3)]">输入一个 emoji，例如 🔗 📚 🎨</span>
             </div>
             <ImageUpload v-else v-model="form.icon" :size="72" tip="建议 1:1 小图标" />
           </div>

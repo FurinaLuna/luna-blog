@@ -170,68 +170,76 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader title="友情链接" description="通过审核的友链会展示在博客友链页">
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-      <el-button type="primary" :icon="Plus" @click="openCreate">新增友链</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card">
+      <template #header>
+        <PageHeader title="友情链接" description="通过审核的友链会展示在博客友链页">
+          <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+          <el-button type="primary" :icon="Plus" @click="openCreate">新增友链</el-button>
+        </PageHeader>
+      </template>
 
-    <div class="panel overflow-hidden">
-      <el-table v-loading="loading" :data="rows" row-key="id" style="width: 100%">
-        <el-table-column label="站点" min-width="220">
-          <template #default="{ row }">
-            <div class="flex items-center gap-3 py-1">
-              <el-avatar :size="36" shape="square" :src="row.avatar ? resolveAssetUrl(row.avatar) : undefined">
-                {{ row.name.slice(0, 1) }}
-              </el-avatar>
-              <div class="min-w-0">
-                <div class="truncate text-[13px] font-medium" :style="{ color: 'var(--text)' }">{{ row.name }}</div>
-                <a
-                  class="block max-w-[220px] truncate text-[12px] hover:underline"
-                  :style="{ color: 'var(--brand)' }"
-                  :href="row.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >{{ row.url }}</a>
+      <div class="table-toolbar">
+        <span class="text-[12px] text-[var(--text-3)]">共 {{ rows.length }} 条友链</span>
+      </div>
+
+      <div class="table-flex">
+        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%">
+          <el-table-column label="站点" min-width="220">
+            <template #default="{ row }">
+              <div class="flex items-center gap-3 py-1">
+                <el-avatar :size="36" shape="square" :src="row.avatar ? resolveAssetUrl(row.avatar) : undefined">
+                  {{ row.name.slice(0, 1) }}
+                </el-avatar>
+                <div class="min-w-0">
+                  <div class="truncate text-[13px] font-medium text-[var(--text)]">{{ row.name }}</div>
+                  <a
+                    class="block max-w-[220px] truncate text-[12px] text-[var(--brand)] hover:underline"
+                    :href="row.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >{{ row.url }}</a>
+                </div>
               </div>
-            </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="描述" min-width="240">
+            <template #default="{ row }">
+              <span class="clamp-2 text-[12px] leading-5 text-[var(--text-2)]">{{ row.description || '—' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="96" align="center">
+            <template #default="{ row }">
+              <StatusTag :status="row.status" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="sort" label="排序" width="80" align="center" />
+          <el-table-column label="申请时间" width="150" align="center">
+            <template #default="{ row }">
+              <span class="text-[12px] text-[var(--text-2)]">{{ formatDateTime(row.createdAt) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="220" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button v-if="row.status !== 'approved'" link type="success" size="small" @click="review(row, 'approved')">通过</el-button>
+              <el-button v-if="row.status !== 'rejected'" link type="warning" size="small" @click="review(row, 'rejected')">拒绝</el-button>
+              <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+          <template #empty>
+            <EmptyState title="还没有友链" description="读者可以在前台提交友链申请，这里会显示待审核记录。">
+              <el-button type="primary" size="small" @click="openCreate">新增友链</el-button>
+            </EmptyState>
           </template>
-        </el-table-column>
-        <el-table-column label="描述" min-width="240">
-          <template #default="{ row }">
-            <span class="clamp-2 text-[12px] leading-5" :style="{ color: 'var(--text-2)' }">{{ row.description || '—' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="96">
-          <template #default="{ row }">
-            <StatusTag :status="row.status" />
-          </template>
-        </el-table-column>
-        <el-table-column prop="sort" label="排序" width="80" align="center" />
-        <el-table-column label="申请时间" width="150">
-          <template #default="{ row }">
-            <span class="text-[12px]" :style="{ color: 'var(--text-2)' }">{{ formatDateTime(row.createdAt) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{ row }">
-            <el-button v-if="row.status !== 'approved'" link type="success" size="small" @click="review(row, 'approved')">通过</el-button>
-            <el-button v-if="row.status !== 'rejected'" link type="warning" size="small" @click="review(row, 'rejected')">拒绝</el-button>
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-        <template #empty>
-          <EmptyState title="还没有友链" description="读者可以在前台提交友链申请，这里会显示待审核记录。">
-            <el-button type="primary" size="small" @click="openCreate">新增友链</el-button>
-          </EmptyState>
-        </template>
-      </el-table>
-    </div>
+        </el-table>
+      </div>
+    </el-card>
 
     <el-dialog
       v-model="dialogVisible"
       :title="editing ? '编辑友链' : '新增友链'"
       width="520px"
+      draggable
       destroy-on-close
     >
       <el-alert v-if="dialogError" :title="dialogError" type="error" show-icon :closable="false" class="mb-4" />

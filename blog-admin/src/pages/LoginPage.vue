@@ -7,6 +7,9 @@ import { Lock, Moon, Sunny, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { ApiError } from '@/api/http'
+import bgImage from '@/assets/login/bg.png'
+import avatarImage from '@/assets/login/avatar.svg'
+import illustrationImage from '@/assets/login/illustration.svg'
 
 const USERNAME_KEY = 'luna-admin-remember-username'
 
@@ -73,55 +76,28 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen items-center justify-center px-4 py-10" :style="{ background: 'var(--bg)' }">
-    <div
-      class="pointer-events-none absolute inset-0 overflow-hidden opacity-70"
-      aria-hidden="true"
-    >
-      <div
-        class="absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full blur-3xl"
-        :style="{ background: 'radial-gradient(circle, rgba(47,143,131,.18), transparent 70%)' }"
-      />
-      <div
-        class="absolute -right-20 -bottom-32 h-[380px] w-[380px] rounded-full blur-3xl"
-        :style="{ background: 'radial-gradient(circle, rgba(224,122,63,.14), transparent 70%)' }"
-      />
+  <div class="login-container">
+    <img class="login-wave" :src="bgImage" alt="" />
+
+    <div class="login-marketing">
+      <div class="login-brand">
+        <img class="login-brand__mark" :src="avatarImage" alt="Luna Blog" />
+        <div>
+          <p class="login-brand__title">Luna Blog</p>
+          <p class="login-brand__sub">内容管理后台</p>
+        </div>
+      </div>
+      <img class="login-illustration" :src="illustrationImage" alt="登录插画" />
+      <p class="login-marketing__tip">文章、说说、相册与留言，都在同一个地方安静生长。</p>
     </div>
 
-    <button
-      type="button"
-      class="absolute top-5 right-5 z-10 grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] border-0 bg-transparent transition-colors hover:bg-[var(--brand-soft)]"
-      :style="{ color: 'var(--text-2)' }"
-      :aria-label="theme.isDark ? '切换亮色' : '切换深色'"
-      @click="theme.toggle()"
-    >
-      <el-icon :size="18"><Sunny v-if="theme.isDark" /><Moon v-else /></el-icon>
-    </button>
-
-    <div class="relative z-10 flex w-full max-w-[900px] overflow-hidden rounded-[18px] border" :style="{ borderColor: 'var(--border)', background: 'var(--card)', boxShadow: 'var(--shadow)' }">
-      <div
-        class="hidden w-[44%] flex-col justify-between p-8 lg:flex"
-        :style="{ background: 'linear-gradient(160deg, #26766c 0%, #2f8f83 55%, #5ec9b8 130%)' }"
-      >
-        <div class="flex items-center gap-2 text-white">
-          <span class="grid h-9 w-9 place-items-center rounded-xl bg-white/15 text-[17px]">🌙</span>
-          <span class="text-[15px] font-bold tracking-wide">Luna Blog</span>
+    <div class="login-panel">
+      <div class="login-box">
+        <div class="login-head">
+          <img class="login-avatar" :src="avatarImage" alt="Luna Blog" />
+          <h2>Luna Blog</h2>
+          <p>登录管理后台</p>
         </div>
-        <div class="text-white">
-          <p class="m-0 text-[26px] leading-snug font-bold">把想说的话<br />留在月光里</p>
-          <p class="mt-3 mb-0 text-[13px] leading-relaxed text-white/75">
-            文章、说说、相册与留言，都在同一个地方安静生长。
-          </p>
-        </div>
-        <p class="m-0 text-[11px] text-white/60">© {{ new Date().getFullYear() }} Furina Luna</p>
-      </div>
-
-      <div class="flex-1 p-7 sm:p-9">
-        <div class="mb-6 lg:hidden">
-          <span class="grid h-10 w-10 place-items-center rounded-xl text-[18px] text-white" :style="{ background: 'linear-gradient(135deg, #2f8f83, #5ec9b8)' }">🌙</span>
-        </div>
-        <h1 class="m-0 text-[22px] font-bold tracking-tight" :style="{ color: 'var(--text)' }">登录管理后台</h1>
-        <p class="mt-1.5 mb-6 text-[13px]" :style="{ color: 'var(--text-2)' }">使用管理员账号继续</p>
 
         <el-alert
           v-if="errorText"
@@ -132,11 +108,22 @@ async function handleSubmit(): Promise<void> {
           class="mb-4"
         />
 
-        <el-form ref="formRef" :model="form" :rules="rules" label-position="top" size="large" @submit.prevent="handleSubmit">
-          <el-form-item label="账号" prop="username">
-            <el-input v-model="form.username" placeholder="请输入账号" :prefix-icon="User" autocomplete="username" />
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          size="large"
+          @submit.prevent="handleSubmit"
+        >
+          <el-form-item prop="username">
+            <el-input
+              v-model="form.username"
+              placeholder="请输入账号"
+              :prefix-icon="User"
+              autocomplete="username"
+            />
           </el-form-item>
-          <el-form-item label="密码" prop="password">
+          <el-form-item prop="password">
             <el-input
               v-model="form.password"
               type="password"
@@ -148,20 +135,229 @@ async function handleSubmit(): Promise<void> {
             />
           </el-form-item>
 
-          <div class="mb-4 flex items-center justify-between">
+          <div class="login-options">
             <el-checkbox v-model="form.remember" label="记住账号" />
-            <span class="hint">首次登录需修改初始密码</span>
+            <span class="login-options__tip">首次登录需修改初始密码</span>
           </div>
 
-          <el-button type="primary" size="large" class="w-full" :loading="submitting" @click="handleSubmit">
+          <el-button
+            type="primary"
+            size="large"
+            class="login-submit"
+            :loading="submitting"
+            @click="handleSubmit"
+          >
             登录
           </el-button>
         </el-form>
 
-        <p class="mt-6 mb-0 text-center text-[11px]" :style="{ color: 'var(--text-3)' }">
+        <p class="login-footer">
           仅限站点管理员使用 · 请勿在公共设备保存账号
         </p>
       </div>
     </div>
+
+    <button
+      type="button"
+      class="login-theme"
+      :aria-label="theme.isDark ? '切换亮色' : '切换深色'"
+      @click="theme.toggle()"
+    >
+      <el-icon :size="18"><Sunny v-if="theme.isDark" /><Moon v-else /></el-icon>
+    </button>
   </div>
 </template>
+
+<style scoped>
+.login-container {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8rem;
+  width: 100vw;
+  min-height: 100vh;
+  padding: 0 2rem;
+  overflow: hidden;
+  background-color: #f0f2f5;
+}
+
+.login-wave {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.login-marketing,
+.login-panel {
+  position: relative;
+  z-index: 1;
+}
+
+.login-marketing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-brand__mark {
+  width: 44px;
+  height: 44px;
+}
+
+.login-brand__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1890ff;
+}
+
+.login-brand__sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #676767;
+}
+
+.login-illustration {
+  width: min(500px, 90%);
+  height: auto;
+}
+
+.login-marketing__tip {
+  max-width: 440px;
+  margin: 0;
+  font-size: 14px;
+  color: #606266;
+  text-align: center;
+}
+
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  width: 360px;
+  padding: 30px 28px;
+  background-color: var(--card);
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 12%);
+}
+
+.login-head {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.login-avatar {
+  width: 46px;
+  height: 46px;
+  margin-bottom: 6px;
+}
+
+.login-head h2 {
+  margin: 0;
+  font: bold 200% Consolas, Monaco, monospace;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.login-head p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.login-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.login-options__tip {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.login-submit {
+  width: 100%;
+}
+
+.login-footer {
+  margin: 20px 0 0;
+  font-size: 11px;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.login-theme {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  color: var(--text-2);
+  cursor: pointer;
+  background-color: var(--card);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+  place-items: center;
+}
+
+.login-theme:hover {
+  color: var(--el-color-primary);
+}
+
+:global(html.dark) .login-wave {
+  opacity: 0.16;
+}
+
+:global(html.dark) .login-brand__sub,
+:global(html.dark) .login-marketing__tip {
+  color: var(--text-2);
+}
+
+@media (max-width: 1180px) {
+  .login-container {
+    gap: 3rem;
+  }
+}
+
+@media (max-width: 968px) {
+  .login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .login-marketing {
+    display: none;
+  }
+
+  .login-wave {
+    display: none;
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 380px;
+  }
+}
+</style>

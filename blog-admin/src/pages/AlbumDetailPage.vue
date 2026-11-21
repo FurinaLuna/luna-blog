@@ -193,32 +193,38 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader
-      :title="album?.name ?? '相册详情'"
-      :description="album?.description ?? '管理这个相册中的照片'"
-    >
-      <el-button :icon="ArrowLeft" @click="goBack">返回相册</el-button>
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-      <el-button type="primary" :icon="Edit" :disabled="!album" @click="openAlbumEdit">编辑相册</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="mb-3">
+      <PageHeader :title="album?.name ?? '相册详情'" :description="album?.description ?? '管理这个相册中的照片'">
+        <el-button :icon="ArrowLeft" @click="goBack">返回相册</el-button>
+        <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+        <el-button type="primary" :icon="Edit" :disabled="!album" @click="openAlbumEdit">编辑相册</el-button>
+      </PageHeader>
+    </el-card>
 
-    <el-skeleton v-if="loading && !album" :rows="6" animated class="panel panel--pad" />
+    <el-card v-if="loading && !album" shadow="never">
+      <el-skeleton :rows="6" animated />
+    </el-card>
 
-    <div v-else-if="loadFailed || !album" class="panel panel--pad">
+    <el-card v-else-if="loadFailed || !album" shadow="never">
       <el-result icon="error" title="相册加载失败" sub-title="相册可能已被删除，或后端服务不可用">
         <template #extra>
           <el-button @click="goBack">返回相册列表</el-button>
           <el-button type="primary" @click="load">重试</el-button>
         </template>
       </el-result>
-    </div>
+    </el-card>
 
     <template v-else>
-      <div class="panel panel--pad mb-4">
-        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div class="section-title">上传照片</div>
-          <span class="hint">{{ album.photoCount }} 张 · 创建于 {{ formatDateTime(album.createdAt) }}</span>
-        </div>
+      <el-card shadow="never" class="mb-3">
+        <template #header>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-[14px] font-semibold text-[var(--text-2)]">上传照片</span>
+            <span class="text-[12px] text-[var(--text-3)]">
+              {{ album.photoCount }} 张 · 创建于 {{ formatDateTime(album.createdAt) }}
+            </span>
+          </div>
+        </template>
+
         <el-upload
           v-model:file-list="fileList"
           :auto-upload="false"
@@ -230,54 +236,47 @@ onMounted(load)
         >
           <el-icon><Plus /></el-icon>
         </el-upload>
-        <div class="mt-3 flex items-center gap-3">
+
+        <div class="mt-3 flex flex-wrap items-center gap-3">
           <el-button type="primary" :loading="uploading" :disabled="fileList.length === 0" @click="uploadSelected">
             {{ fileList.length > 0 ? `上传 ${fileList.length} 张` : '上传照片' }}
           </el-button>
           <el-button v-if="fileList.length > 0 && !uploading" @click="clearSelection">清空选择</el-button>
-          <span v-if="uploading" class="hint">
+          <span v-if="uploading" class="text-[12px] text-[var(--text-2)]">
             正在上传 {{ uploadDone }} / {{ uploadTotal }}（{{ uploadProgress }}%）
           </span>
-          <span v-else class="hint">支持一次选择多张，单张不超过 5MB</span>
+          <span v-else class="text-[12px] text-[var(--text-3)]">支持一次选择多张，单张不超过 5MB</span>
         </div>
-      </div>
+      </el-card>
 
-      <div class="panel panel--pad">
-        <div class="section-title mb-3">照片（{{ album.photos.length }}）</div>
-        <div v-if="album.photos.length > 0" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          <div
-            v-for="(photo, index) in album.photos"
-            :key="photo.id"
-            class="group relative overflow-hidden rounded-[10px] border"
-            :style="{ borderColor: 'var(--border)' }"
-          >
+      <el-card shadow="never">
+        <template #header>
+          <span class="text-[14px] font-semibold text-[var(--text-2)]">照片（{{ album.photos.length }}）</span>
+        </template>
+
+        <div v-if="album.photos.length > 0" class="photo-grid">
+          <div v-for="(photo, index) in album.photos" :key="photo.id" class="photo-tile">
             <el-image
               :src="resolveAssetUrl(photo.url)"
               :preview-src-list="album.photos.map((item) => resolveAssetUrl(item.url))"
               :initial-index="index"
               fit="cover"
-              class="aspect-square w-full"
               preview-teleported
               hide-on-click-modal
             />
-            <div class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-2 pb-1.5 pt-4">
-              <p class="truncate text-[11px] text-white/90">{{ photo.title || `照片 #${photo.id}` }}</p>
-            </div>
-            <div class="absolute right-1.5 top-1.5 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-              <el-button size="small" circle :icon="Edit" @click="openPhotoEdit(photo)" />
-              <el-button size="small" circle type="danger" :icon="Delete" @click="handleDeletePhoto(photo)" />
+            <div class="photo-tile__title">{{ photo.title || `照片 #${photo.id}` }}</div>
+            <div class="photo-tile__ops">
+              <el-button size="small" circle :icon="Edit" @click.stop="openPhotoEdit(photo)" />
+              <el-button size="small" circle type="danger" :icon="Delete" @click.stop="handleDeletePhoto(photo)" />
             </div>
           </div>
         </div>
-        <EmptyState
-          v-else
-          title="相册还是空的"
-          description="用上方选择器挑几张照片，上传后会按顺序展示。"
-        />
-      </div>
+
+        <EmptyState v-else title="相册还是空的" description="用上方选择器挑几张照片，上传后会按顺序展示。" />
+      </el-card>
     </template>
 
-    <el-dialog v-model="albumDialogVisible" title="编辑相册" width="500px" destroy-on-close>
+    <el-dialog v-model="albumDialogVisible" title="编辑相册" width="500px" draggable destroy-on-close>
       <el-alert v-if="albumError" :title="albumError" type="error" show-icon :closable="false" class="mb-4" />
       <el-form ref="albumFormRef" :model="albumForm" :rules="albumRules" label-position="top" @submit.prevent="submitAlbum">
         <el-form-item label="相册名称" prop="name">
@@ -296,7 +295,7 @@ onMounted(load)
       </template>
     </el-dialog>
 
-    <el-dialog v-model="photoDialogVisible" title="照片标题" width="420px" destroy-on-close>
+    <el-dialog v-model="photoDialogVisible" title="照片标题" width="420px" draggable destroy-on-close>
       <el-input v-model="photoTitle" maxlength="60" show-word-limit placeholder="给这张照片起个名字（可留空）" />
       <template #footer>
         <el-button @click="photoDialogVisible = false">取消</el-button>

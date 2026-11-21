@@ -50,6 +50,11 @@ async function load(): Promise<void> {
   }
 }
 
+function handleSizeChange(): void {
+  page.value = 1
+  void load()
+}
+
 function openCreate(): void {
   editing.value = null
   dialogError.value = ''
@@ -118,44 +123,48 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader title="说说" description="碎片化的短动态，支持最多 9 张图片">
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-      <el-button type="primary" :icon="Plus" @click="openCreate">发布说说</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card">
+      <template #header>
+        <PageHeader title="说说" description="碎片化的短动态，支持最多 9 张图片">
+          <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+          <el-button type="primary" :icon="Plus" @click="openCreate">发布说说</el-button>
+        </PageHeader>
+      </template>
 
-    <div v-loading="loading" class="flex flex-col gap-3">
-      <div v-for="item in rows" :key="item.id" class="panel panel--pad">
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex-1">
-            <p class="whitespace-pre-wrap text-[13px] leading-6" :style="{ color: 'var(--text)' }">{{ item.content }}</p>
-            <div v-if="item.images.length > 0" class="mt-3 grid max-w-[520px] grid-cols-3 gap-1.5">
-              <el-image
-                v-for="(url, index) in item.images"
-                :key="`${item.id}-${index}`"
-                :src="resolveAssetUrl(url)"
-                :preview-src-list="item.images.map(resolveAssetUrl)"
-                :initial-index="index"
-                fit="cover"
-                class="aspect-square w-full rounded-md"
-                preview-teleported
-                hide-on-click-modal
-              />
+      <div v-loading="loading" class="talks-scroll">
+        <div v-for="item in rows" :key="item.id" class="talk-item">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <p class="mb-0 whitespace-pre-wrap text-[13px] leading-6 text-[var(--text)]">{{ item.content }}</p>
+              <div v-if="item.images.length > 0" class="mt-3 flex flex-wrap gap-1.5">
+                <el-image
+                  v-for="(url, index) in item.images"
+                  :key="`${item.id}-${index}`"
+                  :src="resolveAssetUrl(url)"
+                  :preview-src-list="item.images.map(resolveAssetUrl)"
+                  :initial-index="index"
+                  fit="cover"
+                  class="h-[108px] w-[108px] rounded"
+                  preview-teleported
+                  hide-on-click-modal
+                />
+              </div>
+              <div class="mt-2.5 flex flex-wrap items-center gap-4 text-[12px] text-[var(--text-3)]">
+                <span>{{ formatDateTime(item.createdAt) }}</span>
+                <span class="inline-flex items-center gap-1"><el-icon><Star /></el-icon>{{ item.likeCount }}</span>
+                <span class="inline-flex items-center gap-1">
+                  <el-icon><ChatDotRound /></el-icon>{{ item.commentCount }}
+                </span>
+              </div>
             </div>
-            <div class="mt-2.5 flex flex-wrap items-center gap-4 text-[12px]" :style="{ color: 'var(--text-3)' }">
-              <span>{{ formatDateTime(item.createdAt) }}</span>
-              <span class="inline-flex items-center gap-1"><el-icon><Star /></el-icon>{{ item.likeCount }}</span>
-              <span class="inline-flex items-center gap-1"><el-icon><ChatDotRound /></el-icon>{{ item.commentCount }}</span>
+            <div class="flex shrink-0 items-center">
+              <el-button link type="primary" size="small" :icon="Edit" @click="openEdit(item)">编辑</el-button>
+              <el-button link type="danger" size="small" :icon="Delete" @click="handleDelete(item)">删除</el-button>
             </div>
-          </div>
-          <div class="flex shrink-0 items-center gap-1">
-            <el-button link type="primary" size="small" :icon="Edit" @click="openEdit(item)">编辑</el-button>
-            <el-button link type="danger" size="small" :icon="Delete" @click="handleDelete(item)">删除</el-button>
           </div>
         </div>
-      </div>
 
-      <div v-if="!loading && rows.length === 0" class="panel panel--pad">
-        <EmptyState title="还没有说说" description="随手记录一点此刻的想法，会展示在博客说说页。">
+        <EmptyState v-if="!loading && rows.length === 0" title="还没有说说" description="随手记录一点此刻的想法，会展示在博客说说页。">
           <el-button type="primary" size="small" @click="openCreate">发布说说</el-button>
         </EmptyState>
       </div>
@@ -169,12 +178,18 @@ onMounted(load)
           layout="total, sizes, prev, pager, next"
           background
           @current-change="load"
-          @size-change="() => { page = 1; load() }"
+          @size-change="handleSizeChange"
         />
       </div>
-    </div>
+    </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑说说' : '发布说说'" width="580px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editing ? '编辑说说' : '发布说说'"
+      width="580px"
+      draggable
+      destroy-on-close
+    >
       <el-alert v-if="dialogError" :title="dialogError" type="error" show-icon :closable="false" class="mb-4" />
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="submit">
         <el-form-item label="内容" prop="content">
@@ -198,3 +213,26 @@ onMounted(load)
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.talks-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.talk-item {
+  padding: 14px 16px;
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+}
+
+.talk-item + .talk-item {
+  margin-top: 10px;
+}
+
+.talk-item:hover {
+  border-color: var(--el-color-primary-light-7);
+}
+</style>

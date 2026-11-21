@@ -36,3 +36,8 @@ _ref/
 coverage/
 .vite/
 *.tsbuildinfo
+
+# local screenshot / scratch output
+.shots/
+.tmp-*/
+*.screenshot.png

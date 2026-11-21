@@ -119,58 +119,68 @@ onMounted(load)
 
 <template>
   <div class="page">
-    <PageHeader title="标签管理" description="标签描述文章的具体主题，颜色会显示在前台标签上">
-      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-      <el-button type="primary" :icon="Plus" @click="openCreate">新建标签</el-button>
-    </PageHeader>
+    <el-card shadow="never" class="admin-card">
+      <template #header>
+        <PageHeader title="标签管理" description="标签描述文章的具体主题，颜色会显示在前台标签上">
+          <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+          <el-button type="primary" :icon="Plus" @click="openCreate">新建标签</el-button>
+        </PageHeader>
+      </template>
 
-    <div class="panel overflow-hidden">
-      <el-table v-loading="loading" :data="rows" row-key="id" style="width: 100%">
-        <el-table-column label="颜色" width="86" align="center">
-          <template #default="{ row }">
-            <span
-              class="inline-block h-5 w-5 rounded-md border"
-              :style="{ background: row.color || 'var(--border)', borderColor: 'var(--border)' }"
-            />
+      <div class="table-flex">
+        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%">
+          <el-table-column label="颜色" width="86" align="center">
+            <template #default="{ row }">
+              <span
+                class="inline-block h-5 w-5 rounded border"
+                :style="{ background: row.color || 'var(--el-border-color)', borderColor: 'var(--el-border-color)' }"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="name" label="名称" min-width="160" align="center">
+            <template #default="{ row }">
+              <el-tag
+                size="default"
+                effect="plain"
+                disable-transitions
+                :style="row.color ? { color: row.color, borderColor: row.color } : undefined"
+              >
+                {{ row.name }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="slug" label="别名" min-width="180" align="center">
+            <template #default="{ row }">
+              <code class="text-[12px] text-[var(--text-2)]">{{ row.slug || '—' }}</code>
+            </template>
+          </el-table-column>
+          <el-table-column label="文章数" width="100" align="center">
+            <template #default="{ row }">
+              <span class="text-[12px] tabular-nums text-[var(--text-2)]">{{ row.articleCount }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="130" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+          <template #empty>
+            <EmptyState title="还没有标签" description="给文章加几个标签，方便读者按主题浏览。">
+              <el-button type="primary" size="small" @click="openCreate">新建标签</el-button>
+            </EmptyState>
           </template>
-        </el-table-column>
-        <el-table-column prop="name" label="名称" min-width="160">
-          <template #default="{ row }">
-            <el-tag
-              size="default"
-              effect="plain"
-              disable-transitions
-              :style="row.color ? { color: row.color, borderColor: row.color } : undefined"
-            >
-              {{ row.name }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="slug" label="别名" min-width="180">
-          <template #default="{ row }">
-            <code class="text-[12px]" :style="{ color: 'var(--text-2)' }">{{ row.slug || '—' }}</code>
-          </template>
-        </el-table-column>
-        <el-table-column label="文章数" width="100" align="right">
-          <template #default="{ row }">
-            <span class="text-[12px] tabular-nums" :style="{ color: 'var(--text-2)' }">{{ row.articleCount }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="130" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-        <template #empty>
-          <EmptyState title="还没有标签" description="给文章加几个标签，方便读者按主题浏览。">
-            <el-button type="primary" size="small" @click="openCreate">新建标签</el-button>
-          </EmptyState>
-        </template>
-      </el-table>
-    </div>
+        </el-table>
+      </div>
+    </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑标签' : '新建标签'" width="440px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editing ? '编辑标签' : '新建标签'"
+      width="440px"
+      draggable
+      destroy-on-close
+    >
       <el-alert v-if="dialogError" :title="dialogError" type="error" show-icon :closable="false" class="mb-4" />
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="submit">
         <el-form-item label="名称" prop="name">
@@ -187,7 +197,7 @@ onMounted(load)
                 v-for="color in PRESET_COLORS"
                 :key="color"
                 type="button"
-                class="h-6 w-6 cursor-pointer rounded-md border-2 transition-transform hover:scale-110"
+                class="h-6 w-6 cursor-pointer rounded border-2 transition-transform hover:scale-110"
                 :style="{ background: color, borderColor: form.color === color ? 'var(--text)' : 'transparent' }"
                 :aria-label="`选择颜色 ${color}`"
                 @click="form.color = color"
@@ -195,8 +205,8 @@ onMounted(load)
             </div>
           </div>
         </el-form-item>
-        <div class="rounded-[10px] px-3 py-2" :style="{ background: 'var(--bg-soft)' }">
-          <span class="hint mr-2">预览</span>
+        <div class="rounded px-3 py-2" :style="{ background: 'var(--el-fill-color-light)' }">
+          <span class="mr-2 text-[12px] text-[var(--text-3)]">预览</span>
           <el-tag :style="{ color: form.color, borderColor: form.color }" effect="plain" disable-transitions>
             {{ form.name || '标签名称' }}
           </el-tag>

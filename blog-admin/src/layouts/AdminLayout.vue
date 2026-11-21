@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { RouterView, useRoute, useRouter } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useWindowSize } from '@vueuse/core'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowDown, Bell, Menu, Moon, Sunny } from '@element-plus/icons-vue'
+import { ArrowDown, Bell, Expand, Fold, Moon, Sunny } from '@element-plus/icons-vue'
 import AppSidebar from './AppSidebar.vue'
+import TagsView from './TagsView.vue'
 import {
   getNotifications,
   getUnreadCount,
@@ -22,24 +23,23 @@ const auth = useAuthStore()
 const theme = useThemeStore()
 
 const { width } = useWindowSize()
-const isMobile = computed(() => width.value < 768)
-const collapsed = ref(width.value < 1280)
+const isMobile = computed(() => width.value < 760)
+const collapsed = ref(width.value < 990)
 const mobileOpen = ref(false)
+const viewKey = ref(0)
 
-watch(width, (next, prev) => {
-  if (prev === undefined) return
-  if (next >= 1280 && prev < 1280) collapsed.value = false
-  else if (next < 1280 && prev >= 1280) collapsed.value = true
-  if (next >= 768) mobileOpen.value = false
+watch(width, (next) => {
+  if (next < 760) {
+    mobileOpen.value = false
+    return
+  }
+  collapsed.value = next < 990
 })
 
-const contentOffset = computed(() => {
-  if (isMobile.value) return '0px'
-  return collapsed.value ? '72px' : '220px'
-})
+const sidebarCollapsed = computed(() => !isMobile.value && collapsed.value)
 
 const crumbs = computed(() => {
-  const list: Array<{ label: string; to?: string }> = [{ label: '管理后台', to: '/dashboard' }]
+  const list: Array<{ label: string; to?: string }> = [{ label: '首页', to: '/dashboard' }]
   if (route.meta.group) list.push({ label: route.meta.group })
   if (route.meta.title) list.push({ label: route.meta.title })
   return list
@@ -101,6 +101,18 @@ async function openNotification(item: NotificationItem): Promise<void> {
   await router.push({ name: 'Notifications' })
 }
 
+function toggleSidebar(): void {
+  if (isMobile.value) {
+    mobileOpen.value = !mobileOpen.value
+    return
+  }
+  collapsed.value = !collapsed.value
+}
+
+function refreshView(): void {
+  viewKey.value += 1
+}
+
 async function handleUserCommand(command: string | number | object): Promise<void> {
   if (command === 'profile') {
     await router.push({ name: 'Profile' })
@@ -139,180 +151,138 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-screen" :style="{ background: 'var(--bg)' }">
-    <aside
-      v-if="!isMobile"
-      class="fixed inset-y-0 left-0 z-30 overflow-hidden border-r transition-[width] duration-200"
-      :class="collapsed ? 'w-[72px]' : 'w-[220px]'"
-      :style="{ background: 'var(--sidebar)', borderColor: 'var(--border)' }"
-    >
-      <AppSidebar :collapsed="collapsed" @toggle="collapsed = !collapsed" />
+  <div class="app-wrapper" :class="{ 'is-collapsed': sidebarCollapsed, 'mobile-open': mobileOpen }">
+    <div v-if="isMobile && mobileOpen" class="app-mask" @click="mobileOpen = false" />
+
+    <aside class="sidebar-container has-logo">
+      <AppSidebar :collapsed="sidebarCollapsed" @toggle="toggleSidebar" />
     </aside>
 
-    <el-drawer
-      v-model="mobileOpen"
-      direction="ltr"
-      :with-header="false"
-      size="240px"
-      :style="{ '--el-drawer-padding-primary': '0px' }"
-    >
-      <div class="h-full" :style="{ background: 'var(--sidebar)' }">
-        <AppSidebar :collapsed="false" @navigate="mobileOpen = false" />
-      </div>
-    </el-drawer>
+    <div class="main-container">
+      <div class="fixed-header">
+        <nav class="navbar">
+          <div class="navbar-left">
+            <button type="button" class="navbar-collapse" aria-label="收起或展开侧栏" @click="toggleSidebar">
+              <el-icon :size="18"><Expand v-if="sidebarCollapsed" /><Fold v-else /></el-icon>
+            </button>
 
-    <div class="flex min-h-screen flex-col transition-[margin] duration-200" :style="{ marginLeft: contentOffset }">
-      <header
-        class="sticky top-0 z-20 flex h-[60px] shrink-0 items-center gap-3 border-b px-4 backdrop-blur-md lg:px-6"
-        :style="{
-          background: 'color-mix(in srgb, var(--bg) 82%, transparent)',
-          borderColor: 'var(--border)',
-        }"
-      >
-        <button
-          type="button"
-          class="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] border-0 bg-transparent transition-colors hover:bg-[var(--brand-soft)] min-[768px]:hidden"
-          :style="{ color: 'var(--text-2)' }"
-          aria-label="打开菜单"
-          @click="mobileOpen = true"
-        >
-          <el-icon :size="19"><Menu /></el-icon>
-        </button>
+            <el-breadcrumb v-if="!isMobile" class="navbar-breadcrumb" separator="/">
+              <el-breadcrumb-item v-for="(crumb, index) in crumbs" :key="`${crumb.label}-${index}`">
+                <RouterLink v-if="crumb.to && index < crumbs.length - 1" :to="crumb.to">
+                  {{ crumb.label }}
+                </RouterLink>
+                <span v-else>{{ crumb.label }}</span>
+              </el-breadcrumb-item>
+            </el-breadcrumb>
+          </div>
 
-        <el-breadcrumb class="hidden min-w-0 flex-1 text-[13px] min-[480px]:block" separator="/">
-          <el-breadcrumb-item v-for="(crumb, index) in crumbs" :key="`${crumb.label}-${index}`">
-            <RouterLink
-              v-if="crumb.to && index < crumbs.length - 1"
-              :to="crumb.to"
-              class="transition-colors hover:text-[var(--brand)]"
-              :style="{ color: 'var(--text-2)' }"
+          <div class="navbar-right">
+            <el-popover
+              placement="bottom-end"
+              :width="340"
+              trigger="click"
+              popper-class="notification-popover"
+              @show="handleBellVisible(true)"
             >
-              {{ crumb.label }}
-            </RouterLink>
-            <span v-else :style="{ color: index === crumbs.length - 1 ? 'var(--text)' : 'var(--text-2)' }">
-              {{ crumb.label }}
-            </span>
-          </el-breadcrumb-item>
-        </el-breadcrumb>
-
-        <div class="flex flex-1 items-center justify-end gap-1.5 min-[480px]:flex-none">
-          <el-popover
-            placement="bottom-end"
-            :width="340"
-            trigger="click"
-            popper-class="notification-popover"
-            @show="handleBellVisible(true)"
-          >
-            <template #reference>
-              <button
-                type="button"
-                class="grid h-9 w-9 cursor-pointer place-items-center rounded-[10px] border-0 bg-transparent transition-colors hover:bg-[var(--brand-soft)]"
-                :style="{ color: 'var(--text-2)' }"
-                aria-label="通知"
-              >
-                <el-badge :value="unread" :max="99" :hidden="unread === 0" :offset="[-2, 2]">
-                  <el-icon :size="19"><Bell /></el-icon>
-                </el-badge>
-              </button>
-            </template>
-
-            <div>
-              <div class="mb-2 flex items-center justify-between">
-                <p class="m-0 text-[13px] font-bold" :style="{ color: 'var(--text)' }">
-                  通知
-                  <span v-if="unread > 0" class="ml-1 text-[12px] font-normal" :style="{ color: 'var(--accent)' }">
-                    {{ unread }} 条未读
-                  </span>
-                </p>
-                <el-button link size="small" :disabled="unread === 0" @click="handleReadAll">
-                  全部已读
-                </el-button>
-              </div>
-
-              <div v-loading="recentLoading" class="max-h-[320px] min-h-[80px] overflow-y-auto">
-                <button
-                  v-for="item in recent"
-                  :key="item.id"
-                  type="button"
-                  class="mb-1 flex w-full cursor-pointer gap-2 rounded-lg border-0 bg-transparent px-2 py-2 text-left transition-colors hover:bg-[var(--brand-soft)]"
-                  @click="openNotification(item)"
-                >
-                  <span
-                    class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
-                    :style="{ background: item.isRead ? 'var(--border-strong)' : 'var(--accent)' }"
-                  />
-                  <span class="min-w-0 flex-1">
-                    <span class="clamp-1 block text-[13px]" :style="{ color: 'var(--text)' }">{{ item.title }}</span>
-                    <span class="clamp-1 mt-0.5 block text-[12px]" :style="{ color: 'var(--text-2)' }">
-                      {{ item.content }}
-                    </span>
-                    <span class="mt-1 block text-[11px]" :style="{ color: 'var(--text-3)' }">
-                      {{ fromNow(item.createdAt) }}
-                    </span>
-                  </span>
+              <template #reference>
+                <button type="button" class="navbar-icon-btn" aria-label="通知">
+                  <el-badge :value="unread" :max="99" :hidden="unread === 0" :offset="[-4, 4]">
+                    <el-icon :size="18"><Bell /></el-icon>
+                  </el-badge>
                 </button>
+              </template>
 
-                <p v-if="!recentLoading && recent.length === 0" class="py-6 text-center text-[12px]" :style="{ color: 'var(--text-3)' }">
-                  暂无通知
-                </p>
+              <div>
+                <div class="mb-2 flex items-center justify-between">
+                  <p class="m-0 text-[13px] font-semibold" :style="{ color: 'var(--text)' }">
+                    通知
+                    <span v-if="unread > 0" class="ml-1 text-[12px] font-normal text-[var(--el-color-primary)]">
+                      {{ unread }} 条未读
+                    </span>
+                  </p>
+                  <el-button link type="primary" size="small" :disabled="unread === 0" @click="handleReadAll">
+                    全部已读
+                  </el-button>
+                </div>
+
+                <div v-loading="recentLoading" class="max-h-[320px] min-h-[80px] overflow-y-auto">
+                  <button
+                    v-for="item in recent"
+                    :key="item.id"
+                    type="button"
+                    class="mb-1 flex w-full cursor-pointer gap-2 rounded-sm border-0 bg-transparent px-2 py-2 text-left transition-colors hover:bg-[var(--el-fill-color-light)]"
+                    @click="openNotification(item)"
+                  >
+                    <span
+                      class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                      :style="{ background: item.isRead ? 'var(--el-border-color)' : 'var(--el-color-primary)' }"
+                    />
+                    <span class="min-w-0 flex-1">
+                      <span class="clamp-1 block text-[13px] text-[var(--text)]">{{ item.title }}</span>
+                      <span class="clamp-1 mt-0.5 block text-[12px] text-[var(--text-2)]">
+                        {{ item.content }}
+                      </span>
+                      <span class="mt-1 block text-[11px] text-[var(--text-3)]">
+                        {{ fromNow(item.createdAt) }}
+                      </span>
+                    </span>
+                  </button>
+
+                  <p
+                    v-if="!recentLoading && recent.length === 0"
+                    class="py-6 text-center text-[12px] text-[var(--text-3)]"
+                  >
+                    暂无通知
+                  </p>
+                </div>
+
+                <div class="mt-2 border-t border-[var(--el-border-color-lighter)] pt-2 text-center">
+                  <el-button link type="primary" size="small" @click="router.push({ name: 'Notifications' })">
+                    查看全部
+                  </el-button>
+                </div>
               </div>
+            </el-popover>
 
-              <div class="mt-2 border-t pt-2 text-center" :style="{ borderColor: 'var(--border)' }">
-                <el-button link size="small" @click="router.push({ name: 'Notifications' })">
-                  查看全部
-                </el-button>
-              </div>
-            </div>
-          </el-popover>
-
-          <button
-            type="button"
-            class="hidden h-9 w-9 cursor-pointer place-items-center rounded-[10px] border-0 bg-transparent transition-colors hover:bg-[var(--brand-soft)] min-[768px]:grid"
-            :style="{ color: 'var(--text-2)' }"
-            :aria-label="theme.isDark ? '切换亮色' : '切换深色'"
-            @click="theme.toggle()"
-          >
-            <el-icon :size="18"><Sunny v-if="theme.isDark" /><Moon v-else /></el-icon>
-          </button>
-
-          <el-dropdown trigger="click" @command="handleUserCommand">
             <button
               type="button"
-              class="ml-1 flex cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent py-1 pr-2 pl-1 transition-colors hover:bg-[var(--brand-soft)]"
+              class="navbar-icon-btn"
+              :aria-label="theme.isDark ? '切换亮色' : '切换深色'"
+              @click="theme.toggle()"
             >
-              <el-avatar :size="28" :src="avatarUrl" :style="{ background: 'var(--brand)', fontWeight: 600 }">
-                {{ initial }}
-              </el-avatar>
-              <span class="hidden max-w-[120px] truncate text-[13px] min-[560px]:block" :style="{ color: 'var(--text)' }">
-                {{ auth.displayName }}
-              </span>
-              <el-icon :size="12" class="hidden min-[560px]:block" :style="{ color: 'var(--text-3)' }">
-                <ArrowDown />
-              </el-icon>
+              <el-icon :size="18"><Sunny v-if="theme.isDark" /><Moon v-else /></el-icon>
             </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-      </header>
 
-      <main class="mx-auto w-full max-w-[1400px] flex-1 px-4 py-5 lg:px-6">
-        <RouterView v-slot="{ Component }">
-          <Transition name="fade-slide" mode="out-in">
-            <component :is="Component" />
-          </Transition>
-        </RouterView>
-      </main>
+            <el-dropdown trigger="click" @command="handleUserCommand">
+              <button type="button" class="navbar-user">
+                <el-avatar :size="26" :src="avatarUrl" :style="{ background: 'var(--el-color-primary)' }">
+                  {{ initial }}
+                </el-avatar>
+                <span v-if="!isMobile" class="navbar-user__name">{{ auth.displayName }}</span>
+                <el-icon v-if="!isMobile" :size="12" class="ml-1"><ArrowDown /></el-icon>
+              </button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </nav>
+
+        <TagsView @refresh="refreshView" />
+      </div>
+
+      <section class="app-main">
+        <div class="main-content">
+          <RouterView v-slot="{ Component }">
+            <Transition name="fade-transform" mode="out-in">
+              <component :is="Component" :key="`${route.path}-${viewKey}`" />
+            </Transition>
+          </RouterView>
+        </div>
+      </section>
     </div>
   </div>
 </template>
-
-<style scoped>
-:deep(.el-drawer__body) {
-  padding: 0;
-}
-</style>

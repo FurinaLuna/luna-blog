@@ -82,49 +82,55 @@ async function submitPassword(): Promise<void> {
 
 <template>
   <div class="page">
-    <PageHeader title="个人中心" description="账号资料与安全设置" />
+    <el-card shadow="never" class="mb-3">
+      <PageHeader title="个人中心" description="账号资料与安全设置" />
+    </el-card>
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-      <div class="panel panel--pad">
+    <div class="grid grid-cols-1 gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <el-card shadow="never">
+        <template #header>
+          <span class="text-[14px] font-semibold text-[var(--text)]">账号资料</span>
+        </template>
+
         <div class="flex flex-col items-center py-2 text-center">
           <el-avatar :size="76" :src="user?.avatar ? resolveAssetUrl(user.avatar) : undefined" shape="circle">
             {{ avatarText }}
           </el-avatar>
-          <div class="mt-3 text-[16px] font-semibold" :style="{ color: 'var(--text)' }">
+          <div class="mt-3 text-[16px] font-semibold text-[var(--text)]">
             {{ user?.nickname || user?.username || '未登录' }}
           </div>
-          <div class="mt-0.5 text-[12px]" :style="{ color: 'var(--text-2)' }">@{{ user?.username }}</div>
+          <div class="mt-0.5 text-[12px] text-[var(--text-2)]">@{{ user?.username }}</div>
           <el-tag v-if="user?.needPasswordChange" size="small" type="warning" effect="light" class="mt-2">
             待修改初始密码
           </el-tag>
         </div>
 
-        <div class="mt-3 border-t pt-3" :style="{ borderColor: 'var(--border)' }">
+        <div class="mt-3 border-t border-[var(--border)] pt-3">
           <div class="flex items-center justify-between py-1.5 text-[12px]">
-            <span :style="{ color: 'var(--text-2)' }">邮箱</span>
-            <span :style="{ color: 'var(--text)' }">{{ user?.email || '未设置' }}</span>
+            <span class="text-[var(--text-2)]">邮箱</span>
+            <span class="text-[var(--text)]">{{ user?.email || '未设置' }}</span>
           </div>
           <div class="flex items-center justify-between py-1.5 text-[12px]">
-            <span :style="{ color: 'var(--text-2)' }">最近登录</span>
-            <span :style="{ color: 'var(--text)' }">{{ user?.lastLoginAt ? formatDateTime(user.lastLoginAt) : '—' }}</span>
+            <span class="text-[var(--text-2)]">最近登录</span>
+            <span class="text-[var(--text)]">{{ user?.lastLoginAt ? formatDateTime(user.lastLoginAt) : '—' }}</span>
           </div>
           <div class="flex items-center justify-between py-1.5 text-[12px]">
-            <span :style="{ color: 'var(--text-2)' }">创建时间</span>
-            <span :style="{ color: 'var(--text)' }">{{ user?.createdAt ? formatDateTime(user.createdAt) : '—' }}</span>
+            <span class="text-[var(--text-2)]">创建时间</span>
+            <span class="text-[var(--text)]">{{ user?.createdAt ? formatDateTime(user.createdAt) : '—' }}</span>
           </div>
         </div>
 
-        <p class="hint mt-3 leading-5">
+        <p class="mt-3 text-[12px] leading-5 text-[var(--text-3)]">
           资料字段为只读展示。当前接口契约仅提供修改密码，头像与昵称需在服务端后台维护。
         </p>
-      </div>
+      </el-card>
 
-      <div class="panel panel--pad">
-        <div class="section-title mb-1 flex items-center gap-2">
-          <el-icon><Lock /></el-icon>
-          修改密码
-        </div>
-        <p class="hint mb-4">修改后需要重新登录；新密码长度 8–32 位，且不能与原密码相同。</p>
+      <el-card shadow="never">
+        <template #header>
+          <span class="text-[14px] font-semibold text-[var(--text)]">修改密码</span>
+        </template>
+
+        <p class="mb-4 text-[12px] text-[var(--text-3)]">修改后需要重新登录；新密码长度 8–32 位，且不能与原密码相同。</p>
 
         <el-alert v-if="formError" :title="formError" type="error" show-icon :closable="false" class="mb-4" />
 
@@ -138,28 +144,28 @@ async function submitPassword(): Promise<void> {
           <el-form-item label="确认新密码" prop="confirmPassword">
             <el-input v-model="form.confirmPassword" type="password" show-password autocomplete="new-password" />
           </el-form-item>
-          <el-button type="primary" :loading="saving" @click="submitPassword">
+          <el-button type="primary" :loading="saving" :icon="Lock" @click="submitPassword">
             {{ saving ? '保存中…' : '更新密码' }}
           </el-button>
         </el-form>
 
-        <div class="mt-8 border-t pt-4" :style="{ borderColor: 'var(--border)' }">
-          <div class="section-title mb-2 flex items-center gap-2">
+        <div class="mt-8 border-t border-[var(--border)] pt-4">
+          <div class="mb-2 flex items-center gap-2 text-[14px] font-semibold text-[var(--text)]">
             <el-icon><User /></el-icon>
             账号信息
           </div>
           <div class="grid grid-cols-1 gap-2 text-[12px] sm:grid-cols-2">
-            <div class="rounded-[10px] px-3 py-2" :style="{ background: 'var(--bg-soft)' }">
-              <div :style="{ color: 'var(--text-3)' }">登录账号</div>
-              <div class="mt-0.5" :style="{ color: 'var(--text)' }">{{ user?.username || '—' }}</div>
+            <div class="rounded px-3 py-2" style="background: var(--bg-soft)">
+              <div class="text-[var(--text-3)]">登录账号</div>
+              <div class="mt-0.5 text-[var(--text)]">{{ user?.username || '—' }}</div>
             </div>
-            <div class="rounded-[10px] px-3 py-2" :style="{ background: 'var(--bg-soft)' }">
-              <div :style="{ color: 'var(--text-3)' }">显示昵称</div>
-              <div class="mt-0.5" :style="{ color: 'var(--text)' }">{{ user?.nickname || '—' }}</div>
+            <div class="rounded px-3 py-2" style="background: var(--bg-soft)">
+              <div class="text-[var(--text-3)]">显示昵称</div>
+              <div class="mt-0.5 text-[var(--text)]">{{ user?.nickname || '—' }}</div>
             </div>
           </div>
         </div>
-      </div>
+      </el-card>
     </div>
   </div>
 </template>
