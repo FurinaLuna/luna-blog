@@ -17,36 +17,24 @@ const { liked, count, pending, toggle } = useLikeTarget({
 
 const avatarBoxStyle = computed(() => avatarStyle(props.message.nickname))
 const initial = computed(() => avatarInitial(props.message.nickname))
+const accentStyle = computed(() => (props.message.color ? { color: props.message.color } : undefined))
 </script>
 
 <template>
-  <article
-    class="card p-4 transition-shadow duration-200 hover:shadow-[var(--shadow)]"
-    :style="message.color ? { borderLeft: `3px solid ${message.color}` } : undefined"
-  >
-    <header class="flex items-center gap-2.5">
-      <div
-        class="grid h-9 w-9 shrink-0 place-items-center rounded-full border text-sm font-semibold"
-        :style="avatarBoxStyle"
-        aria-hidden="true"
-      >
+  <article class="message-card">
+    <div class="message-card__head">
+      <div class="message-card__avatar" :style="avatarBoxStyle" aria-hidden="true">
         {{ initial }}
       </div>
-      <div class="min-w-0">
-        <p class="truncate text-sm font-semibold">{{ message.nickname }}</p>
-        <p class="text-[11px]" style="color: var(--text-2)">{{ formatRelative(message.createdAt) }}</p>
+      <div class="message-card__who">
+        <p class="message-card__name" :style="accentStyle">{{ message.nickname }}</p>
+        <p class="message-card__time">{{ formatRelative(message.createdAt) }}</p>
       </div>
-      <span
-        v-if="message.color"
-        class="ml-auto h-2.5 w-2.5 shrink-0 rounded-full"
-        :style="{ background: message.color }"
-        aria-hidden="true"
-      />
-    </header>
+    </div>
 
-    <p class="mt-3 whitespace-pre-line break-words text-sm leading-relaxed">{{ message.content }}</p>
+    <p class="message-card__body">{{ message.content }}</p>
 
-    <div class="mt-2 flex justify-end">
+    <div class="message-card__foot">
       <LikeButton :count="count" :liked="liked" :pending="pending" label="点赞留言" @toggle="toggle" />
     </div>
   </article>

@@ -2,11 +2,12 @@
 import { computed, reactive, ref } from 'vue'
 import { useQuery } from '@pinia/colada'
 import { ElMessage, type FormInstance, type FormItemRule, type FormRules } from 'element-plus'
-import { Connection, Link, Plus } from '@element-plus/icons-vue'
 import CoverImage from '@/components/common/CoverImage.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SkeletonList from '@/components/common/SkeletonList.vue'
 import { applyFriendLink, getFriendLinks } from '@/api/friend'
+import { useSiteStore } from '@/stores/site'
 
 interface FriendForm {
   name: string
@@ -65,6 +66,10 @@ const {
 
 const friends = computed(() => data.value ?? [])
 
+const site = useSiteStore()
+const siteName = computed(() => site.siteName)
+const siteDescription = computed(() => site.siteDescription)
+
 function openDialog(): void {
   dialogOpen.value = true
 }
@@ -96,70 +101,67 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <div class="container-page py-10">
-    <header class="flex flex-wrap items-end justify-between gap-4 border-b pb-6" style="border-color: var(--border)">
-      <div>
-        <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em]" style="color: var(--brand)">
-          <el-icon :size="14"><Connection /></el-icon>
-          Friends
-        </p>
-        <h1 class="mt-2 text-3xl font-bold sm:text-4xl">友链</h1>
-        <p class="mt-2 text-sm" style="color: var(--text-2)">
-          这些站点也在认真记录生活与代码，欢迎互相串门。
-        </p>
+  <div>
+    <PageHeader title="友链" subtitle="这些站点也在认真记录生活与代码，欢迎互相串门" />
+
+    <div class="center_box">
+      <div class="card friend-intro">
+        <h2 class="friend-intro__title">欢迎交换友链</h2>
+        <div class="friend-intro__meta">
+          <p class="friend-intro__row"><span class="friend-intro__label">本站名称</span><span>{{ siteName }}</span></p>
+          <p class="friend-intro__row"><span class="friend-intro__label">本站简介</span><span>{{ siteDescription }}</span></p>
+        </div>
+        <p class="friend-intro__hint">申请前请先添加本站友链，审核通过后会尽快上线。</p>
+        <button type="button" class="apply-button friend-intro__btn" @click="openDialog">
+          申请友链
+        </button>
       </div>
-      <button type="button" class="btn btn-primary" @click="openDialog">
-        <el-icon :size="15"><Plus /></el-icon>
-        申请友链
-      </button>
-    </header>
 
-    <div v-if="isLoading" class="mt-8">
-      <SkeletonList variant="card" :count="6" />
-    </div>
+      <SkeletonList v-if="isLoading" variant="card" :count="6" />
 
-    <EmptyState
-      v-else-if="error && friends.length === 0"
-      class="mt-8"
-      icon="error"
-      title="友链加载失败"
-      description="请稍后重试。"
-      action-text="重新加载"
-      @action="refetch"
-    />
+      <EmptyState
+        v-else-if="error && friends.length === 0"
+        icon="error"
+        title="友链加载失败"
+        description="请稍后重试。"
+        action-text="重新加载"
+        @action="refetch"
+      />
 
-    <EmptyState
-      v-else-if="friends.length === 0"
-      class="mt-8"
-      icon="inbox"
-      title="还没有友链"
-      description="成为第一个交换链接的人吧。"
-      action-text="申请友链"
-      @action="openDialog"
-    />
+      <EmptyState
+        v-else-if="friends.length === 0"
+        icon="inbox"
+        title="还没有友链"
+        description="成为第一个交换链接的人吧。"
+        action-text="申请友链"
+        @action="openDialog"
+      />
 
-    <div v-else class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <a
-        v-for="friend in friends"
-        :key="friend.id"
-        :href="friend.url"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="card card-hover group flex items-start gap-3 p-4"
-      >
-        <div class="w-12 shrink-0">
-          <CoverImage :src="friend.avatar" :alt="`${friend.name} 头像`" :seed="friend.name" ratio="1 / 1" rounded="rounded-full" />
-        </div>
-        <div class="min-w-0 flex-1">
-          <p class="flex items-center gap-1 text-sm font-semibold transition-colors group-hover:text-[var(--brand)]">
-            <span class="truncate">{{ friend.name }}</span>
-            <el-icon :size="12" class="shrink-0" style="color: var(--text-2)"><Link /></el-icon>
-          </p>
-          <p class="mt-1 line-clamp-2 text-xs leading-relaxed" style="color: var(--text-2)">
-            {{ friend.description || '这个站点还没有写简介。' }}
-          </p>
-        </div>
-      </a>
+      <div v-else class="friend-grid">
+        <a
+          v-for="friend in friends"
+          :key="friend.id"
+          :href="friend.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="friend-card"
+        >
+          <div class="friend-card__inner">
+            <CoverImage
+              class="friend-card__avatar"
+              :src="friend.avatar"
+              :alt="`${friend.name} 头像`"
+              :seed="friend.name"
+              ratio="1 / 1"
+              rounded="rounded-full"
+            />
+            <div class="friend-card__text">
+              <p class="friend-card__name">{{ friend.name }}</p>
+              <p class="friend-card__desc">{{ friend.description || '这个站点还没有写简介。' }}</p>
+            </div>
+          </div>
+        </a>
+      </div>
     </div>
 
     <el-dialog v-model="dialogOpen" title="申请友链" width="min(92vw, 480px)" align-center>
@@ -179,9 +181,9 @@ async function submit(): Promise<void> {
       </el-form>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
+        <div class="friend-dialog__actions">
           <button type="button" class="btn btn-ghost" @click="dialogOpen = false">取消</button>
-          <button type="button" class="btn btn-primary" :disabled="submitting" @click="submit">
+          <button type="button" class="apply-button" :disabled="submitting" @click="submit">
             {{ submitting ? '提交中…' : '提交申请' }}
           </button>
         </div>
@@ -189,3 +191,56 @@ async function submit(): Promise<void> {
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.friend-card__text {
+  min-width: 0;
+  flex: 1;
+}
+
+.friend-intro {
+  padding: 2rem clamp(1.2rem, 4vw, 2.6rem);
+  text-align: center;
+}
+
+.friend-intro__title {
+  color: var(--font-color);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.friend-intro__meta {
+  margin: 1rem auto 0;
+  max-width: 32rem;
+}
+
+.friend-intro__row {
+  display: flex;
+  gap: 0.8rem;
+  padding: 0.2rem 0;
+  color: var(--second-font-color);
+  font-size: 0.92rem;
+}
+
+.friend-intro__label {
+  flex: 0 0 5.5rem;
+  color: var(--meta-color);
+  text-align: right;
+}
+
+.friend-intro__hint {
+  margin-top: 0.8rem;
+  color: var(--meta-color);
+  font-size: 0.85rem;
+}
+
+.friend-intro__btn {
+  margin-top: 1.2rem;
+}
+
+.friend-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+</style>

@@ -31,31 +31,51 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
-    <a
-      href="#main-content"
-      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[var(--card)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:shadow-lg"
-    >
-      跳到主要内容
-    </a>
+  <div class="app-shell">
+    <a href="#main-content" class="skip-link">跳到主要内容</a>
 
     <AppHeader />
 
-    <main id="main-content" class="flex-1">
+    <main id="main-content" class="app-main">
       <RouterView v-slot="{ Component }">
-        <Transition name="page" mode="out-in">
-          <component :is="Component" />
-        </Transition>
+        <component :is="Component" />
       </RouterView>
     </main>
 
     <AppFooter />
 
-    <div
-      class="pointer-events-none fixed bottom-5 right-4 z-40 flex flex-col items-end gap-3 sm:right-6"
-    >
-      <MusicPlayer class="pointer-events-auto" />
-      <BackToTop />
-    </div>
+    <!-- 常驻组件：音乐在无 /wapi 数据时自身不渲染；返回顶部随滚动出现 -->
+    <MusicPlayer />
+    <BackToTop />
   </div>
 </template>
+
+<style scoped>
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.app-main {
+  flex: 1;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  z-index: 3000;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.9rem;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0.6rem;
+}
+</style>

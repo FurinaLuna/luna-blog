@@ -31,55 +31,39 @@ const isReply = computed(() => props.depth > 0)
 </script>
 
 <template>
-  <article class="flex gap-3">
-    <div
-      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold"
-      :class="isReply ? 'h-8 w-8 text-xs' : ''"
-      :style="avatarBoxStyle"
-      aria-hidden="true"
-    >
+  <article class="comment-box__item" :class="{ 'comment-box__item--reply': isReply }">
+    <div class="comment-box__avatar" :style="avatarBoxStyle" aria-hidden="true">
       {{ initial }}
     </div>
 
-    <div class="min-w-0 flex-1">
-      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span class="text-sm font-semibold" :class="isReply ? 'text-[13px]' : ''">
-          {{ comment.nickname }}
-        </span>
-        <span v-if="comment.isAdmin" class="admin-badge">博主</span>
+    <div class="comment-box__main">
+      <div class="comment-box__head">
+        <span class="comment-box__name">{{ comment.nickname }}</span>
+        <span v-if="comment.isAdmin" class="comment-box__badge">博主</span>
         <a
           v-if="websiteHref"
           :href="websiteHref"
           target="_blank"
           rel="noopener noreferrer nofollow"
-          class="inline-flex items-center transition-colors hover:text-[var(--brand)]"
-          style="color: var(--text-2)"
+          class="comment-box__site"
           :aria-label="`访问 ${comment.nickname} 的个人网站`"
         >
-          <el-icon :size="13"><Link /></el-icon>
+          <el-icon :size="12"><Link /></el-icon>
         </a>
-        <span class="ml-auto whitespace-nowrap text-[11px]" style="color: var(--text-2)">
-          {{ formatRelative(comment.createdAt) }}
-        </span>
+        <span class="comment-box__time">{{ formatRelative(comment.createdAt) }}</span>
       </div>
 
-      <p v-if="comment.replyTo" class="mt-1 text-xs" style="color: var(--text-2)">
-        回复
-        <span style="color: var(--brand)">@{{ comment.replyTo.nickname }}</span>
-      </p>
+      <div class="comment-box__content">
+        <p v-if="comment.replyTo" class="comment-box__reply-to">
+          回复 <span>@{{ comment.replyTo.nickname }}</span>
+        </p>
+        <p class="comment-box__text">{{ comment.content }}</p>
+      </div>
 
-      <p
-        class="mt-1.5 whitespace-pre-line text-sm leading-relaxed"
-        :class="isReply ? 'text-[13px]' : ''"
-      >
-        {{ comment.content }}
-      </p>
-
-      <div class="mt-2 flex items-center gap-3">
+      <div class="comment-box__actions">
         <button
           type="button"
-          class="text-xs transition-colors hover:text-[var(--brand)]"
-          style="color: var(--text-2)"
+          class="comment-box__action"
           :aria-label="`回复 ${comment.nickname}`"
           @click="emit('reply', comment)"
         >
@@ -94,11 +78,7 @@ const isReply = computed(() => props.depth > 0)
         />
       </div>
 
-      <div
-        v-if="!isReply && comment.replies.length > 0"
-        class="mt-3.5 space-y-4 border-l-2 pl-4"
-        style="border-color: var(--border)"
-      >
+      <div v-if="!isReply && comment.replies.length > 0" class="comment-box__replies">
         <CommentItem
           v-for="reply in comment.replies"
           :key="reply.id"
@@ -110,17 +90,3 @@ const isReply = computed(() => props.depth > 0)
     </div>
   </article>
 </template>
-
-<style scoped>
-.admin-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 0.35rem;
-  border-radius: 5px;
-  font-size: 0.65rem;
-  font-weight: 600;
-  line-height: 1.5;
-  color: var(--brand-contrast);
-  background: var(--brand);
-}
-</style>

@@ -182,21 +182,15 @@ watch(
 </script>
 
 <template>
-  <section class="mt-12" aria-label="评论区">
-    <div class="mb-4 flex items-end justify-between gap-3">
-      <h2 class="flex items-center gap-2 text-lg font-bold">
+  <section class="comment-box" aria-label="评论区">
+    <div class="comment-box__header">
+      <h2 class="comment-box__title">
         {{ title }}
-        <span
-          class="rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums"
-          style="background: var(--brand-soft); color: var(--brand)"
-        >
-          {{ total }}
-        </span>
+        <span class="comment-box__count">{{ total }}</span>
       </h2>
       <button
         type="button"
-        class="inline-flex items-center gap-1 text-xs transition-colors hover:text-[var(--brand)]"
-        style="color: var(--text-2)"
+        class="comment-box__refresh"
         aria-label="刷新评论"
         @click="loadComments"
       >
@@ -205,7 +199,7 @@ watch(
       </button>
     </div>
 
-    <div v-if="loading" class="space-y-5 py-2">
+    <div v-if="loading" class="comment-box__loading">
       <SkeletonList variant="list" :count="2" />
     </div>
 
@@ -216,7 +210,7 @@ watch(
       description="成为第一个留下想法的人吧。"
     />
 
-    <div v-else class="space-y-6">
+    <div v-else class="comment-box__list">
       <CommentItem
         v-for="comment in comments"
         :key="comment.id"
@@ -227,40 +221,34 @@ watch(
 
     <Pagination
       v-if="!loading && total > pageSize"
+      class="comment-box__pagination"
       :page="page"
       :total="total"
       :page-size="pageSize"
-      class="mt-6"
       @update:page="handlePageChange"
     />
 
-    <div id="comment-form" class="card mt-8 scroll-mt-24 p-5 sm:p-6">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <h3 class="text-base font-bold">发表评论</h3>
-        <p v-if="replyTarget" class="flex items-center gap-2 text-xs" style="color: var(--text-2)">
+    <div id="comment-form" class="comment-box__form-wrap">
+      <div class="comment-box__form-head">
+        <h3>发表评论</h3>
+        <p v-if="replyTarget" class="comment-box__reply-hint">
           回复
-          <span style="color: var(--brand)">@{{ replyTarget.nickname }}</span>
-          <button
-            type="button"
-            class="underline decoration-dotted underline-offset-2 hover:text-[var(--brand)]"
-            @click="cancelReply"
-          >
-            取消
-          </button>
+          <span>@{{ replyTarget.nickname }}</span>
+          <button type="button" @click="cancelReply">取消</button>
         </p>
       </div>
 
-      <p class="mt-1.5 text-xs" style="color: var(--text-2)">访客可直接评论，邮箱仅用于接收回复提醒，不会公开。</p>
+      <p class="comment-box__form-hint">访客可直接评论，邮箱仅用于接收回复提醒，不会公开。</p>
 
       <el-form
         ref="formRef"
         :model="form"
         :rules="rules"
         label-position="top"
-        class="mt-4"
+        class="comment-box__form"
         @submit.prevent="submit"
       >
-        <div class="grid gap-x-3 sm:grid-cols-3">
+        <div class="comment-box__form-row">
           <el-form-item label="昵称" prop="nickname">
             <el-input v-model="form.nickname" maxlength="20" placeholder="怎么称呼你" autocomplete="nickname" />
           </el-form-item>
@@ -284,8 +272,8 @@ watch(
           />
         </el-form-item>
 
-        <div class="flex items-center justify-end">
-          <button type="submit" class="btn btn-primary min-w-[7rem]" :disabled="submitting">
+        <div class="comment-box__form-actions">
+          <button type="submit" class="apply-button" :disabled="submitting">
             {{ submitting ? '提交中…' : '提交评论' }}
           </button>
         </div>
@@ -295,7 +283,7 @@ watch(
 </template>
 
 <style scoped>
-:deep(.el-form-item) {
+.comment-box__form :deep(.el-form-item) {
   margin-bottom: 1rem;
 }
 </style>

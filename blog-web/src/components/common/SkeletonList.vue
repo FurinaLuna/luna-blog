@@ -19,19 +19,19 @@ withDefaults(
     </div>
   </div>
 
-  <div v-else-if="variant === 'card'" class="grid gap-5 sm:grid-cols-2" aria-hidden="true">
-    <div v-for="index in count" :key="index" class="card overflow-hidden">
-      <div class="skeleton aspect-[16/10] rounded-none"></div>
+  <div v-else-if="variant === 'card'" class="post-grid" aria-hidden="true">
+    <div v-for="index in count" :key="index" class="post-card">
+      <div class="skeleton aspect-video rounded-none"></div>
       <div class="space-y-2.5 p-4">
-        <div class="skeleton h-3 w-1/3"></div>
         <div class="skeleton h-4 w-4/5"></div>
         <div class="skeleton h-3 w-full"></div>
+        <div class="skeleton h-3 w-2/3"></div>
       </div>
     </div>
   </div>
 
   <div v-else class="space-y-4" aria-hidden="true">
-    <div v-for="index in count" :key="index" class="card overflow-hidden">
+    <div v-for="index in count" :key="index" class="post-card">
       <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
         <div class="flex-1 space-y-3">
           <div class="skeleton h-3 w-24"></div>

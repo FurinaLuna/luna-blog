@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-
-const props = withDefaults(
+withDefaults(
   defineProps<{
     id: number
     name: string
@@ -10,19 +8,27 @@ const props = withDefaults(
   }>(),
   { color: null, count: undefined },
 )
-
-const dotStyle = computed(() => (props.color ? { backgroundColor: props.color } : undefined))
 </script>
 
 <template>
   <RouterLink :to="`/tag/${id}`" class="chip" :aria-label="`标签 ${name}`">
-    <span
-      v-if="color"
-      class="h-1.5 w-1.5 shrink-0 rounded-full"
-      :style="dotStyle"
-      aria-hidden="true"
-    ></span>
-    <span class="opacity-70">#</span>{{ name }}
-    <span v-if="count !== undefined" class="text-[10px] tabular-nums opacity-60">{{ count }}</span>
+    <span v-if="color" class="tag-dot" :style="{ backgroundColor: color }" aria-hidden="true"></span>
+    <span>#{{ name }}</span>
+    <span v-if="count !== undefined" class="tag-count">{{ count }}</span>
   </RouterLink>
 </template>
+
+<style scoped>
+.tag-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.tag-count {
+  font-size: 0.7rem;
+  tabular-nums: tabular-nums;
+  opacity: 0.65;
+}
+</style>

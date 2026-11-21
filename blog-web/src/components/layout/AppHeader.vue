@@ -2,27 +2,69 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEventListener, useWindowScroll } from '@vueuse/core'
-import { Close, Menu, Search } from '@element-plus/icons-vue'
-import SocialLinks from '@/components/common/SocialLinks.vue'
+import type { Component } from 'vue'
+import {
+  ChatLineRound,
+  Clock,
+  Collection,
+  Grid,
+  House,
+  Link as LinkIcon,
+  Message,
+  Picture,
+  Search,
+} from '@element-plus/icons-vue'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import { mainNav } from '@/config/nav'
 import { useSiteStore } from '@/stores/site'
-import { useThemeStore } from '@/stores/theme'
+
+interface MenuLink {
+  label: string
+  to: string
+  icon: Component
+}
 
 const site = useSiteStore()
-const theme = useThemeStore()
 const route = useRoute()
 const router = useRouter()
 const { y } = useWindowScroll()
 
-const scrolled = computed(() => y.value > 8)
 const drawerOpen = ref(false)
-const searchKeyword = ref('')
+const hidden = ref(false)
+let lastY = 0
 
-function isActive(to: string): boolean {
-  if (to === '/') return route.path === '/'
-  return route.path === to || route.path.startsWith(`${to}/`)
-}
+const scrolled = computed(() => y.value > 50)
+/** 首页与内页 banner 顶部都浮在背景图之上；404 没有 banner，直接白底 */
+const transparent = computed(() => !scrolled.value && route.name !== 'not-found')
+const avatarUrl = computed(() => site.avatar || '')
+const avatarInitial = computed(() => (site.siteName || 'Luna').trim().charAt(0).toUpperCase())
+
+const primaryNav: MenuLink[] = [
+  { label: '主页', to: '/', icon: House },
+  { label: '时间轴', to: '/archives', icon: Clock },
+]
+
+const tailNav: MenuLink[] = [
+  { label: '相册', to: '/albums', icon: Picture },
+  { label: '说说', to: '/talks', icon: ChatLineRound },
+  { label: '友链', to: '/friends', icon: LinkIcon },
+  { label: '留言', to: '/message', icon: Message },
+]
+
+const moreLinks: MenuLink[] = [
+  { label: '归档', to: '/archives', icon: Clock },
+  { label: '资源', to: '/resources', icon: Collection },
+  { label: '关于', to: '/about', icon: Grid },
+]
+
+const drawerNav = computed<MenuLink[]>(() => {
+  const items: MenuLink[] = [{ label: '主页', to: '/', icon: House }]
+  for (const item of mainNav.slice(1)) {
+    const icon = tailNav.find((entry) => entry.to === item.to)?.icon
+    items.push({ label: item.label, to: item.to, icon: icon ?? Collection })
+  }
+  return items
+})
 
 watch(
   () => route.fullPath,
@@ -31,30 +73,38 @@ watch(
   },
 )
 
-function focusSearchOnPage(): void {
-  const input = document.querySelector<HTMLInputElement>('#page-search-input')
-  input?.focus()
-  input?.select()
+watch(y, (next) => {
+  if (next <= 50) {
+    hidden.value = false
+  } else if (next > lastY + 6) {
+    hidden.value = true
+  } else if (next < lastY - 6) {
+    hidden.value = false
+  }
+  lastY = next
+})
+
+function isActive(to: string): boolean {
+  if (to === '/') return route.path === '/'
+  return route.path === to || route.path.startsWith(`${to}/`)
+}
+
+const taxonomyActive = computed(() => route.name === 'category' || route.name === 'tag')
+
+function go(path: string): void {
+  drawerOpen.value = false
+  void router.push(path)
 }
 
 function openSearchPage(): void {
   drawerOpen.value = false
   if (route.path === '/search') {
-    focusSearchOnPage()
+    const input = document.querySelector<HTMLInputElement>('#page-search-input')
+    input?.focus()
+    input?.select()
     return
   }
   void router.push('/search')
-}
-
-function submitSearch(): void {
-  const keyword = searchKeyword.value.trim()
-  drawerOpen.value = false
-  if (!keyword) {
-    void router.push('/search')
-    return
-  }
-  void router.push({ path: '/search', query: { keyword } })
-  searchKeyword.value = ''
 }
 
 useEventListener(document, 'keydown', (event: KeyboardEvent) => {
@@ -68,118 +118,186 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
 </script>
 
 <template>
-  <header class="app-header" :class="{ 'is-scrolled': scrolled }">
-    <div class="container-page flex h-16 items-center gap-3">
-      <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" aria-label="返回首页">
-        <span class="logo-mark" aria-hidden="true">L</span>
-        <span class="hidden text-[15px] font-bold tracking-tight sm:block">
-          {{ site.siteName }}
-        </span>
-      </RouterLink>
-
-      <nav class="ml-5 hidden items-center gap-5 md:flex" aria-label="主导航">
-        <RouterLink
-          v-for="item in mainNav"
-          :key="item.to"
-          :to="item.to"
-          class="nav-link"
-          :class="{ 'is-active': isActive(item.to) }"
-          :aria-current="isActive(item.to) ? 'page' : undefined"
-        >
-          {{ item.label }}
+  <header
+    class="header_box"
+    :class="{
+      'is-transparent': transparent,
+      'is-solid': !transparent,
+      'is-hidden': hidden,
+    }"
+  >
+    <div class="header_inner">
+      <div class="header_left">
+        <RouterLink to="/" class="header_avatar" aria-label="返回首页">
+          <img v-if="avatarUrl" :src="avatarUrl" alt="" />
+          <span v-else class="header_avatar_text" aria-hidden="true">{{ avatarInitial }}</span>
         </RouterLink>
-      </nav>
+      </div>
 
-      <div class="ml-auto flex items-center gap-1">
-        <button
-          type="button"
-          class="icon-btn"
-          aria-label="搜索文章"
-          title="搜索文章（Ctrl / ⌘ + K）"
-          @click="openSearchPage"
-        >
-          <el-icon :size="18"><Search /></el-icon>
-        </button>
+      <div class="header_right">
+        <nav class="pc_menu" aria-label="主导航">
+          <button
+            type="button"
+            class="menu_item"
+            aria-label="搜索文章"
+            title="搜索文章（Ctrl / ⌘ + K）"
+            @click="openSearchPage"
+          >
+            <el-icon class="menu_icon"><Search /></el-icon>
+          </button>
+
+          <RouterLink
+            v-for="item in primaryNav"
+            :key="item.to"
+            :to="item.to"
+            class="menu_item"
+            :class="{ 'is-active': isActive(item.to) }"
+            :aria-current="isActive(item.to) ? 'page' : undefined"
+          >
+            <el-icon class="menu_icon"><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
+          </RouterLink>
+
+          <el-dropdown trigger="click" placement="bottom" @command="go">
+            <button
+              type="button"
+              class="menu_item"
+              :class="{ 'is-active': isActive('/resources') || isActive('/about') }"
+            >
+              <el-icon class="menu_icon"><Grid /></el-icon>
+              <span>更多</span>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="item in moreLinks"
+                  :key="item.to"
+                  :command="item.to"
+                >
+                  {{ item.label }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <el-dropdown trigger="click" placement="bottom" @command="go">
+            <button type="button" class="menu_item" :class="{ 'is-active': taxonomyActive }">
+              <el-icon class="menu_icon"><Collection /></el-icon>
+              <span>分类</span>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="category in site.categories"
+                  :key="category.id"
+                  :command="`/category/${category.id}`"
+                >
+                  {{ category.name }}（{{ category.articleCount }}）
+                </el-dropdown-item>
+                <el-dropdown-item v-if="site.categories.length === 0" disabled>
+                  暂无分类
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <RouterLink
+            v-for="item in tailNav"
+            :key="item.to"
+            :to="item.to"
+            class="menu_item"
+            :class="{ 'is-active': isActive(item.to) }"
+            :aria-current="isActive(item.to) ? 'page' : undefined"
+          >
+            <el-icon class="menu_icon"><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
+          </RouterLink>
+        </nav>
+
         <ThemeToggle />
+      </div>
+    </div>
+
+    <div class="mobile_menu">
+      <div class="mobile_menu_actions">
         <button
           type="button"
-          class="icon-btn md:hidden"
+          class="header_icon"
           aria-label="打开导航菜单"
           :aria-expanded="drawerOpen"
-          aria-controls="mobile-nav-drawer"
           @click="drawerOpen = true"
         >
-          <el-icon :size="19"><Menu /></el-icon>
+          <el-icon :size="20"><Grid /></el-icon>
         </button>
+      </div>
+      <div class="mobile_menu_actions">
+        <button type="button" class="header_icon" aria-label="搜索文章" @click="openSearchPage">
+          <el-icon :size="19"><Search /></el-icon>
+        </button>
+        <ThemeToggle />
       </div>
     </div>
 
     <el-drawer
-      id="mobile-nav-drawer"
       v-model="drawerOpen"
-      direction="rtl"
-      size="84%"
+      direction="ltr"
+      size="60%"
       :with-header="false"
       append-to-body
     >
-      <div class="flex h-full flex-col">
-        <div
-          class="flex items-center justify-between border-b pb-4"
-          style="border-color: var(--border)"
-        >
-          <span class="text-sm font-semibold">导航</span>
-          <button type="button" class="icon-btn" aria-label="关闭导航菜单" @click="drawerOpen = false">
-            <el-icon :size="18"><Close /></el-icon>
-          </button>
+      <div class="drawer_body">
+        <div class="drawer_profile">
+          <img v-if="avatarUrl" class="drawer_avatar" :src="avatarUrl" alt="" />
+          <span v-else class="drawer_avatar drawer_avatar_text" aria-hidden="true">{{ avatarInitial }}</span>
+          <div>
+            <div class="drawer_name">{{ site.siteName }}</div>
+            <div class="drawer_desc">{{ site.siteDescription }}</div>
+          </div>
         </div>
 
-        <form class="mt-4 flex gap-2" role="search" @submit.prevent="submitSearch">
-          <el-input
-            id="header-search-input"
-            v-model="searchKeyword"
-            placeholder="搜索文章…"
-            clearable
-            :prefix-icon="Search"
-            aria-label="搜索文章关键词"
-          />
-          <button type="submit" class="btn btn-primary px-4">搜索</button>
-        </form>
-
-        <nav class="mt-6 space-y-1" aria-label="移动端主导航">
+        <nav class="header_drawer_list" aria-label="移动端主导航">
           <RouterLink
-            v-for="(item, index) in mainNav"
+            v-for="item in drawerNav"
             :key="item.to"
             :to="item.to"
-            class="flex items-center justify-between rounded-[10px] px-3 py-2.5 text-[15px] font-medium transition-colors"
-            :style="
-              isActive(item.to)
-                ? { color: 'var(--brand)', background: 'var(--brand-soft)' }
-                : { color: 'var(--text-2)' }
-            "
+            class="drawer_link"
+            :class="{ 'is-active': isActive(item.to) }"
           >
-            <span class="flex items-center gap-3">
-              <span class="font-mono text-[11px] opacity-50">
-                {{ String(index + 1).padStart(2, '0') }}
-              </span>
-              {{ item.label }}
-            </span>
-            <span
-              v-if="isActive(item.to)"
-              class="h-1.5 w-1.5 rounded-full"
-              style="background: var(--brand)"
-              aria-hidden="true"
-            ></span>
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
+          </RouterLink>
+          <RouterLink to="/search" class="drawer_link" :class="{ 'is-active': isActive('/search') }">
+            <el-icon><Search /></el-icon>
+            <span>搜索</span>
           </RouterLink>
         </nav>
 
-        <div class="mt-auto border-t pt-4" style="border-color: var(--border)">
-          <div class="flex items-center justify-between">
-            <span class="text-xs" style="color: var(--text-2)">外观主题</span>
-            <button type="button" class="btn btn-ghost text-xs" @click="theme.toggle()">
-              切换为{{ theme.isDark ? '浅色' : '深色' }}
-            </button>
-          </div>
-          <SocialLinks v-if="site.resolvedSocialLinks.length > 0" class="mt-4" :links="site.resolvedSocialLinks" size="md" />
+        <div v-if="site.categories.length > 0" class="drawer_sub">
+          <div class="drawer_sub_title">分类</div>
+          <button
+            v-for="category in site.categories"
+            :key="category.id"
+            type="button"
+            class="drawer_link"
+            @click="go(`/category/${category.id}`)"
+          >
+            <el-icon><Collection /></el-icon>
+            <span>{{ category.name }}</span>
+          </button>
+        </div>
+
+        <div v-if="site.tags.length > 0" class="drawer_sub">
+          <div class="drawer_sub_title">标签</div>
+          <button
+            v-for="tag in site.tags"
+            :key="tag.id"
+            type="button"
+            class="drawer_link"
+            @click="go(`/tag/${tag.id}`)"
+          >
+            <el-icon><Collection /></el-icon>
+            <span>{{ tag.name }}</span>
+          </button>
         </div>
       </div>
     </el-drawer>
@@ -187,36 +305,40 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
 </template>
 
 <style scoped>
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
-  border-bottom: 1px solid transparent;
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.app-header.is-scrolled {
-  background: color-mix(in srgb, var(--bg) 94%, transparent);
-  border-bottom-color: var(--border);
-}
-
-.logo-mark {
+.drawer_body {
   display: flex;
-  height: 2.1rem;
-  width: 2.1rem;
+  height: 100%;
+  flex-direction: column;
+  padding: 0.4rem 0.2rem 1.5rem;
+  overflow-y: auto;
+}
+
+.drawer_profile {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: var(--brand);
-  color: var(--brand-contrast);
+  gap: 0.8rem;
+  padding: 0.4rem 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.drawer_avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-soft);
+}
+
+.drawer_name {
+  color: var(--text);
   font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14);
+}
+
+.drawer_desc {
+  margin-top: 0.15rem;
+  color: var(--meta-color);
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 </style>

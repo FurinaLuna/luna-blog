@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
 import { useQuery } from '@pinia/colada'
-import { Link, Share } from '@element-plus/icons-vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SkeletonList from '@/components/common/SkeletonList.vue'
 import { getResources } from '@/api/resource'
 import type { Resource } from '@/api/types'
@@ -39,89 +39,73 @@ function markIconFailed(id: number): void {
 </script>
 
 <template>
-  <div class="container-page py-10">
-    <header class="border-b pb-6" style="border-color: var(--border)">
-      <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em]" style="color: var(--brand)">
-        <el-icon :size="14"><Share /></el-icon>
-        Resources
-      </p>
-      <h1 class="mt-2 text-3xl font-bold sm:text-4xl">资源</h1>
-      <p class="mt-2 text-sm" style="color: var(--text-2)">
-        收藏的一些工具、站点与读物，共 {{ total }} 个。
-      </p>
-    </header>
+  <div>
+    <PageHeader title="资源" :subtitle="`收藏的一些工具、站点与读物 · 共 ${total} 个`" />
 
-    <div v-if="isLoading" class="mt-8">
-      <SkeletonList variant="card" :count="6" />
-    </div>
+    <div class="center_box">
+      <SkeletonList v-if="isLoading" variant="card" :count="6" />
 
-    <EmptyState
-      v-else-if="error && groups.length === 0"
-      class="mt-8"
-      icon="error"
-      title="资源加载失败"
-      description="请稍后重试。"
-      action-text="重新加载"
-      @action="refetch"
-    />
+      <EmptyState
+        v-else-if="error && groups.length === 0"
+        icon="error"
+        title="资源加载失败"
+        description="请稍后重试。"
+        action-text="重新加载"
+        @action="refetch"
+      />
 
-    <EmptyState
-      v-else-if="groups.length === 0"
-      class="mt-8"
-      icon="inbox"
-      title="还没有整理资源"
-      description="收藏夹正在慢慢变好。"
-    />
+      <EmptyState
+        v-else-if="groups.length === 0"
+        icon="inbox"
+        title="还没有整理资源"
+        description="收藏夹正在慢慢变好。"
+      />
 
-    <div v-else class="mt-8 space-y-10">
-      <section v-for="group in groups" :key="group.category">
-        <div class="flex items-center gap-3">
-          <h2 class="text-lg font-bold">{{ group.category }}</h2>
-          <span class="text-xs" style="color: var(--text-2)">{{ group.items.length }} 个</span>
-          <span class="h-px flex-1" style="background: var(--border)" />
-        </div>
+      <div v-else>
+        <section v-for="group in groups" :key="group.category" class="resource-group">
+          <h2 class="resource-group__title">
+            {{ group.category }}
+            <span>{{ group.items.length }} 个</span>
+          </h2>
 
-        <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <a
-            v-for="item in group.items"
-            :key="item.id"
-            :href="item.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="card card-hover group flex items-start gap-3 p-4"
-          >
-            <img
-              v-if="item.icon && !failedIcons.has(item.id)"
-              :src="item.icon"
-              :alt="`${item.name} 图标`"
-              class="h-10 w-10 shrink-0 rounded-lg border object-cover"
-              style="border-color: var(--border)"
-              loading="lazy"
-              @error="markIconFailed(item.id)"
-            />
-            <span
-              v-else
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-bold"
-              style="background: var(--brand-soft); color: var(--brand)"
-              aria-hidden="true"
+          <div class="resource-grid">
+            <a
+              v-for="item in group.items"
+              :key="item.id"
+              :href="item.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="resource-card"
             >
-              {{ item.name.charAt(0) }}
-            </span>
+              <span class="resource-icon">
+                <img
+                  v-if="item.icon && !failedIcons.has(item.id)"
+                  :src="item.icon"
+                  :alt="`${item.name} 图标`"
+                  loading="lazy"
+                  @error="markIconFailed(item.id)"
+                />
+                <span v-else aria-hidden="true">{{ item.name.charAt(0) }}</span>
+              </span>
 
-            <span class="min-w-0 flex-1">
-              <span class="flex items-center gap-1">
-                <span class="truncate text-sm font-semibold transition-colors group-hover:text-[var(--brand)]">
-                  {{ item.name }}
-                </span>
-                <el-icon :size="12" class="shrink-0" style="color: var(--text-2)"><Link /></el-icon>
+              <span class="resource-body">
+                <span class="resource-name">{{ item.name }}</span>
+                <span class="resource-desc">{{ item.description || item.url }}</span>
               </span>
-              <span class="mt-1 line-clamp-2 block text-xs leading-relaxed" style="color: var(--text-2)">
-                {{ item.description || item.url }}
-              </span>
-            </span>
-          </a>
-        </div>
-      </section>
+            </a>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.resource-group {
+  margin-bottom: 2rem;
+}
+
+.resource-group:last-child {
+  margin-bottom: 0;
+}
+</style>

@@ -17,7 +17,7 @@ function handleChange(value: number): void {
 </script>
 
 <template>
-  <div v-if="total > pageSize" class="flex justify-center pt-2">
+  <div v-if="total > pageSize" class="pagination-wrap">
     <el-pagination
       background
       layout="prev, pager, next"

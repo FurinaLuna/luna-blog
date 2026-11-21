@@ -1,131 +1,110 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import SocialLinks from '@/components/common/SocialLinks.vue'
-import { mainNav } from '@/config/nav'
 import { useSiteStore } from '@/stores/site'
 import { formatCopyrightYear } from '@/utils/format'
 
 const site = useSiteStore()
 
 const year = computed(() => formatCopyrightYear(site.config?.startDate))
-const footerText = computed(() => site.config?.footerText || '用文字记录，用代码思考')
+const footerText = computed(() => site.config?.footerText || '')
 const icp = computed(() => site.config?.icp || '')
-const rssUrl = '/rss.xml'
+
+const badges = [
+  { label: 'Vue 3 · 渐进式框架', color: '#41b883', href: 'https://cn.vuejs.org/' },
+  { label: 'Vite · 构建工具', color: '#646cff', href: 'https://cn.vitejs.dev/' },
+  { label: 'Koa · Node.js 框架', color: '#33333d', href: 'https://koajs.com/' },
+  { label: 'MySQL · 数据库', color: '#00758f', href: 'https://www.mysql.com/' },
+  { label: 'Element Plus · 组件库', color: '#409eff', href: 'https://element-plus.org/' },
+  { label: 'Tailwind CSS · 样式方案', color: '#38bdf8', href: 'https://tailwindcss.com/' },
+]
 </script>
 
 <template>
-  <footer class="mt-20 border-t" style="border-color: var(--border); background: var(--bg-soft)">
-    <div class="container-page py-12">
-      <div class="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr]">
-        <div>
-          <div class="flex items-center gap-2.5">
-            <span
-              class="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold"
-              style="background: var(--brand); color: var(--brand-contrast)"
-              aria-hidden="true"
-            >
-              L
-            </span>
-            <span class="text-[15px] font-bold tracking-tight">{{ site.siteName }}</span>
-          </div>
-          <p class="mt-3 max-w-sm text-sm leading-relaxed" style="color: var(--text-2)">
-            {{ site.siteDescription }}
-          </p>
-          <SocialLinks
-            v-if="site.resolvedSocialLinks.length > 0"
-            class="mt-5"
-            :links="site.resolvedSocialLinks"
-          />
-        </div>
-
-        <nav aria-label="页脚导航">
-          <h2 class="text-xs font-semibold uppercase tracking-[0.16em]" style="color: var(--text-2)">
-            导航
-          </h2>
-          <ul class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
-            <li v-for="item in mainNav" :key="item.to">
-              <RouterLink
-                :to="item.to"
-                class="transition-colors hover:text-[var(--brand)]"
-                style="color: var(--text-2)"
-              >
-                {{ item.label }}
-              </RouterLink>
-            </li>
-          </ul>
-        </nav>
-
-        <div>
-          <h2 class="text-xs font-semibold uppercase tracking-[0.16em]" style="color: var(--text-2)">
-            更多
-          </h2>
-          <ul class="mt-4 space-y-2.5 text-sm">
-            <li>
-              <a
-                :href="rssUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors hover:text-[var(--brand)]"
-                style="color: var(--text-2)"
-              >
-                RSS 订阅
-              </a>
-            </li>
-            <li v-if="site.config?.github">
-              <a
-                :href="site.config.github"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors hover:text-[var(--brand)]"
-                style="color: var(--text-2)"
-              >
-                GitHub
-              </a>
-            </li>
-            <li>
-              <RouterLink
-                to="/search"
-                class="transition-colors hover:text-[var(--brand)]"
-                style="color: var(--text-2)"
-              >
-                搜索
-              </RouterLink>
-            </li>
-            <li v-if="site.config?.email">
-              <a
-                :href="`mailto:${site.config.email}`"
-                class="transition-colors hover:text-[var(--brand)]"
-                style="color: var(--text-2)"
-              >
-                邮箱联系
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div
-        class="mt-10 flex flex-col gap-3 border-t pt-6 text-xs sm:flex-row sm:items-center sm:justify-between"
-        style="border-color: var(--border); color: var(--text-2)"
+  <footer class="blog-footer">
+    <p class="footer_line">
+      © {{ year }} {{ site.siteName }}
+      <span v-if="footerText"> · {{ footerText }}</span>
+    </p>
+    <a
+      v-if="icp"
+      class="footer_line footer_link"
+      href="https://beian.miit.gov.cn/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {{ icp }}
+    </a>
+    <div class="footer_badges">
+      <a
+        v-for="badge in badges"
+        :key="badge.label"
+        class="footer_badge"
+        :style="{ background: badge.color }"
+        :href="badge.href"
+        target="_blank"
+        rel="noopener noreferrer"
       >
-        <p>© {{ year }} {{ site.siteName }} · {{ footerText }}</p>
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <a
-            v-if="icp"
-            href="https://beian.miit.gov.cn/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="transition-colors hover:text-[var(--brand)]"
-            style="color: var(--text-2)"
-          >
-            {{ icp }}
-          </a>
-          <span class="inline-flex items-center gap-1.5">
-            <span class="h-1 w-1 rounded-full" style="background: var(--brand)" aria-hidden="true"></span>
-            Vue 3 · Vite · Tailwind CSS
-          </span>
-        </div>
-      </div>
+        {{ badge.label }}
+      </a>
     </div>
   </footer>
 </template>
+
+<style scoped>
+.blog-footer {
+  display: flex;
+  width: 100%;
+  height: 10rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 1rem 10px;
+  text-align: center;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.footer_line {
+  margin: 0;
+}
+
+.footer_link {
+  transition: color 0.3s ease;
+}
+
+.footer_link:hover {
+  color: var(--primary);
+}
+
+.footer_badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.footer_badge {
+  padding: 2px 7px;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  transition: opacity 0.25s ease;
+}
+
+.footer_badge:hover {
+  opacity: 0.85;
+}
+
+@media (max-width: 768px) {
+  .blog-footer {
+    height: 8rem;
+    font-size: 0.85rem;
+  }
+}
+</style>

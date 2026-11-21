@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { ChatLineRound, Refresh } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 import Danmaku from 'vue3-danmaku'
 import 'vue3-danmaku/dist/vue3-danmaku.css'
 import EmptyState from '@/components/common/EmptyState.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import SkeletonList from '@/components/common/SkeletonList.vue'
 import MessageCard from '@/components/message/MessageCard.vue'
@@ -23,7 +24,7 @@ interface MessageForm {
 
 const PAGE_SIZE = 9
 const DANMAKU_PAGE_SIZE = 50
-const COLOR_PALETTE = ['#2f8f83', '#e07a3f', '#4c7bd9', '#a35fd1', '#3f9d68', '#d95f8a']
+const COLOR_PALETTE = ['#49b1f5', '#ff7242', '#4c7bd9', '#a35fd1', '#3f9d68', '#d95f8a']
 
 const mode = ref<ViewMode>('card')
 const messages = ref<Message[]>([])
@@ -135,26 +136,20 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container-page py-10">
-    <header class="border-b pb-6" style="border-color: var(--border)">
-      <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em]" style="color: var(--brand)">
-        <el-icon :size="14"><ChatLineRound /></el-icon>
-        Message
-      </p>
-      <h1 class="mt-2 text-3xl font-bold sm:text-4xl">留言板</h1>
-      <p class="mt-2 text-sm" style="color: var(--text-2)">
-        想说什么都可以留下，{{ formatCompact(total) }} 条留言正在这里发光。
-      </p>
-    </header>
+  <div>
+    <PageHeader
+      title="留言板"
+      :subtitle="`想说什么都可以留下 · ${formatCompact(total)} 条留言正在这里发光`"
+    />
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div class="order-2 lg:order-1">
-        <div class="flex items-center justify-between gap-3">
-          <div class="inline-flex rounded-lg border p-1" style="border-color: var(--border); background: var(--bg-soft)">
+    <div class="center_box">
+      <div class="card message-panel">
+        <div class="message-panel__bar">
+          <div class="mode-tabs">
             <button
               type="button"
-              class="rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-              :style="mode === 'card' ? { background: 'var(--card)', color: 'var(--brand)' } : { color: 'var(--text-2)' }"
+              class="mode-tab"
+              :class="{ 'is-active': mode === 'card' }"
               :aria-pressed="mode === 'card'"
               @click="switchMode('card')"
             >
@@ -162,8 +157,8 @@ onMounted(() => {
             </button>
             <button
               type="button"
-              class="rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-              :style="mode === 'danmaku' ? { background: 'var(--card)', color: 'var(--brand)' } : { color: 'var(--text-2)' }"
+              class="mode-tab"
+              :class="{ 'is-active': mode === 'danmaku' }"
               :aria-pressed="mode === 'danmaku'"
               @click="switchMode('danmaku')"
             >
@@ -171,43 +166,30 @@ onMounted(() => {
             </button>
           </div>
 
-          <button
-            type="button"
-            class="inline-flex items-center gap-1 text-xs transition-colors hover:text-[var(--brand)]"
-            style="color: var(--text-2)"
-            aria-label="刷新留言"
-            @click="loadMessages"
-          >
+          <button type="button" class="message-panel__refresh" aria-label="刷新留言" @click="loadMessages">
             <el-icon :size="13"><Refresh /></el-icon>
             刷新
           </button>
         </div>
 
-        <div v-if="loading" class="mt-5">
-          <SkeletonList variant="card" :count="6" />
-        </div>
+        <SkeletonList v-if="loading" variant="card" :count="6" />
 
         <EmptyState
           v-else-if="messages.length === 0"
-          class="mt-5"
           icon="comment"
           title="还没有留言"
           description="写下第一条吧，让这块板子开始有温度。"
         />
 
         <template v-else>
-          <div v-if="mode === 'danmaku'" class="danmaku-stage mt-5">
-            <Danmaku
-              :danmus="danmakuItems"
-              :speeds="110"
-              :font-size="16"
-              :loop="true"
-              class="h-full w-full"
-            />
-            <p class="danmaku-hint">弹幕仅展示已通过审核的留言</p>
+          <div v-if="mode === 'danmaku'" class="danmaku-stage">
+            <div class="danmaku-layer">
+              <Danmaku :danmus="danmakuItems" :speeds="120" :font-size="20" :loop="true" class="danmaku-layer__inner" />
+            </div>
+            <p class="danmaku-stage__title">弹幕仅展示已通过审核的留言</p>
           </div>
 
-          <div v-else class="mt-5 grid gap-4 sm:grid-cols-2">
+          <div v-else class="message-grid">
             <MessageCard v-for="message in messages" :key="message.id" :message="message" />
           </div>
 
@@ -216,86 +198,164 @@ onMounted(() => {
             :page="page"
             :total="total"
             :page-size="PAGE_SIZE"
-            class="mt-6"
             @update:page="page = $event"
           />
         </template>
       </div>
 
-      <div class="order-1 lg:order-2">
-        <div class="card p-5 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)]">
-          <h2 class="text-base font-bold">写下留言</h2>
-          <p class="mt-1 text-xs" style="color: var(--text-2)">访客免登录，提交后需要等站长审核。</p>
+      <div class="card message-form-card">
+        <h2 class="message-form-card__title">写下留言</h2>
+        <p class="message-form-card__hint">访客免登录，提交后需要等站长审核。</p>
 
-          <el-form
-            ref="formRef"
-            :model="form"
-            :rules="rules"
-            label-position="top"
-            class="mt-4"
-            @submit.prevent="submit"
-          >
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-position="top"
+          class="message-form"
+          @submit.prevent="submit"
+        >
+          <div class="message-form__row">
             <el-form-item label="昵称" prop="nickname">
               <el-input v-model="form.nickname" maxlength="20" placeholder="怎么称呼你" />
             </el-form-item>
 
-            <el-form-item label="留言内容" prop="content">
-              <el-input
-                v-model="form.content"
-                type="textarea"
-                :rows="4"
-                maxlength="200"
-                show-word-limit
-                placeholder="想说的话…"
-                resize="vertical"
-              />
-            </el-form-item>
-
             <el-form-item label="弹幕颜色">
-              <div class="flex flex-wrap items-center gap-2">
+              <div class="message-form__colors">
                 <button
                   v-for="color in COLOR_PALETTE"
                   :key="color"
                   type="button"
-                  class="h-6 w-6 rounded-full border-2 transition-transform"
-                  :style="{
-                    background: color,
-                    borderColor: form.color === color ? 'var(--text)' : 'transparent',
-                    transform: form.color === color ? 'scale(1.12)' : undefined,
-                  }"
+                  class="message-form__color"
+                  :class="{ 'is-active': form.color === color }"
+                  :style="{ background: color }"
                   :aria-label="`选择颜色 ${color}`"
                   :aria-pressed="form.color === color"
                   @click="form.color = color"
                 />
               </div>
             </el-form-item>
+          </div>
 
-            <button type="submit" class="btn btn-primary mt-1 w-full" :disabled="submitting">
-              {{ submitting ? '提交中…' : '提交留言' }}
-            </button>
-          </el-form>
-        </div>
+          <el-form-item label="留言内容" prop="content">
+            <el-input
+              v-model="form.content"
+              type="textarea"
+              :rows="4"
+              maxlength="200"
+              show-word-limit
+              placeholder="想说的话…"
+              resize="vertical"
+            />
+          </el-form-item>
+
+          <button type="submit" class="apply-button message-form__submit" :disabled="submitting">
+            {{ submitting ? '提交中…' : '提交留言' }}
+          </button>
+        </el-form>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.danmaku-stage {
-  position: relative;
-  height: 420px;
-  overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
+.message-panel {
+  padding: 1.6rem clamp(1rem, 3vw, 2rem) 2rem;
 }
 
-.danmaku-hint {
+.message-panel__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.message-panel__refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--meta-color);
+  font-size: 0.82rem;
+  transition: color 0.2s ease;
+}
+
+.message-panel__refresh:hover {
+  color: var(--primary);
+}
+
+.message-form-card {
+  margin-top: 1.2rem;
+  padding: 1.6rem clamp(1rem, 3vw, 2rem) 2rem;
+}
+
+.message-form-card__title {
+  color: var(--font-color);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.message-form-card__hint {
+  margin-top: 0.2rem;
+  color: var(--meta-color);
+  font-size: 0.82rem;
+}
+
+.message-form {
+  margin-top: 0.6rem;
+}
+
+.message-form__row {
+  display: grid;
+  gap: 0 1.2rem;
+}
+
+@media (min-width: 768px) {
+  .message-form__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.message-form :deep(.el-form-item) {
+  margin-bottom: 1rem;
+}
+
+.message-form__colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  height: 32px;
+}
+
+.message-form__color {
+  width: 22px;
+  height: 22px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.message-form__color.is-active {
+  border-color: var(--font-color);
+  transform: scale(1.15);
+}
+
+.message-form__submit {
+  width: 100%;
+  margin-top: 0.2rem;
+}
+
+.danmaku-layer {
   position: absolute;
-  bottom: 8px;
-  left: 12px;
-  font-size: 11px;
-  color: var(--text-2);
-  opacity: 0.7;
+  inset: 0;
+}
+
+.danmaku-layer__inner {
+  width: 100%;
+  height: 100%;
 }
 </style>

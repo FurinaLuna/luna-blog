@@ -10,6 +10,7 @@ import {
   View,
 } from '@element-plus/icons-vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import SocialLinks from '@/components/common/SocialLinks.vue'
 import { useSiteStore } from '@/stores/site'
 import { useThemeStore } from '@/stores/theme'
@@ -45,94 +46,203 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container-page py-10">
-    <header class="border-b pb-8" style="border-color: var(--border)">
-      <p class="text-xs font-semibold uppercase tracking-[0.16em]" style="color: var(--brand)">About</p>
-      <h1 class="mt-2 text-3xl font-bold sm:text-4xl">关于</h1>
-    </header>
+  <div>
+    <PageHeader title="关于" :subtitle="site.siteDescription" />
 
-    <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div class="order-2 min-w-0 lg:order-1">
-        <div v-if="aboutContent" class="md-content card p-6 sm:p-8">
-          <MdPreview
-            id="about-preview"
-            :model-value="aboutContent"
-            :theme="mdTheme"
-            preview-theme="github"
-            code-theme="atom"
-          />
-        </div>
+    <div class="center_box">
+      <div class="about-layout">
+        <div class="about-main">
+          <div v-if="aboutContent" class="card about-card">
+            <MdPreview
+              id="about-preview"
+              :model-value="aboutContent"
+              :theme="mdTheme"
+              preview-theme="github"
+              code-theme="atom"
+            />
+          </div>
 
-        <EmptyState
-          v-else
-          icon="inbox"
-          title="还在写自我介绍"
-          description="可以先看看侧边的站点信息，或者去读几篇文章。"
-        />
-      </div>
-
-      <aside class="order-1 space-y-5 lg:order-2">
-        <div class="card p-6 text-center">
-          <img
-            v-if="site.avatar && !avatarFailed"
-            :src="site.avatar"
-            :alt="`${site.author} 的头像`"
-            class="mx-auto h-24 w-24 rounded-full border object-cover"
-            style="border-color: var(--border)"
-            loading="lazy"
-            @error="avatarFailed = true"
-          />
-          <div
+          <EmptyState
             v-else
-            class="mx-auto grid h-24 w-24 place-items-center rounded-full text-3xl font-bold"
-            style="background: var(--brand); color: var(--brand-contrast)"
-            aria-hidden="true"
-          >
-            {{ site.author.charAt(0) }}
-          </div>
-
-          <h2 class="mt-4 text-xl font-bold">{{ site.author }}</h2>
-          <p class="mt-2 text-sm leading-relaxed" style="color: var(--text-2)">
-            {{ site.siteDescription }}
-          </p>
-
-          <div class="mt-4 flex justify-center">
-            <SocialLinks :links="site.resolvedSocialLinks" />
-          </div>
-
-          <dl class="mt-5 space-y-2 border-t pt-4 text-left text-xs" style="border-color: var(--border)">
-            <div v-if="site.config?.siteKeywords" class="flex gap-2">
-              <dt class="shrink-0" style="color: var(--text-2)">关键词</dt>
-              <dd class="min-w-0 flex-1">{{ site.config.siteKeywords }}</dd>
-            </div>
-            <div v-if="site.config?.startDate" class="flex gap-2">
-              <dt class="shrink-0" style="color: var(--text-2)">记录始于</dt>
-              <dd class="min-w-0 flex-1">{{ formatCopyrightYear(site.config.startDate) }}</dd>
-            </div>
-            <div v-if="site.config?.email" class="flex gap-2">
-              <dt class="shrink-0" style="color: var(--text-2)">邮箱</dt>
-              <dd class="min-w-0 flex-1 break-all">
-                <a :href="`mailto:${site.config.email}`" class="hover:text-[var(--brand)]">{{ site.config.email }}</a>
-              </dd>
-            </div>
-          </dl>
+            icon="inbox"
+            title="还在写自我介绍"
+            description="可以先看看侧边的站点信息，或者去读几篇文章。"
+          />
         </div>
 
-        <div v-if="statItems.length > 0" class="card p-6">
-          <h2 class="text-sm font-bold">站点统计</h2>
-          <div class="mt-4 grid grid-cols-3 gap-3">
-            <div
-              v-for="item in statItems"
-              :key="item.label"
-              class="rounded-lg px-2 py-2.5 text-center"
-              style="background: var(--bg-soft)"
-            >
-              <p class="stat-num text-base font-bold leading-tight">{{ item.value }}</p>
-              <p class="mt-0.5 text-[11px]" style="color: var(--text-2)">{{ item.label }}</p>
+        <aside class="about-side">
+          <div class="card about-profile">
+            <div class="about-profile__avatar">
+              <img
+                v-if="site.avatar && !avatarFailed"
+                :src="site.avatar"
+                :alt="`${site.author} 的头像`"
+                loading="lazy"
+                @error="avatarFailed = true"
+              />
+              <span v-else aria-hidden="true">{{ site.author.charAt(0) }}</span>
+            </div>
+
+            <h2 class="about-profile__name">{{ site.author }}</h2>
+            <p class="about-profile__desc">{{ site.siteDescription }}</p>
+
+            <div class="about-profile__social">
+              <SocialLinks :links="site.resolvedSocialLinks" />
+            </div>
+
+            <ul class="about-meta">
+              <li v-if="site.config?.siteKeywords">
+                <span>关键词</span>
+                <strong>{{ site.config.siteKeywords }}</strong>
+              </li>
+              <li v-if="site.config?.startDate">
+                <span>记录始于</span>
+                <strong>{{ formatCopyrightYear(site.config.startDate) }}</strong>
+              </li>
+              <li v-if="site.config?.email">
+                <span>邮箱</span>
+                <strong><a :href="`mailto:${site.config.email}`">{{ site.config.email }}</a></strong>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="statItems.length > 0" class="card about-stats">
+            <h2 class="about-stats__title">站点统计</h2>
+            <div class="about-stats__grid">
+              <div v-for="item in statItems" :key="item.label" class="about-stats__item">
+                <p class="stat-num">{{ item.value }}</p>
+                <p class="about-stats__label">{{ item.label }}</p>
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.about-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+
+@media (min-width: 992px) {
+  .about-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+.about-main {
+  min-width: 0;
+}
+
+.about-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.about-profile {
+  padding: 1.6rem 1.4rem;
+  text-align: center;
+}
+
+.about-profile__avatar {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--button-linear-gradient);
+  color: #fff;
+  font-size: 1.9rem;
+  font-weight: 700;
+}
+
+.about-profile__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-profile__name {
+  margin-top: 0.8rem;
+  color: var(--font-color);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.about-profile__desc {
+  margin-top: 0.35rem;
+  color: var(--meta-color);
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+
+.about-profile__social {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.8rem;
+}
+
+.about-meta {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.about-meta li {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.22rem 0;
+}
+
+.about-meta span {
+  flex: 0 0 4.4rem;
+  color: var(--meta-color);
+}
+
+.about-meta strong {
+  min-width: 0;
+  color: var(--second-font-color);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.about-stats {
+  padding: 1.2rem 1.2rem 1.4rem;
+}
+
+.about-stats__title {
+  color: var(--font-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.about-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+}
+
+.about-stats__item {
+  padding: 0.5rem 0.2rem;
+  border-radius: 6px;
+  background: var(--bg-soft);
+  text-align: center;
+}
+
+.about-stats__label {
+  margin-top: 0.15rem;
+  color: var(--meta-color);
+  font-size: 0.72rem;
+}
+</style>
