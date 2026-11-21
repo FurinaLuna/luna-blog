@@ -1,0 +1,27 @@
+# Luna Blog API 服务 systemd 单元样例
+# 使用：sudo cp deploy/luna-blog.service /etc/systemd/system/
+#       sudo systemctl daemon-reload && sudo systemctl enable --now luna-blog
+
+[Unit]
+Description=Luna Blog API (Koa)
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/luna-blog/blog-server
+# .env 中不要放 shell 特性；需要额外变量时用 Environment=
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=3
+# 日志走 journalctl -u luna-blog -f
+StandardOutput=journal
+StandardError=journal
+# 上传目录需要可写
+ReadWritePaths=/var/www/luna-blog/blog-server/uploads
+
+[Install]
+WantedBy=multi-user.target
