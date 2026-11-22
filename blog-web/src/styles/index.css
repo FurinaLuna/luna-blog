@@ -3565,3 +3565,50 @@ html.is-danmaku-wall body {
     gap: 1rem 0.75rem;
   }
 }
+
+/* 分类总览：作者站「分类 - N」+ 彩色字号分类云 */
+.category-cloud {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--font-color);
+}
+
+.category-cloud__total {
+  margin-bottom: 1.6rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 2;
+}
+
+.category-cloud__list {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.4rem 1.2rem;
+  flex-wrap: wrap;
+}
+
+.category-cloud__item {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-weight: 700;
+  line-height: 1.6;
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+}
+
+.category-cloud__item:hover {
+  filter: saturate(1.35) brightness(1.05);
+  transform: scale(1.08);
+}
+
+@media (max-width: 768px) {
+  .category-cloud {
+    padding: 2rem 1.2rem;
+  }
+
+  .category-cloud__total {
+    font-size: 1.2rem;
+  }
+}

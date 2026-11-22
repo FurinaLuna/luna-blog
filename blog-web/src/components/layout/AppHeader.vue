@@ -88,7 +88,9 @@ function isActive(to: string): boolean {
   return route.path === to || route.path.startsWith(`${to}/`)
 }
 
-const taxonomyActive = computed(() => route.name === 'category' || route.name === 'tag')
+const taxonomyActive = computed(
+  () => route.name === 'category' || route.name === 'categories' || route.name === 'tag',
+)
 
 function go(path: string): void {
   drawerOpen.value = false
@@ -186,6 +188,7 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
             </button>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="/categories">全部分类</el-dropdown-item>
                 <el-dropdown-item
                   v-for="category in site.categories"
                   :key="category.id"
@@ -273,6 +276,10 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
 
         <div v-if="site.categories.length > 0" class="drawer_sub">
           <div class="drawer_sub_title">分类</div>
+          <button type="button" class="drawer_link" @click="go('/categories')">
+            <el-icon><Collection /></el-icon>
+            <span>全部分类</span>
+          </button>
           <button
             v-for="category in site.categories"
             :key="category.id"
