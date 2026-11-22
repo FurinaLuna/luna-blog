@@ -49,10 +49,10 @@ const palette = computed(() => {
     hash = (hash + (char.codePointAt(0) ?? 0)) % 997
   }
   const variants = [
-    'linear-gradient(135deg, #7ec8f8 0%, #49b1f5 55%, #2f8fd8 100%)',
-    'linear-gradient(135deg, #a4d8fa 0%, #6cbcf7 50%, #3f9ee0 100%)',
-    'linear-gradient(135deg, #9face6 0%, #74c6e8 55%, #49b1f5 100%)',
-    'linear-gradient(135deg, #b7d3ea 0%, #7fb6e2 55%, #4a9fd6 100%)',
+    'var(--cover-grad-1)',
+    'var(--cover-grad-2)',
+    'var(--cover-grad-3)',
+    'var(--cover-grad-4)',
   ]
   return variants[hash % variants.length]
 })
