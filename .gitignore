@@ -41,3 +41,6 @@ coverage/
 .shots/
 .tmp-*/
 *.screenshot.png
+
+# 本地提示词/草稿
+vue3-blog重写提示词.md
