@@ -88,6 +88,12 @@ watch(y, (next) => {
   lastY = next
 })
 
+/** 鼠标移到屏幕顶端就把顶栏叫回来，不必先往上滚动一点 */
+const REVEAL_ZONE = 76
+useEventListener(window, 'mousemove', (event: MouseEvent) => {
+  if (hidden.value && event.clientY <= REVEAL_ZONE) hidden.value = false
+})
+
 function isActive(to: string): boolean {
   if (to === '/') return route.path === '/'
   return route.path === to || route.path.startsWith(`${to}/`)
