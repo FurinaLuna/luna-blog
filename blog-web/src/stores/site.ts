@@ -37,6 +37,12 @@ export const useSiteStore = defineStore('site', () => {
     return fallback
   })
 
+  /** 访问上报接口顺带回的 pv/uv，避免为页脚再请求一次 */
+  function setVisitStats(visit: { pv: number; uv: number }): void {
+    if (!stats.value) return
+    stats.value = { ...stats.value, visit }
+  }
+
   async function loadAll(): Promise<void> {
     const results = await Promise.allSettled([
       getSiteConfig({ silent: true }),
@@ -84,5 +90,6 @@ export const useSiteStore = defineStore('site', () => {
     commentNeedReview,
     ensureLoaded,
     refresh,
+    setVisitStats,
   }
 })

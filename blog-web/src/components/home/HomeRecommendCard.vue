@@ -12,10 +12,10 @@ onMounted(() => {
   void load()
 })
 
-/** 推荐位失败时静默降级：整张卡不渲染 */
+/** 只展示后台勾了「推荐」的文章；没有推荐或接口失败时整张卡不渲染 */
 async function load(): Promise<void> {
   try {
-    const list = await getRecommendArticles(5)
+    const list = await getRecommendArticles(8)
     items.value = list.slice(0, 5)
   } catch {
     items.value = []

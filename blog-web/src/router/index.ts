@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { recordVisit } from '@/api/site'
+import { useSiteStore } from '@/stores/site'
 import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
@@ -88,6 +90,16 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior: (_to, _from, savedPosition) => savedPosition ?? { top: 0 },
+})
+
+/** 每次前台路由切换上报一次浏览，用于统计总访问量 / 总访客数（失败静默） */
+router.afterEach((to) => {
+  void recordVisit(to.fullPath)
+    .then((report) => {
+      /** 接口顺带回最新统计，直接写回 store，页脚立刻能看到自己这次访问 */
+      if (report?.visit) useSiteStore().setVisitStats(report.visit)
+    })
+    .catch(() => undefined)
 })
 
 export default router

@@ -312,6 +312,8 @@ export interface SiteStats {
   message: number
   views: number
   words: number
+  /** 站点访问量：pv=总访问量（页面浏览数），uv=总访客数（去重 IP 数） */
+  visit: { pv: number; uv: number }
 }
 
 /* -------------------------------------------------------------------------- */

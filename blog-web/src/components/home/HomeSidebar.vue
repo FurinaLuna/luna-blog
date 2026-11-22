@@ -19,7 +19,8 @@ function tagTone(id: number): string {
 const infoRows = computed(() => [
   { key: 'article', label: '文章数', value: formatCount(site.stats?.article ?? 0) },
   { key: 'days', label: '运行天数', value: `${daysSince(site.config?.startDate)} 天` },
-  { key: 'views', label: '总阅读量', value: formatCount(site.stats?.views ?? 0) },
+  { key: 'pv', label: '总访问量', value: formatCount(site.stats?.visit?.pv ?? 0) },
+  { key: 'uv', label: '总访客数', value: formatCount(site.stats?.visit?.uv ?? 0) },
   { key: 'comment', label: '评论数', value: formatCount(site.stats?.comment ?? 0) },
 ])
 </script>
