@@ -5,7 +5,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { deleteMessage, getAdminMessages, reviewMessage } from '@/api/messages'
+import { batchMessages, deleteMessage, getAdminMessages, reviewMessage } from '@/api/messages'
 import { formatDateTime } from '@/utils/format'
 import type { MessageItem, ReviewStatus } from '@/api/types'
 
@@ -26,6 +26,7 @@ const query = reactive<MessageFilter>({ status: 'pending', page: 1, pageSize: 10
 const loading = ref(false)
 const rows = ref<MessageItem[]>([])
 const total = ref(0)
+const selected = ref<MessageItem[]>([])
 
 async function load(): Promise<void> {
   loading.value = true
@@ -42,6 +43,36 @@ async function load(): Promise<void> {
     total.value = 0
   } finally {
     loading.value = false
+  }
+}
+
+function onSelectionChange(rows: MessageItem[]): void {
+  selected.value = rows
+}
+
+async function runBatch(action: 'approve' | 'reject' | 'delete'): Promise<void> {
+  const ids = selected.value.map((row) => row.id)
+  if (!ids.length) {
+    ElMessage.warning('请先勾选要操作的留言')
+    return
+  }
+  const label = action === 'approve' ? '通过' : action === 'reject' ? '拒绝' : '删除'
+  try {
+    await ElMessageBox.confirm(`确定${label}选中的 ${ids.length} 条留言吗？`, `批量${label}`, {
+      confirmButtonText: label,
+      cancelButtonText: '取消',
+      type: action === 'approve' ? 'info' : 'warning',
+    })
+  } catch {
+    return
+  }
+  try {
+    const result = await batchMessages(ids, action)
+    ElMessage.success(`已${label} ${result.affected} 条留言`)
+    selected.value = []
+    await load()
+  } catch {
+    // 请求层已提示
   }
 }
 
@@ -114,11 +145,17 @@ onMounted(load)
         <el-tabs :model-value="query.status" class="min-w-0 flex-1" @tab-change="onTabChange">
           <el-tab-pane v-for="tab in TABS" :key="tab.value || 'all'" :label="tab.label" :name="tab.value" />
         </el-tabs>
-        <span class="text-[12px] text-[var(--text-3)]">共 {{ total }} 条</span>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[12px] text-[var(--text-3)]">共 {{ total }} 条</span>
+          <el-button type="success" plain :disabled="selected.length === 0" @click="runBatch('approve')">批量通过</el-button>
+          <el-button type="warning" plain :disabled="selected.length === 0" @click="runBatch('reject')">批量拒绝</el-button>
+          <el-button type="danger" plain :disabled="selected.length === 0" @click="runBatch('delete')">批量删除</el-button>
+        </div>
       </div>
 
       <div class="table-flex">
-        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%">
+        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%" @selection-change="onSelectionChange">
+          <el-table-column type="selection" width="44" align="center" />
           <el-table-column label="留言内容" min-width="320">
             <template #default="{ row }">
               <p class="clamp-2 py-1 text-[13px] leading-5 text-[var(--text)]">{{ row.content }}</p>

@@ -5,7 +5,7 @@ import { ChatLineRound, Refresh, Search } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { deleteComment, getAdminComments, replyComment, reviewComment } from '@/api/comments'
+import { batchComments, deleteComment, getAdminComments, replyComment, reviewComment } from '@/api/comments'
 import { formatDateTime } from '@/utils/format'
 import type { Comment, CommentTargetType, ReviewStatus } from '@/api/types'
 
@@ -39,6 +39,7 @@ const replyVisible = ref(false)
 const replyTarget = ref<Comment | null>(null)
 const replyContent = ref('')
 const replying = ref(false)
+const selected = ref<Comment[]>([])
 
 const hasRows = computed(() => rows.value.length > 0)
 
@@ -64,6 +65,38 @@ async function load(): Promise<void> {
     total.value = 0
   } finally {
     loading.value = false
+  }
+}
+
+function onSelectionChange(rows: Comment[]): void {
+  selected.value = rows
+}
+
+async function runBatch(action: 'approve' | 'reject' | 'delete'): Promise<void> {
+  const ids = selected.value.map((row) => row.id)
+  if (!ids.length) {
+    ElMessage.warning('请先勾选要操作的评论')
+    return
+  }
+  const label = action === 'approve' ? '通过' : action === 'reject' ? '拒绝' : '删除'
+  try {
+    await ElMessageBox.confirm(
+      action === 'delete'
+        ? `将删除选中的 ${ids.length} 条评论（含其下回复），删除后无法恢复，确定继续吗？`
+        : `确定${label}选中的 ${ids.length} 条评论吗？`,
+      `批量${label}`,
+      { confirmButtonText: label, cancelButtonText: '取消', type: action === 'approve' ? 'info' : 'warning' },
+    )
+  } catch {
+    return
+  }
+  try {
+    const result = await batchComments(ids, action)
+    ElMessage.success(`已${label} ${result.affected} 条评论`)
+    selected.value = []
+    await load()
+  } catch {
+    // 请求层已提示
   }
 }
 
@@ -194,11 +227,15 @@ onMounted(load)
           />
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
+          <el-button type="success" plain :disabled="selected.length === 0" @click="runBatch('approve')">批量通过</el-button>
+          <el-button type="warning" plain :disabled="selected.length === 0" @click="runBatch('reject')">批量拒绝</el-button>
+          <el-button type="danger" plain :disabled="selected.length === 0" @click="runBatch('delete')">批量删除</el-button>
         </div>
       </div>
 
       <div class="table-flex">
-        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%">
+        <el-table v-loading="loading" :data="rows" row-key="id" height="100%" border style="width: 100%" @selection-change="onSelectionChange">
+          <el-table-column type="selection" width="44" align="center" />
           <el-table-column label="评论内容" min-width="300">
             <template #default="{ row }">
               <div class="py-1">

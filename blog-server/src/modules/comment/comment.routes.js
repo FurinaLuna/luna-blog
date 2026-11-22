@@ -10,6 +10,7 @@ export function registerCommentRoutes(router) {
   router.post('/api/comments/:id/like', controller.handleLike)
 
   router.get('/api/admin/comments', adminAuth, controller.handleAdminList)
+  router.post('/api/admin/comments/batch', adminAuth, controller.handleBatch)
   router.patch('/api/admin/comments/:id/review', adminAuth, controller.handleReview)
   router.post('/api/admin/comments/:id/reply', adminAuth, controller.handleReply)
   router.delete('/api/admin/comments/:id', adminAuth, controller.handleDelete)

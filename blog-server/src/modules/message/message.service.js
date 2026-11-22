@@ -5,6 +5,7 @@ import { escapeHtml, randomDanmakuColor } from '../../core/text.js'
 import { findSensitiveWord } from '../../config/sensitive-words.js'
 import { clearLikes, likeTarget } from '../like/like.service.js'
 import { createNotification } from '../notification/notification.service.js'
+import { getSiteConfig } from '../site/site-config.service.js'
 
 /**
  * 前台留言（弹幕）序列化：隐藏 IP 与审核状态。
@@ -73,11 +74,16 @@ export async function createMessage(input, ip) {
   const content = escapeHtml(input.content)
   if (content.length > 500) throw badRequest('留言内容过长，请精简后再提交')
 
+  /** 站点配置里关掉「留言需要审核」后，新留言直接公开（仍会通知站长） */
+  const config = await getSiteConfig()
+  const needReview = config.messageNeedReview !== false
+  const status = needReview ? 'pending' : 'approved'
+
   const message = await Message.create({
     nickname: input.nickname,
     content,
     color: input.color ?? randomDanmakuColor(),
-    status: 'pending',
+    status,
     ip,
   })
 
@@ -89,7 +95,7 @@ export async function createMessage(input, ip) {
     targetId: message.id,
   })
 
-  return { id: message.id, status: 'pending' }
+  return { id: message.id, status }
 }
 
 /**
@@ -142,4 +148,26 @@ export async function deleteMessage(id) {
  */
 export function likeMessage(id, ip) {
   return likeTarget({ Model: Message, targetType: 'message', targetId: id, ip })
+}
+
+/**
+ * 批量审核 / 删除留言：单条失败（比如已被删除）跳过，不中断整批。
+ * @param {number[]} ids
+ * @param {'approve'|'reject'|'delete'} action
+ */
+export async function batchMessages(ids, action) {
+  let affected = 0
+  for (const id of ids) {
+    try {
+      if (action === 'delete') {
+        await deleteMessage(id)
+      } else {
+        await reviewMessage(id, action === 'approve' ? 'approved' : 'rejected')
+      }
+      affected += 1
+    } catch {
+      /** 跳过：该条可能刚被删除 */
+    }
+  }
+  return { affected, requested: ids.length }
 }

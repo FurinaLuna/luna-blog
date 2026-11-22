@@ -67,6 +67,7 @@ const form = reactive<SiteConfig>({
   startDate: '',
   socialLinks: [],
   commentNeedReview: true,
+  messageNeedReview: true,
   pageBanners: { ...EMPTY_PAGE_BANNERS },
 })
 
@@ -94,6 +95,7 @@ function fillForm(data: SiteConfig): void {
     ? data.socialLinks.map((link) => ({ name: link.name ?? '', url: link.url ?? '', icon: link.icon ?? '' }))
     : []
   form.commentNeedReview = data.commentNeedReview !== false
+  form.messageNeedReview = data.messageNeedReview !== false
   form.pageBanners = normalizeBanners(data.pageBanners)
 }
 
@@ -183,6 +185,7 @@ async function save(): Promise<void> {
 
       socialLinks: normalizeLinks(),
       commentNeedReview: form.commentNeedReview,
+      messageNeedReview: form.messageNeedReview,
       pageBanners: collectBanners(),
     })
     ElMessage.success('站点配置已保存')
@@ -248,7 +251,11 @@ onMounted(load)
               </el-form-item>
               <el-form-item label="评论需要审核">
                 <el-switch v-model="form.commentNeedReview" />
-                <span class="ml-3 text-[12px] text-[var(--text-3)]">开启后前台新评论会进入待审核列表</span>
+                <span class="ml-3 text-[12px] text-[var(--text-3)]">开启后新评论进入待审核列表，关闭则提交后直接公开</span>
+              </el-form-item>
+              <el-form-item label="留言需要审核">
+                <el-switch v-model="form.messageNeedReview" />
+                <span class="ml-3 text-[12px] text-[var(--text-3)]">开启后新留言进入待审核列表，关闭则提交后直接公开</span>
               </el-form-item>
             </el-form>
           </div>

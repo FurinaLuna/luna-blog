@@ -12,3 +12,15 @@ export function reviewMessage(id: number, status: ReviewStatus): Promise<Message
 export function deleteMessage(id: number): Promise<void> {
   return http.delete<void>(`/admin/messages/${id}`)
 }
+
+export type MessageBatchAction = 'approve' | 'reject' | 'delete'
+
+export interface MessageBatchResult {
+  affected: number
+  requested: number
+}
+
+/** 批量通过 / 拒绝 / 删除留言 */
+export function batchMessages(ids: number[], action: MessageBatchAction): Promise<MessageBatchResult> {
+  return http.post<MessageBatchResult>('/admin/messages/batch', { ids, action })
+}

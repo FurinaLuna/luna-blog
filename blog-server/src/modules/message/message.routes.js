@@ -13,6 +13,7 @@ export function registerMessageRoutes(router) {
 
   // 管理接口
   router.get('/api/admin/messages', adminAuth, controller.handleAdminList)
+  router.post('/api/admin/messages/batch', adminAuth, controller.handleBatch)
   router.patch('/api/admin/messages/:id/review', adminAuth, controller.handleReview)
   router.delete('/api/admin/messages/:id', adminAuth, controller.handleDelete)
 }

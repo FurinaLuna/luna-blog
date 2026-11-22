@@ -5,6 +5,7 @@ import { findSensitiveWord } from '../../config/sensitive-words.js'
 import { excerpt } from '../../core/text.js'
 import { likeTarget } from '../like/like.service.js'
 import { createNotification } from '../notification/notification.service.js'
+import { getSiteConfig } from '../site/site-config.service.js'
 import * as repo from './comment.repository.js'
 
 /**
@@ -91,6 +92,11 @@ export async function createVisitorComment(input, meta) {
   const sensitive = findSensitiveWord(input.content)
   if (sensitive) throw badRequest('内容包含敏感词，请修改后再提交')
 
+  /** 站点配置里关掉「评论需要审核」后，新评论直接公开（仍会通知站长） */
+  const config = await getSiteConfig()
+  const needReview = config.commentNeedReview !== false
+  const status = needReview ? 'pending' : 'approved'
+
   const comment = await Comment.create({
     targetType: input.targetType,
     articleId: input.targetType === 'article' ? input.articleId : null,
@@ -101,9 +107,11 @@ export async function createVisitorComment(input, meta) {
     website: input.website ?? '',
     content: input.content,
     isAdmin: false,
-    status: 'pending',
+    status,
     ip: meta.ip,
   })
+
+  if (!needReview) await adjustTargetCommentCount(comment, 1)
 
   const targetLabel = input.targetType === 'article' ? `《${target.title}》` : '说说'
   await createNotification({
@@ -114,7 +122,7 @@ export async function createVisitorComment(input, meta) {
     targetId: comment.id,
   })
 
-  return { id: comment.id, status: 'pending' }
+  return { id: comment.id, status }
 }
 
 /**
@@ -222,4 +230,26 @@ export async function listAdminComments(params) {
 /** 点赞评论 */
 export function likeComment(id, ip) {
   return likeTarget({ Model: Comment, targetType: 'comment', targetId: id, ip })
+}
+
+/**
+ * 批量审核 / 删除评论：单条失败（比如已被删掉）跳过，不中断整批。
+ * @param {number[]} ids
+ * @param {'approve'|'reject'|'delete'} action
+ */
+export async function batchComments(ids, action) {
+  let affected = 0
+  for (const id of ids) {
+    try {
+      if (action === 'delete') {
+        await deleteComment(id)
+      } else {
+        await reviewComment(id, action === 'approve' ? 'approved' : 'rejected')
+      }
+      affected += 1
+    } catch {
+      /** 跳过：该条可能刚被删除 */
+    }
+  }
+  return { affected, requested: ids.length }
 }

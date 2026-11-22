@@ -16,3 +16,15 @@ export function replyComment(id: number, content: string): Promise<Comment> {
 export function deleteComment(id: number): Promise<void> {
   return http.delete<void>(`/admin/comments/${id}`)
 }
+
+export type BatchAction = 'approve' | 'reject' | 'delete'
+
+export interface BatchResult {
+  affected: number
+  requested: number
+}
+
+/** 批量通过 / 拒绝 / 删除评论 */
+export function batchComments(ids: number[], action: BatchAction): Promise<BatchResult> {
+  return http.post<BatchResult>('/admin/comments/batch', { ids, action })
+}

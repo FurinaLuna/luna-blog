@@ -48,7 +48,7 @@ export async function handleCreate(ctx) {
   const payload = parseInput(createSchema, ctx.request.body)
   const result = await service.createMessage(payload, clientIp(ctx))
 
-  ok(ctx, result, '留言已提交，审核通过后展示')
+  ok(ctx, result, result.status === 'approved' ? '留言已发布' : '留言已提交，审核通过后展示')
 }
 
 /**
@@ -89,4 +89,20 @@ export async function handleDelete(ctx) {
   await service.deleteMessage(parseId(ctx.params.id))
 
   ok(ctx, null, '留言已删除')
+}
+
+const batchSchema = z.object({
+  ids: z.array(z.coerce.number().int().positive()).min(1, '请选择要操作的留言').max(200, '一次最多 200 条'),
+  action: z.enum(['approve', 'reject', 'delete']),
+})
+
+/**
+ * POST /api/admin/messages/batch —— 批量通过 / 拒绝 / 删除
+ */
+export async function handleBatch(ctx) {
+  const { ids, action } = parseInput(batchSchema, ctx.request.body)
+  const result = await service.batchMessages(ids, action)
+  const label = action === 'approve' ? '已通过' : action === 'reject' ? '已拒绝' : '已删除'
+
+  ok(ctx, result, `${label} ${result.affected} 条留言`)
 }

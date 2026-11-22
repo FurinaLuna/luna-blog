@@ -20,6 +20,7 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   startDate: '2024-01-01',
   socialLinks: [],
   commentNeedReview: true,
+  messageNeedReview: true,
   // 每个页面的横幅图（空字符串 = 使用内置天空渐变默认横幅）
   pageBanners: {
     home: '',
@@ -61,6 +62,7 @@ export const siteConfigSchema = z.object({
   startDate: z.string().trim().max(20).optional(),
   socialLinks: z.array(socialLinkSchema).max(16).optional(),
   commentNeedReview: z.boolean().optional(),
+  messageNeedReview: z.boolean().optional(),
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
 })
 

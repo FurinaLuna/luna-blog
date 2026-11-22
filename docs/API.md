@@ -120,6 +120,7 @@
 | PATCH | `/api/admin/comments/:id/review` | A! | body `{status:'approved'\|'rejected'}` |
 | POST | `/api/admin/comments/:id/reply` | A! | body `{content}`；以管理员身份创建子评论，直接 approved |
 | DELETE | `/api/admin/comments/:id` | A! | 级联删除子回复 |
+| POST | `/api/admin/comments/batch` | A! | body `{ids:number[], action:'approve'\|'reject'\|'delete'}`，单次最多 200 条，返回 `{affected,requested}` |
 
 限频：同 IP 每 60 秒最多 1 条；同 IP 每小时 10 条；同邮箱每小时 5 条 → 超限 `429`「评论太频繁，请稍后再试」。邮箱必须合法，`email` 前台展示时脱敏为 `ab***@xx.com`。内容含敏感词 → `400`「内容包含敏感词，请修改后再提交」。正文服务端转义 HTML（`<>&"'`），前端按纯文本渲染。
 
@@ -152,6 +153,7 @@
 | GET | `/api/admin/messages` | A | `status` 过滤 |
 | PATCH | `/api/admin/messages/:id/review` | A! | `{status}` |
 | DELETE | `/api/admin/messages/:id` | A! | |
+| POST | `/api/admin/messages/batch` | A! | body `{ids:number[], action:'approve'\|'reject'\|'delete'}`，单次最多 200 条，返回 `{affected,requested}` |
 | POST | `/api/messages/:id/like` | — | 按 IP 去重 |
 
 ### 5.9 资源导航
@@ -184,7 +186,7 @@
 | GET | `/api/site-stats` | — | `{article, category, tag, comment, talk, photo, message, views, words, visit:{pv,uv}}`；`views`=文章阅读数之和，`visit.pv`=页面浏览总数，`visit.uv`=去重访客数 |
 | POST | `/api/visit` | — | 前台每次路由切换上报 `{path, referer?}`；按 IP 哈希去重统计 UV，限频 60 次/分/IP；返回 `{recorded:true}` |
 
-配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon}], commentNeedReview(true), pageBanners(13 个页面键 → 横幅图 URL)
+配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon}], commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), pageBanners(13 个页面键 → 横幅图 URL)
 
 `pageBanners` 为页面横幅图映射（值是图片 URL，最长 500，空字符串表示使用内置天空渐变横幅）：
 `{ home, archives, category, tag, article, talks, albums, album, resources, friends, message, about, search }`。

@@ -349,6 +349,7 @@ export interface SiteConfig {
   startDate: string
   socialLinks: SocialLink[]
   commentNeedReview: boolean
+  messageNeedReview: boolean
   pageBanners: PageBanners
 }
 
