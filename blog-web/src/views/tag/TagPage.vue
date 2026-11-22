@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery } from '@pinia/colada'
-import ArticleCard from '@/components/article/ArticleCard.vue'
+import ArticleTile from '@/components/article/ArticleTile.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import Pagination from '@/components/common/Pagination.vue'
@@ -10,7 +10,7 @@ import SkeletonList from '@/components/common/SkeletonList.vue'
 import { getArticles } from '@/api/article'
 import { useSiteStore } from '@/stores/site'
 
-const PAGE_SIZE = 9
+const PAGE_SIZE = 4
 
 const route = useRoute()
 const site = useSiteStore()
@@ -20,12 +20,7 @@ const page = ref(1)
 
 const tag = computed(() => site.tags.find((item) => item.id === tagId.value) ?? null)
 
-const {
-  data,
-  isLoading,
-  error,
-  refetch,
-} = useQuery({
+const { data, isLoading, error, refetch } = useQuery({
   key: () => ['articles-tag', tagId.value, page.value],
   query: () => getArticles({ tagId: tagId.value, page: page.value, pageSize: PAGE_SIZE }),
   staleTime: 60_000,
@@ -49,26 +44,33 @@ watch(tagId, () => {
     <PageHeader :title="title" :subtitle="subtitle" />
 
     <div class="center_box">
-      <SkeletonList v-if="isLoading" variant="card" :count="6" />
+      <div class="card article-list-panel">
+        <div class="article-list-panel__head">
+          <span class="article-list-panel__type">标签 - {{ tag?.name ?? '…' }}</span>
+          <span class="article-list-panel__total">文章总数：{{ total }}</span>
+        </div>
 
-      <EmptyState
-        v-else-if="error && list.length === 0"
-        icon="error"
-        title="标签文章加载失败"
-        description="请稍后重试。"
-        action-text="重新加载"
-        @action="refetch"
-      />
+        <SkeletonList v-if="isLoading" variant="card" :count="4" />
 
-      <EmptyState
-        v-else-if="list.length === 0"
-        icon="inbox"
-        title="这个标签下还没有文章"
-        description="试试其他标签吧。"
-      />
+        <EmptyState
+          v-else-if="error && list.length === 0"
+          icon="error"
+          title="标签文章加载失败"
+          description="请稍后重试。"
+          action-text="重新加载"
+          @action="refetch"
+        />
 
-      <div v-else class="post-grid">
-        <ArticleCard v-for="item in list" :key="item.id" :article="item" />
+        <EmptyState
+          v-else-if="list.length === 0"
+          icon="inbox"
+          title="这个标签下还没有文章"
+          description="试试其他标签吧。"
+        />
+
+        <div v-else class="article-tile-grid">
+          <ArticleTile v-for="item in list" :key="item.id" :article="item" />
+        </div>
       </div>
 
       <Pagination
