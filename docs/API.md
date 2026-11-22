@@ -183,7 +183,11 @@
 | PUT | `/api/admin/site-config` | A! | body 为部分对象，按 key 合并保存 |
 | GET | `/api/site-stats` | — | `{article, category, tag, comment, talk, photo, message, views, words}` |
 
-配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon}], commentNeedReview(true)`。
+配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon}], commentNeedReview(true), pageBanners`。
+
+`pageBanners` 为页面横幅图映射（值是图片 URL，最长 500，空字符串表示使用内置天空渐变横幅）：
+`{ home, archives, category, tag, article, talks, albums, album, resources, friends, message, about, search }`。
+后端读取时与缺省对象做浅合并，因此只 PUT 其中几个 key 不会把其它页面冲成空。
 
 ### 5.12 通知
 
