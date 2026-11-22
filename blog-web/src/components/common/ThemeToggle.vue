@@ -92,15 +92,6 @@ function handleCommand(command: unknown): void {
   color: #6f7fa8;
 }
 
-:global(.header_box.is-solid) .theme-switch {
-  background: var(--bg-soft);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-:global(.header_box.is-solid) .theme-switch__knob {
-  background: var(--card-bg);
-}
-
 .theme-option {
   display: flex;
   width: 100%;

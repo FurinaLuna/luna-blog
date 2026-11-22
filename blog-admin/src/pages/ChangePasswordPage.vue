@@ -239,8 +239,4 @@ async function handleSubmit(): Promise<void> {
 .password-theme:hover {
   color: var(--el-color-primary);
 }
-
-:global(html.dark) .password-wave {
-  opacity: 0.16;
-}
 </style>

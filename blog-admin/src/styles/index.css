@@ -1450,3 +1450,23 @@ html.dark .login-marketing__tip {
   color: var(--text-2);
 }
 
+
+/* 修改密码页：暗色下压暗背景图，整页底色跟随暗色主题
+   注意：这类「祖先在组件外」的规则必须写在全局样式里——
+   scoped 样式中的 :global(html.dark) .x 会被编译成 html.dark {…}，把样式打到 <html> 上。 */
+
+html.dark .password-page {
+  background-color: #020409;
+}
+
+html.dark .password-wave {
+  opacity: 0.16;
+}
+
+html.dark .password-box {
+  border: 1px solid rgb(255 255 255 / 8%);
+}
+
+html.dark .password-head h1 {
+  color: var(--text);
+}
