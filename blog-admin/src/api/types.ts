@@ -313,6 +313,25 @@ export interface SocialLink {
   icon: string
 }
 
+/** 前台页面横幅的固定键（与后端 pageBanners 对象的键一致） */
+export type PageBannerKey =
+  | 'home'
+  | 'archives'
+  | 'category'
+  | 'tag'
+  | 'article'
+  | 'talks'
+  | 'albums'
+  | 'album'
+  | 'resources'
+  | 'friends'
+  | 'message'
+  | 'about'
+  | 'search'
+
+/** 每个页面对应的横幅图 URL，空字符串表示使用内置默认横幅 */
+export type PageBanners = Record<PageBannerKey, string>
+
 export interface SiteConfig {
   siteName: string
   siteDescription: string
@@ -330,6 +349,7 @@ export interface SiteConfig {
   startDate: string
   socialLinks: SocialLink[]
   commentNeedReview: boolean
+  pageBanners: PageBanners
 }
 
 /* ------------------------------- 通知 ------------------------------- */
