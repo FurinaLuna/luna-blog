@@ -15,8 +15,10 @@ const props = withDefaults(
     subtitle?: string
     /** 覆盖自动推导的横幅配置键（默认按首段路由推导） */
     bannerKey?: string
+    /** 更高的 banner 且标题上移，给压在卡片上的圆形头像留位置（关于页） */
+    tall?: boolean
   }>(),
-  { title: '', subtitle: '', bannerKey: '' },
+  { title: '', subtitle: '', bannerKey: '', tall: false },
 )
 
 const route = useRoute()
@@ -60,7 +62,11 @@ const bannerStyle = computed(() =>
 </script>
 
 <template>
-  <header class="page-header" :class="{ 'page-header--custom': !!bannerUrl }" :style="bannerStyle">
+  <header
+    class="page-header"
+    :class="{ 'page-header--custom': !!bannerUrl, 'page-header--tall': tall }"
+    :style="bannerStyle"
+  >
     <div v-if="!bannerUrl" class="page-header__sky" aria-hidden="true"></div>
     <div v-if="!bannerUrl" class="page-header__clouds" aria-hidden="true"></div>
 
@@ -77,6 +83,15 @@ const bannerStyle = computed(() =>
 </template>
 
 <style scoped>
+/* 关于页：banner 加高、标题整体上移，避免被压在卡片上的头像盖住 */
+.page-header--tall {
+  height: 26rem;
+}
+
+.page-header--tall .route-font {
+  margin-bottom: 4.5rem;
+}
+
 .page-header__subtitle {
   margin-top: 0.2rem;
   color: rgba(255, 255, 255, 0.75);

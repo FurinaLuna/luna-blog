@@ -42,7 +42,7 @@ onMounted(() => {
 
 <template>
   <div>
-    <PageHeader title="关于" :subtitle="site.siteDescription" />
+    <PageHeader title="关于" :subtitle="site.siteDescription" tall />
 
     <div class="center_box about-wrap">
       <div class="card about-card">
@@ -103,7 +103,7 @@ onMounted(() => {
   max-width: 860px;
   margin: -4.5rem auto 0;
   padding: 0 2rem 2rem;
-  overflow: hidden;
+  /* 不要 overflow:hidden——头像要靠负 margin 挂在卡片上边、并探进 banner */
 }
 
 .about-hero {
@@ -116,7 +116,9 @@ onMounted(() => {
   place-items: center;
   width: 8.5rem;
   height: 8.5rem;
-  margin: -4.25rem auto 0;
+  position: relative;
+  top: -4.25rem;
+  margin: 0 auto -4.25rem;
   overflow: hidden;
   border: 4px solid var(--card-bg, #fff);
   border-radius: 50%;
@@ -194,7 +196,8 @@ onMounted(() => {
   .about-avatar {
     width: 6.6rem;
     height: 6.6rem;
-    margin-top: -3.3rem;
+    top: -3.3rem;
+    margin: 0 auto -3.3rem;
     font-size: 2rem;
   }
 
