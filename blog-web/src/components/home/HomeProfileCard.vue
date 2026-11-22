@@ -73,6 +73,13 @@ const ctaLink = computed<CtaLink | null>(() => {
 const restSocialLinks = computed(() =>
   socialLinks.value.filter((link) => link.url !== ctaLink.value?.url),
 )
+
+/** 侧栏窄，最多铺 6 个图标，其余折叠成「+N」链到关于页 */
+const MAX_SOCIALS = 5
+const visibleSocials = computed(() => restSocialLinks.value.slice(0, MAX_SOCIALS))
+const hiddenSocialCount = computed(() =>
+  Math.max(0, restSocialLinks.value.length - visibleSocials.value.length),
+)
 </script>
 
 <template>
@@ -124,7 +131,15 @@ const restSocialLinks = computed(() =>
     <RouterLink v-else to="/about" class="home-profile__cta">关于我</RouterLink>
 
     <div v-if="restSocialLinks.length > 0" class="home-profile__socials">
-      <SocialLinks :links="restSocialLinks" size="md" />
+      <SocialLinks :links="visibleSocials" />
+      <RouterLink
+        v-if="hiddenSocialCount > 0"
+        to="/about"
+        class="home-profile__social-more"
+        :title="`还有 ${hiddenSocialCount} 个链接`"
+      >
+        +{{ hiddenSocialCount }}
+      </RouterLink>
     </div>
   </section>
 </template>

@@ -58,7 +58,7 @@ export const siteConfigSchema = z.object({
   footerText: z.string().trim().max(200).optional(),
   icp: z.string().trim().max(100).optional(),
   startDate: z.string().trim().max(20).optional(),
-  socialLinks: z.array(socialLinkSchema).max(10).optional(),
+  socialLinks: z.array(socialLinkSchema).max(16).optional(),
   commentNeedReview: z.boolean().optional(),
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
 })
