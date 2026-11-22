@@ -149,6 +149,7 @@ function closeCatalog(): void {
                   :theme="mdTheme"
                   preview-theme="github"
                   code-theme="atom"
+                  :code-foldable="false"
                 />
               </div>
 

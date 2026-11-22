@@ -80,6 +80,7 @@ onMounted(() => {
             :theme="mdTheme"
             preview-theme="github"
             code-theme="atom"
+            :code-foldable="false"
           />
         </div>
 

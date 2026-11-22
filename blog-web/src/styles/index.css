@@ -97,6 +97,14 @@
   --accent-soft: #fdeceb;
   --shadow: var(--card-box-shadow);
   --header-h: 3.6rem;
+
+  /* 代码块（浅色） */
+  --code-bg: #f6f8fa;
+  --code-head-bg: #eceff4;
+  --code-border: #e2e7ef;
+  --code-fg: #2b3038;
+  --code-ln: #96a1b0;
+  --code-chip-bg: rgb(15 23 42 / 6%);
 }
 
 html.dark {
@@ -123,6 +131,14 @@ html.dark {
   --wave-two-color: rgba(31, 31, 31, 0.5);
   --wave-three-color: rgba(31, 31, 31, 0.3);
   --wave-four-color: rgba(31, 31, 31, 1);
+
+  /* 代码块（暗色） */
+  --code-bg: #171b22;
+  --code-head-bg: #1f242d;
+  --code-border: #2a3040;
+  --code-fg: #d7dde7;
+  --code-ln: #5f6b7d;
+  --code-chip-bg: rgb(255 255 255 / 8%);
   --card-box-shadow: 0 1px 20px -8px rgba(0, 0, 0, 0.6), 0 0.5rem 1rem rgba(0, 0, 0, 0.45);
   --card-hover-box-shadow: 0 3px 6px 3px rgba(0, 0, 0, 0.55);
   --brand-soft: rgba(73, 177, 245, 0.16);
@@ -2021,6 +2037,164 @@ html.dark .home-tag--5 {
   background: transparent;
   color: inherit;
   font-size: 0.88rem;
+}
+
+/* ---- Markdown 代码块：头部与代码区合成一张卡片 ---- */
+.md-content .md-editor-code {
+  margin: 1.4em 0;
+  overflow: hidden;
+  border: 1px solid var(--code-border);
+  border-radius: 10px;
+  background: var(--code-bg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+.md-content .md-editor-code-head {
+  display: flex !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+  height: 2.5rem !important;
+  padding: 0 0.75rem !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--code-border) !important;
+  border-radius: 0 !important;
+  background: var(--code-head-bg) !important;
+  color: var(--text-2) !important;
+  list-style: none !important;
+  cursor: pointer;
+}
+
+/* 让头部三块（圆点 / 语言 / 复制与折叠）在同一行里按 GitHub 式排布 */
+.md-content .md-editor-code-action {
+  display: contents !important;
+}
+
+.md-content .md-editor-code-flag {
+  order: 1;
+}
+
+.md-content .md-editor-code-lang {
+  order: 2;
+  margin-left: 0.3rem;
+}
+
+.md-content .md-editor-copy-button {
+  order: 3;
+  margin-left: auto;
+}
+
+.md-content .md-editor-collapse-tips {
+  order: 4;
+}
+
+.md-content .md-editor-code-head::-webkit-details-marker {
+  display: none;
+}
+
+.md-content .md-editor-code-flag {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  width: auto;
+  margin: 0;
+}
+
+.md-content .md-editor-code-flag span {
+  width: 0.68rem;
+  height: 0.68rem;
+  border-radius: 50%;
+}
+
+.md-content .md-editor-code-action {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  height: 100%;
+}
+
+.md-content .md-editor-code-lang {
+  color: var(--code-ln) !important;
+  font-family: var(--font-mono);
+  font-size: 0.72rem !important;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.md-content .md-editor-code-lang:empty {
+  display: none;
+}
+
+.md-content .md-editor-copy-button {
+  padding: 0.15rem 0.55rem !important;
+  border-radius: 6px;
+  background: var(--code-chip-bg);
+  color: var(--text-2) !important;
+  font-size: 0.76rem !important;
+  line-height: 1.6;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.md-content .md-editor-copy-button:hover {
+  background: var(--code-chip-bg);
+  color: var(--primary);
+}
+
+.md-content .md-editor-collapse-tips {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.md-content .md-editor-code-head:hover .md-editor-collapse-tips {
+  opacity: 0.85;
+}
+
+.md-content .md-editor-collapse-tips svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.md-content .md-editor-code pre {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: auto;
+}
+
+.md-content .md-editor-code pre code {
+  display: block;
+  padding: 0.95rem 1.05rem;
+  background: transparent;
+  color: var(--code-fg);
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  line-height: 1.72;
+}
+
+/* 行号：右侧留白 + 等宽数字，与代码之间不画分割线 */
+.md-content .md-editor-code-block-lines {
+  display: block;
+  min-width: max-content;
+}
+
+.md-content .md-editor-code-line {
+  align-items: baseline;
+}
+
+.md-content [rn-wrapper] {
+  padding-right: 1rem;
+  color: var(--code-ln) !important;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  user-select: none;
+  opacity: 0.85;
+}
+
+.md-content .md-editor-code-line-content {
+  white-space: pre;
 }
 
 .article-copyright {
