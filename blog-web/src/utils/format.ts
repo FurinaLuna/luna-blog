@@ -47,6 +47,14 @@ export function formatCount(value: number): string {
   return Number.isFinite(value) ? value.toLocaleString('zh-CN') : '0'
 }
 
+/** 从起始日到今天经过的天数（用于「运行天数」，无效日期返回 0） */
+export function daysSince(value?: string | null): number {
+  if (!value) return 0
+  const start = dayjs(value)
+  if (!start.isValid()) return 0
+  return Math.max(0, dayjs().startOf('day').diff(start.startOf('day'), 'day'))
+}
+
 /** 按起始年份生成版权年份区间 */
 export function formatCopyrightYear(startDate?: string | null): string {
   const currentYear = dayjs().year()

@@ -2,16 +2,17 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useWindowScroll } from '@vueuse/core'
 import { ArrowDown } from '@element-plus/icons-vue'
-import ArticleCard from '@/components/article/ArticleCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import PrototypeWaves from '@/components/common/PrototypeWaves.vue'
-import SkeletonList from '@/components/common/SkeletonList.vue'
+import HomeArticleCard from '@/components/home/HomeArticleCard.vue'
+import HomeArticleSkeleton from '@/components/home/HomeArticleSkeleton.vue'
+import HomeSidebar from '@/components/home/HomeSidebar.vue'
 import { getArticles } from '@/api/article'
 import type { Article } from '@/api/types'
 import { useSiteStore } from '@/stores/site'
 
-const PAGE_SIZE = 9
+const PAGE_SIZE = 5
 
 const site = useSiteStore()
 const { y } = useWindowScroll()
@@ -135,33 +136,41 @@ onBeforeUnmount(() => {
         <span>{{ site.announcement }}</span>
       </div>
 
-      <SkeletonList v-if="loading" variant="card" :count="6" />
+      <el-row :gutter="20" class="home-row">
+        <el-col :xs="24" :sm="18" class="home-main-col">
+          <HomeArticleSkeleton v-if="loading" :count="PAGE_SIZE" />
 
-      <EmptyState
-        v-else-if="articles.length === 0"
-        :title="failed ? '文章加载失败' : '还没有发布文章'"
-        :description="failed ? '请稍后刷新重试' : '去后台写点什么吧～'"
-        icon="inbox"
-      />
+          <EmptyState
+            v-else-if="articles.length === 0"
+            :title="failed ? '文章加载失败' : '还没有发布文章'"
+            :description="failed ? '请稍后刷新重试' : '去后台写点什么吧～'"
+            icon="inbox"
+          />
 
-      <div v-else class="post-grid">
-        <ArticleCard v-for="article in articles" :key="article.id" :article="article" />
-      </div>
+          <div v-else class="home-list">
+            <HomeArticleCard
+              v-for="(article, index) in articles"
+              :key="article.id"
+              :article="article"
+              :index="index"
+            />
+          </div>
 
-      <Pagination
-        v-if="!loading && articles.length > 0"
-        class="home-pagination"
-        :page="page"
-        :total="total"
-        :page-size="PAGE_SIZE"
-        @update:page="changePage"
-      />
+          <Pagination
+            v-if="!loading && articles.length > 0"
+            class="home-pagination"
+            :page="page"
+            :total="total"
+            :page-size="PAGE_SIZE"
+            :pager-count="5"
+            @update:page="changePage"
+          />
+        </el-col>
+
+        <el-col :xs="0" :sm="6" class="home-aside-col">
+          <HomeSidebar />
+        </el-col>
+      </el-row>
     </div>
   </div>
 </template>
-
-<style scoped>
-.home-pagination {
-  padding: 1.2rem 0 0.4rem;
-}
-</style>
