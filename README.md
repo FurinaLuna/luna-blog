@@ -130,6 +130,40 @@ node scripts/smoke-api.mjs
 | blog-web | `pnpm dev` / `pnpm build` | 开发 / 类型检查 + 生产构建 |
 | blog-web | `pnpm check` | 仅类型检查（TS 7 查 `.ts`、TS 6 + vue-tsc 查 `.vue`） |
 | blog-admin | `pnpm dev` / `pnpm build` | 同上（页面为自建骨架，无第三方后台模板） |
+| blog-server | `node scripts/migrate-legacy.mjs` | 从旧 Hexo 博客迁移内容（见下节） |
+
+## 从旧博客迁移内容
+
+如果原来用的是 Hexo（fluid 主题）等以 Markdown 为源的博客，可以用一次性脚本把文章导进来：
+
+```bash
+# 先看计划，不写库、不拷图
+LEGACY_BLOG_DIR="D:/path/to/hexo-blog" node blog-server/scripts/migrate-legacy.mjs --dry-run
+
+# 真跑：写库 + 拷图
+LEGACY_BLOG_DIR="D:/path/to/hexo-blog" node blog-server/scripts/migrate-legacy.mjs
+
+# 内容有改动（或脚本升级后）重跑覆盖已迁移文章
+LEGACY_BLOG_DIR="D:/path/to/hexo-blog" node blog-server/scripts/migrate-legacy.mjs --update
+```
+
+脚本做的事：
+
+1. 解析 `source/_posts/*.md` 的 front-matter：`title` / `date` / `tags` / `categories` / `sticky` / `index_img`，
+   `categories[0]` 作为文章分类，其余分类并入标签，`sticky` 映射为置顶；
+2. 文章资源目录（`source/_posts/<文章名>/`）与站点图片（`source/img/`）拷到
+   `blog-server/uploads/legacy/**`，正文里的相对路径与 `/img/...` 改写成 `/uploads/legacy/**`，
+   同时把正文里的 `<img>` 标签转成 Markdown 图片语法（跳过代码块，避免破坏示例代码）；
+3. 分类 / 标签按名字 find-or-create，文章按**标题**幂等（默认跳过已存在，`--update` 覆盖正文与标签）；
+4. 旧 `source/about/index.md` 正文在站点配置 `about` 为空时补进「关于」页。
+
+注意：
+
+- `blog-server/uploads/` 不进 Git（见 `.gitignore`），迁移后的图片需要随部署一起拷贝到服务器；
+- 旧站正文里若有指向已删除图片的引用，脚本原样保留（不会凭空生成文件），前台会显示为加载失败的图片，
+  可在后台编辑该文章时删掉；
+- 迁移前建议先 `mysqldump` 备份一次 `luna_blog`。
+
 
 ## 生产部署
 

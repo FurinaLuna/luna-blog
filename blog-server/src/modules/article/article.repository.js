@@ -35,9 +35,18 @@ export function withRelations({ tagsRequired = false, tagId } = {}) {
 
 /**
  * 前台文章列表。
+ * 注意：hasMany(标签) + limit 会让 LIMIT 作用在连表后的行上（多标签文章吃掉配额），
+ * 因此分两步：先只查 id 分页，再按 id 取完整行。
  * @param {{ limit: number, offset: number, categoryId?: number, tagId?: number, keyword?: string, sort?: 'latest'|'popular' }} params
  */
-export function findPublishedPage({ limit, offset, categoryId, tagId, keyword, sort = 'latest' }) {
+export async function findPublishedPage({
+  limit,
+  offset,
+  categoryId,
+  tagId,
+  keyword,
+  sort = 'latest',
+}) {
   const where = { status: 'published' }
   if (categoryId) where.categoryId = categoryId
   if (keyword) {
@@ -52,39 +61,70 @@ export function findPublishedPage({ limit, offset, categoryId, tagId, keyword, s
       ? [['views', 'DESC'], ['id', 'DESC']]
       : [['isTop', 'DESC'], ['publishedAt', 'DESC'], ['id', 'DESC']]
 
-  return Article.findAndCountAll({
+  const filterInclude = tagId
+    ? [
+        {
+          model: Tag,
+          as: 'tags',
+          attributes: [],
+          through: { attributes: [] },
+          where: { id: tagId },
+          required: true,
+        },
+      ]
+    : []
+
+  const idRows = await Article.findAll({
     where,
-    attributes: LIST_ATTRIBUTES,
-    include: withRelations({ tagId }),
+    attributes: ['id'],
+    include: filterInclude,
     order,
     limit,
     offset,
-    distinct: true,
-    subQuery: false,
   })
+  const ids = idRows.map((row) => row.id)
+
+  const count = await Article.count({
+    where,
+    ...(filterInclude.length > 0 ? { include: filterInclude, distinct: true } : {}),
+  })
+
+  return { ids, count }
 }
+
+/** 按 id 顺序取完整列表（带分类与标签） */
+export async function findArticlesByIds(ids) {
+  if (ids.length === 0) return []
+
+  const rows = await Article.findAll({
+    where: { id: { [Op.in]: ids } },
+    attributes: LIST_ATTRIBUTES,
+    include: withRelations(),
+  })
+  const byId = new Map(rows.map((row) => [row.id, row]))
+  return ids.map((id) => byId.get(id)).filter(Boolean)
+}
+
 
 /** 推荐文章：先取 isRecommend，不足由最新文章补齐 */
 export async function findRecommended(limit) {
-  const recommended = await Article.findAll({
+  const recommendedIds = await Article.findAll({
     where: { status: 'published', isRecommend: true },
-    attributes: LIST_ATTRIBUTES,
-    include: withRelations(),
+    attributes: ['id'],
     order: [['publishedAt', 'DESC'], ['id', 'DESC']],
     limit,
-    subQuery: false,
   })
+  const recommended = await findArticlesByIds(recommendedIds.map((row) => row.id))
   if (recommended.length >= limit) return recommended
 
   const excludeIds = recommended.map((item) => item.id)
-  const fill = await Article.findAll({
+  const fillIds = await Article.findAll({
     where: { status: 'published', ...(excludeIds.length ? { id: { [Op.notIn]: excludeIds } } : {}) },
-    attributes: LIST_ATTRIBUTES,
-    include: withRelations(),
+    attributes: ['id'],
     order: [['publishedAt', 'DESC'], ['id', 'DESC']],
     limit: limit - recommended.length,
-    subQuery: false,
   })
+  const fill = await findArticlesByIds(fillIds.map((row) => row.id))
   return [...recommended, ...fill]
 }
 

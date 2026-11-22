@@ -55,7 +55,8 @@ export function toArticleJSON(article, { withContent = false } = {}) {
 
 /** 前台列表 */
 export async function listArticles(params) {
-  const { count, rows } = await repo.findPublishedPage(params)
+  const { ids, count } = await repo.findPublishedPage(params)
+  const rows = await repo.findArticlesByIds(ids)
   return { list: rows.map((row) => toArticleJSON(row)), total: count }
 }
 
