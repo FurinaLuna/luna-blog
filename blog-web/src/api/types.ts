@@ -296,9 +296,6 @@ export interface SiteConfig {
   footerText: string
   icp: string
   startDate: string
-  /** 旧站迁移过来的访问量基数（统计时叠加在真实值上） */
-  visitBasePv?: number
-  visitBaseUv?: number
   socialLinks: SocialLink[]
   commentNeedReview: boolean
   /** 每个页面的横幅图（空字符串 = 用内置天空渐变） */
