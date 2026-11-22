@@ -145,7 +145,7 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
         </RouterLink>
       </div>
 
-      <div class="header_right">
+      <div class="header_center">
         <nav class="pc_menu" aria-label="主导航">
           <button
             type="button"
@@ -193,7 +193,9 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
             <span>{{ item.label }}</span>
           </RouterLink>
         </nav>
+      </div>
 
+      <div class="header_right">
         <ThemeToggle />
       </div>
     </div>

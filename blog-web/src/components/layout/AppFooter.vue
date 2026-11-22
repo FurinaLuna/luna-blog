@@ -8,7 +8,6 @@ const site = useSiteStore()
 const year = computed(() => formatCopyrightYear(site.config?.startDate))
 const footerText = computed(() => site.config?.footerText || '')
 const icp = computed(() => site.config?.icp || '')
-const author = computed(() => site.author)
 
 /** 运行时长走秒：每秒重算一次，卸载时清掉定时器 */
 const now = ref(Date.now())
@@ -63,16 +62,6 @@ const badges = [
 
 <template>
   <footer class="blog-footer">
-    <p class="footer_line footer_heart">
-      <el-icon class="footer_heart-icon" :size="14"><svg viewBox="0 0 1024 1024" aria-hidden="true">
-        <path
-          fill="currentColor"
-          d="M512 891.7 138.5 528.3C39.6 432.2 46.7 269.5 154 183c93-75 232.6-60.7 306.6 33.5L512 283.9l51.4-67.4c74-94.2 213.6-108.5 306.6-33.5 107.3 86.5 114.4 249.2 15.5 345.3L512 891.7z"
-        />
-      </svg></el-icon>
-      <span>{{ author }}</span>
-    </p>
-
     <p v-if="elapsed" class="footer_line footer_timer">
       {{ site.siteName }} 自从搭建已经历
       <strong>{{ elapsed.days }}</strong> 天
@@ -135,18 +124,6 @@ const badges = [
 
 .footer_line {
   margin: 0;
-}
-
-.footer_heart {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  color: var(--text);
-}
-
-.footer_heart-icon {
-  color: #f56c6c;
 }
 
 .footer_timer strong {
