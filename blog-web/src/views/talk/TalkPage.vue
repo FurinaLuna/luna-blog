@@ -25,6 +25,12 @@ const {
 
 const talks = computed(() => data.value?.list ?? [])
 const total = computed(() => data.value?.total ?? 0)
+
+/** 翻页后回到列表顶部，避免停在上一页的底部 */
+function changePage(value: number): void {
+  page.value = value
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <template>
@@ -65,7 +71,7 @@ const total = computed(() => data.value?.total ?? 0)
         :page="page"
         :total="total"
         :page-size="PAGE_SIZE"
-        @update:page="page = $event"
+        @update:page="changePage"
       />
     </div>
   </div>

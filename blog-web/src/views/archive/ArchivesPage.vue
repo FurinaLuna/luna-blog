@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useQuery } from '@pinia/colada'
+import { ArrowDown } from '@element-plus/icons-vue'
 import CoverImage from '@/components/common/CoverImage.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -17,6 +18,39 @@ const { data, isLoading, error, refetch } = useQuery({
 
 const years = computed<ArchiveYear[]>(() => data.value ?? [])
 const totalArticles = computed(() => years.value.reduce((sum, year) => sum + year.count, 0))
+
+/** 展开的年份：默认只展开最近一年，历史年份折叠成一行，避免时间轴无限拉长 */
+const expandedYears = ref<Set<number>>(new Set())
+
+watch(
+  years,
+  (list) => {
+    const known = new Set(list.map((year) => year.year))
+    const next = new Set([...expandedYears.value].filter((year) => known.has(year)))
+    if (next.size === 0 && list.length > 0) next.add(list[0].year)
+    expandedYears.value = next
+  },
+  { immediate: true },
+)
+
+const allExpanded = computed(
+  () => years.value.length > 0 && years.value.every((year) => expandedYears.value.has(year.year)),
+)
+
+function isExpanded(year: number): boolean {
+  return expandedYears.value.has(year)
+}
+
+function toggleYear(year: number): void {
+  const next = new Set(expandedYears.value)
+  if (next.has(year)) next.delete(year)
+  else next.add(year)
+  expandedYears.value = next
+}
+
+function toggleAll(): void {
+  expandedYears.value = allExpanded.value ? new Set() : new Set(years.value.map((year) => year.year))
+}
 
 /** 把「按年 → 按月」的分组摊平成一条时间线，最近的在最上面 */
 function flattenYear(year: ArchiveYear): ArchiveArticle[] {
@@ -58,15 +92,31 @@ function flattenYear(year: ArchiveYear): ArchiveArticle[] {
         />
 
         <div v-else class="timeline">
+          <div v-if="years.length > 1" class="timeline-toolbar">
+            <button type="button" class="timeline-toolbar__btn" @click="toggleAll">
+              {{ allExpanded ? '收起全部年份' : '展开全部年份' }}
+            </button>
+          </div>
+
           <section
             v-for="year in years"
             :key="year.year"
             class="timeline-year"
+            :class="{ 'is-collapsed': !isExpanded(year.year) }"
             :aria-label="`${year.year} 年`"
           >
-            <h2 class="timeline-year__title">{{ year.year }}</h2>
+            <button
+              type="button"
+              class="timeline-year__head"
+              :aria-expanded="isExpanded(year.year)"
+              @click="toggleYear(year.year)"
+            >
+              <span class="timeline-year__title">{{ year.year }}</span>
+              <span class="timeline-year__count">{{ year.count }} 篇</span>
+              <el-icon class="timeline-year__chevron"><ArrowDown /></el-icon>
+            </button>
 
-            <ul class="timeline-list">
+            <ul v-if="isExpanded(year.year)" class="timeline-list">
               <li v-for="article in flattenYear(year)" :key="article.id" class="timeline-item">
                 <RouterLink :to="`/article/${article.id}`" class="timeline-link">
                   <span class="timeline-dot" aria-hidden="true"></span>
@@ -105,7 +155,66 @@ function flattenYear(year: ArchiveYear): ArchiveArticle[] {
 }
 
 .timeline-year + .timeline-year {
-  margin-top: 2.2rem;
+  margin-top: 1.1rem;
+}
+
+.timeline-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.4rem;
+}
+
+.timeline-toolbar__btn {
+  padding: 0.25rem 0.7rem;
+  color: var(--meta-color);
+  font-size: 0.8rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.timeline-toolbar__btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.timeline-year__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.3rem 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.timeline-year__head:hover .timeline-year__title {
+  opacity: 0.78;
+}
+
+.timeline-year__count {
+  padding: 0.05rem 0.5rem;
+  color: var(--meta-color);
+  font-size: 0.75rem;
+  background: var(--bg-soft);
+  border-radius: 999px;
+}
+
+.timeline-year__chevron {
+  margin-left: auto;
+  color: var(--meta-color);
+  font-size: 0.9rem;
+  transition: transform 0.25s ease;
+}
+
+.timeline-year.is-collapsed .timeline-year__chevron {
+  transform: rotate(-90deg);
 }
 
 .timeline-year__title {
@@ -114,6 +223,7 @@ function flattenYear(year: ArchiveYear): ArchiveArticle[] {
   font-size: 1.45rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  transition: opacity 0.2s ease;
 }
 
 .timeline-list {
