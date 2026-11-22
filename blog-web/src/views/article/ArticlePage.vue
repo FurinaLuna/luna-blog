@@ -3,7 +3,8 @@ import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery } from '@pinia/colada'
 import { useMediaQuery } from '@vueuse/core'
-import { MdCatalog, MdPreview } from 'md-editor-v3'
+import { MdPreview } from 'md-editor-v3'
+import ArticleToc from '@/components/article/ArticleToc.vue'
 import { ArrowLeft, ArrowRight, ChatDotRound, Clock, View } from '@element-plus/icons-vue'
 import CommentSection from '@/components/comment/CommentSection.vue'
 import CoverImage from '@/components/common/CoverImage.vue'
@@ -46,7 +47,6 @@ const { liked, count, pending, toggle } = useLikeTarget({
 })
 
 const mdTheme = computed<'light' | 'dark'>(() => (theme.isDark ? 'dark' : 'light'))
-const scrollElement = document.documentElement
 const catalogOpen = ref(false)
 
 const publishedLabel = computed(() => {
@@ -199,15 +199,7 @@ function closeCatalog(): void {
           <aside v-if="isDesktop" class="article-aside">
             <div class="card toc-card">
               <h3 class="toc-card__title">目录</h3>
-              <div class="md-catalog toc-body">
-                <MdCatalog
-                  :editor-id="previewId"
-                  :scroll-element="scrollElement"
-                  :scroll-element-offset-top="88"
-                  :theme="mdTheme"
-                  :catalog-max-depth="3"
-                />
-              </div>
+              <ArticleToc :editor-id="previewId" :offset-top="88" />
             </div>
 
             <div v-if="article.related.length > 0" class="card toc-card">
@@ -228,16 +220,7 @@ function closeCatalog(): void {
       </div>
 
       <el-drawer v-model="catalogOpen" direction="rtl" size="78%" title="文章目录">
-        <div v-if="catalogOpen" class="md-catalog">
-          <MdCatalog
-            :editor-id="previewId"
-            :scroll-element="scrollElement"
-            :scroll-element-offset-top="88"
-            :theme="mdTheme"
-            :catalog-max-depth="3"
-            @on-click="closeCatalog"
-          />
-        </div>
+        <ArticleToc v-if="catalogOpen" :editor-id="previewId" :offset-top="72" @navigate="closeCatalog" />
       </el-drawer>
     </template>
   </div>

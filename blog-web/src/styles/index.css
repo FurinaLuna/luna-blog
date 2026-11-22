@@ -2310,34 +2310,73 @@ html.dark .home-tag--5 {
   font-weight: 700;
 }
 
+/* 文章目录：可滚动的胶囊列表，当前小节左侧主色条 + 淡色底 */
 .toc-list {
-  max-height: 60vh;
-  margin-top: 0.6rem;
+  max-height: calc(100vh - 17rem);
+  margin-top: 0.55rem;
+  padding-right: 0.15rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.toc-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.toc-list::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: var(--border);
 }
 
 .toc-link {
+  position: relative;
   display: block;
-  padding: 0.25rem 0.4rem;
-  border-left: 2px solid transparent;
+  padding: 0.32rem 0.55rem 0.32rem 0.7rem;
+  border-radius: 6px;
   color: var(--text-2);
-  font-size: 0.88rem;
-  line-height: 1.7;
-  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.toc-link::before {
+  position: absolute;
+  top: 0.32rem;
+  bottom: 0.32rem;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+  content: '';
+  transition: background-color 0.2s ease;
 }
 
 .toc-link:hover {
+  background: var(--bg-soft);
   color: var(--primary);
 }
 
 .toc-link.is-active {
-  border-left-color: var(--primary);
-  color: var(--primary);
   background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.toc-link.is-active::before {
+  background: var(--primary);
+}
+
+.toc-link__text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .toc-link.level-3 {
-  padding-left: 1.2rem;
+  padding-left: 1.35rem;
   font-size: 0.82rem;
 }
 
@@ -2346,32 +2385,10 @@ html.dark .home-tag--5 {
   font-size: 0.8rem;
 }
 
-.md-catalog {
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-}
-
-/* 目录沿用原型配色：正文灰、当前项蓝色、左侧指示条蓝色 */
-.md-catalog .md-editor-catalog-link,
-.md-catalog .md-editor-catalog-link span {
-  color: var(--text-2) !important;
-  font-size: 0.92rem;
-  line-height: 2;
-  transition: color 0.25s ease;
-}
-
-.md-catalog .md-editor-catalog-link:hover,
-.md-catalog .md-editor-catalog-link:hover span,
-.md-catalog .md-editor-catalog-active,
-.md-catalog .md-editor-catalog-active span {
-  color: var(--primary) !important;
-  font-weight: 600;
-}
-
-.md-catalog .md-editor-catalog-indicator {
-  width: 3px;
-  background-color: var(--primary) !important;
+.toc-empty {
+  padding: 0.6rem 0.2rem;
+  color: var(--text-3, var(--meta-color));
+  font-size: 0.82rem;
 }
 
 /* -------------------------------------------------------------------------- */
