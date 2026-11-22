@@ -112,6 +112,7 @@ export interface ArticleQuery extends PageParams {
 export interface ArchiveArticle {
   id: number
   title: string
+  cover?: string | null
   createdAt: string
 }
 

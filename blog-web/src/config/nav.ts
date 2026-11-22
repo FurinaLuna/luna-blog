@@ -6,7 +6,7 @@ export interface NavItem {
 /** 顶部主导航 */
 export const mainNav: NavItem[] = [
   { label: '首页', to: '/' },
-  { label: '归档', to: '/archives' },
+  { label: '时间轴', to: '/archives' },
   { label: '说说', to: '/talks' },
   { label: '相册', to: '/albums' },
   { label: '资源', to: '/resources' },

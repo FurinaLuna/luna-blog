@@ -19,6 +19,13 @@ export function formatDateTime(value?: string | null): string {
   return date.isValid() ? date.format('YYYY年M月D日 HH:mm') : ''
 }
 
+/** 时间轴时间：YYYY-MM-DD HH:mm */
+export function formatArchiveTime(value?: string | null): string {
+  if (!value) return ''
+  const date = dayjs(value)
+  return date.isValid() ? date.format('YYYY-MM-DD HH:mm') : ''
+}
+
 /** 说说 / 评论时间：30 天内相对时间，更久则显示日期 */
 export function formatRelative(value?: string | null): string {
   if (!value) return ''

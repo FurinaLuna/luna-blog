@@ -25,7 +25,7 @@ export function getRecommendArticles(limit = 3): Promise<Article[]> {
   return get<Article[]>('/articles/recommend', { limit })
 }
 
-/** 归档（按年/月分组） */
+/** 时间轴（按年/月分组） */
 export function getArticleArchives(): Promise<ArchiveYear[]> {
   return get<ArchiveYear[]>('/articles/archives')
 }

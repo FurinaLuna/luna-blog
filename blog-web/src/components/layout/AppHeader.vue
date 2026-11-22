@@ -52,7 +52,6 @@ const tailNav: MenuLink[] = [
 ]
 
 const moreLinks: MenuLink[] = [
-  { label: '归档', to: '/archives', icon: Clock },
   { label: '资源', to: '/resources', icon: Collection },
   { label: '关于', to: '/about', icon: Grid },
 ]
