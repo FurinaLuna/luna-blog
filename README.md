@@ -10,7 +10,7 @@
 表格化内容页），技术栈则是全新的一套，便于从旧站平滑迁移。
 
 - 前台：分页文章列表 + 推荐位、Markdown 详情（代码高亮 / 目录 / 点赞 / 评论）、分类 / 标签 / 时间轴 / 搜索、
-  说说、相册（照片墙 + 大图预览）、留言板（卡片 / 弹幕双模式）、资源、友链、关于、RSS、404
+  说说、相册（照片墙 + 大图预览）、留言墙（彩色卡片 / 夜空弹幕双模式）、资源、友链、关于、RSS、404
 - 后台：登录 + 首次登录强制改密、仪表盘、文章（md-editor-v3 编辑、草稿 / 发布 / 推荐）、分类、标签、
   评论审核与回复、说说、相册、留言审核、资源、友链、站点配置、通知中心、个人中心
 - 服务：Koa 3 + Sequelize 6 + MySQL 8，JWT 鉴权、限频、敏感词、上传、RSS、统一错误响应
@@ -49,6 +49,9 @@ luna-blog/
 ├── scripts/smoke-api.mjs  # 端到端接口冒烟（33 项断言）
 └── deploy/            # Nginx / systemd 部署样例
 ```
+
+界面截图见 `docs/screenshots/`：`home-hero` / `home-list` / `article` / `albums` / `message-wall` /
+`message-danmaku` / `admin-dashboard`。
 
 ## 快速开始
 
@@ -202,7 +205,8 @@ NODE_ENV=production node src/server.js
 - **业务代码不要写 `any`**：TS strict + `noUnusedLocals`，`.vue` 与 `.ts` 都要过检查才能构建。
 - **模板属性里避免裸写含 `//` 的 URL**：`vue-tsc` 会把 `placeholder="https://..."` 里的 `//` 当成行注释，
   并在同一表单上抛 `TS2339`。用脚本常量传给 `:placeholder`。
-- **弹幕容器必须有显式高度**：`vue3-danmaku` 需要拿到容器宽高，留言板弹幕区固定 420px 高。
+- **弹幕容器必须有显式高度**：`vue3-danmaku` 需要拿到容器宽高，留言板弹幕舞台用
+  `calc(100vh - 头部 - 2.5rem)` 并保底 `560px`；内容必须先 HTML 转义再拼成 `span`。
 - **Windows 换行**：仓库带 `.gitattributes`（`* text=auto eol=lf`），提交前无需手动处理。
 - **历史路由部署**：两个 SPA 都是 history 模式，Nginx 必须配置 `try_files` 回退到 `index.html`。
 - **首页背景不依赖外部图床**：天空/云海由 CSS 多层渐变叠加本地 `clouds.png` 实现，离线可用；
