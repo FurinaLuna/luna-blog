@@ -7,12 +7,14 @@ import {
   ChatLineRound,
   Clock,
   Collection,
+  FolderOpened,
   Grid,
   House,
   Link as LinkIcon,
   Message,
   Picture,
   Search,
+  User,
 } from '@element-plus/icons-vue'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import { mainNav } from '@/config/nav'
@@ -44,16 +46,15 @@ const primaryNav: MenuLink[] = [
   { label: '时间轴', to: '/archives', icon: Clock },
 ]
 
+const taxonomyLink: MenuLink = { label: '分类', to: '/categories', icon: FolderOpened }
+
 const tailNav: MenuLink[] = [
   { label: '相册', to: '/albums', icon: Picture },
   { label: '说说', to: '/talks', icon: ChatLineRound },
   { label: '友链', to: '/friends', icon: LinkIcon },
   { label: '留言', to: '/message', icon: Message },
-]
-
-const moreLinks: MenuLink[] = [
   { label: '资源', to: '/resources', icon: Collection },
-  { label: '关于', to: '/about', icon: Grid },
+  { label: '关于', to: '/about', icon: User },
 ]
 
 const drawerNav = computed<MenuLink[]>(() => {
@@ -159,49 +160,15 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
             <span>{{ item.label }}</span>
           </RouterLink>
 
-          <el-dropdown trigger="click" placement="bottom" @command="go">
-            <button
-              type="button"
-              class="menu_item"
-              :class="{ 'is-active': isActive('/resources') || isActive('/about') }"
-            >
-              <el-icon class="menu_icon"><Grid /></el-icon>
-              <span>更多</span>
-            </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item
-                  v-for="item in moreLinks"
-                  :key="item.to"
-                  :command="item.to"
-                >
-                  {{ item.label }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-
-          <el-dropdown trigger="click" placement="bottom" @command="go">
-            <button type="button" class="menu_item" :class="{ 'is-active': taxonomyActive }">
-              <el-icon class="menu_icon"><Collection /></el-icon>
-              <span>分类</span>
-            </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="/categories">全部分类</el-dropdown-item>
-                <el-dropdown-item
-                  v-for="category in site.categories"
-                  :key="category.id"
-                  :command="`/category/${category.id}`"
-                >
-                  {{ category.name }}（{{ category.articleCount }}）
-                </el-dropdown-item>
-                <el-dropdown-item v-if="site.categories.length === 0" disabled>
-                  暂无分类
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          <RouterLink
+            :to="taxonomyLink.to"
+            class="menu_item"
+            :class="{ 'is-active': taxonomyActive }"
+            :aria-current="taxonomyActive ? 'page' : undefined"
+          >
+            <el-icon class="menu_icon"><component :is="taxonomyLink.icon" /></el-icon>
+            <span>{{ taxonomyLink.label }}</span>
+          </RouterLink>
 
           <RouterLink
             v-for="item in tailNav"

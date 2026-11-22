@@ -1586,8 +1586,31 @@ html.dark .home-profile__banner--fallback {
 /* 标签云 */
 .home-tags {
   display: flex;
+  max-height: 10.5rem;
   flex-wrap: wrap;
   gap: 0.45rem;
+  padding-right: 0.2rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  overscroll-behavior: contain;
+}
+
+.home-tags::-webkit-scrollbar {
+  width: 4px;
+}
+
+.home-tags::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.home-tags::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.home-tags::-webkit-scrollbar-thumb:hover {
+  background: var(--meta-color);
 }
 
 .home-tag {
