@@ -85,7 +85,7 @@
 | 方法 | 路径 | 权限 | 说明 |
 | --- | --- | --- | --- |
 | GET | `/api/articles` | — | query `page,pageSize,categoryId,tagId,keyword,sort(latest\|popular)`；仅 published |
-| GET | `/api/articles/recommend` | — | query `limit`(默认 6，最大 12)；先取 `isRecommend` 最新，不足补最新 published |
+| GET | `/api/articles/recommend` | — | query `limit`(默认 6，最大 12)；**只返回 `isRecommend` 的文章，不足不补**（没有推荐文章时返回空数组，首页推荐卡片整块隐藏） |
 | GET | `/api/articles/archives` | — | → `[{year, count, months:[{month, count, articles:[{id,title,cover,createdAt}]}]}]`（时间轴页用，按发布年份/月份倒序） |
 | GET | `/api/articles/:id` | — | 详情 + `prev{id,title}\|null` + `next{id,title}\|null` + `related[{id,title,cover}]`(同分类/同标签最多 4)；仅 published 可查，浏览数 +1（同 IP+文章 1 小时内不重复计） |
 | POST | `/api/articles/:id/like` | — | 按 IP 去重 → `{liked:true, likeCount}`；重复点击返回 `{liked:true, likeCount}` 幂等（不报错） |
@@ -181,7 +181,8 @@
 | --- | --- | --- | --- |
 | GET | `/api/site-config` | — | 返回扁平配置对象（见下），未设置的 key 返回缺省值 |
 | PUT | `/api/admin/site-config` | A! | body 为部分对象，按 key 合并保存 |
-| GET | `/api/site-stats` | — | `{article, category, tag, comment, talk, photo, message, views, words}` |
+| GET | `/api/site-stats` | — | `{article, category, tag, comment, talk, photo, message, views, words, visit:{pv,uv}}`；`views`=文章阅读数之和，`visit.pv`=页面浏览总数，`visit.uv`=去重访客数 |
+| POST | `/api/visit` | — | 前台每次路由切换上报 `{path, referer?}`；按 IP 哈希去重统计 UV，限频 60 次/分/IP；返回 `{recorded:true}` |
 
 配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon}], commentNeedReview(true), pageBanners`。
 

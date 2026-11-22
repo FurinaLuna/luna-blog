@@ -104,18 +104,8 @@ export async function findRecommended(limit) {
     order: [['publishedAt', 'DESC'], ['id', 'DESC']],
     limit,
   })
-  const recommended = await findArticlesByIds(recommendedIds.map((row) => row.id))
-  if (recommended.length >= limit) return recommended
-
-  const excludeIds = recommended.map((item) => item.id)
-  const fillIds = await Article.findAll({
-    where: { status: 'published', ...(excludeIds.length ? { id: { [Op.notIn]: excludeIds } } : {}) },
-    attributes: ['id'],
-    order: [['publishedAt', 'DESC'], ['id', 'DESC']],
-    limit: limit - recommended.length,
-  })
-  const fill = await findArticlesByIds(fillIds.map((row) => row.id))
-  return [...recommended, ...fill]
+  /** 只返回后台明确勾了「推荐」的文章，不足不补：首页推荐卡片在没有推荐时整块隐藏 */
+  return findArticlesByIds(recommendedIds.map((row) => row.id))
 }
 
 /** 归档用的精简数据 */

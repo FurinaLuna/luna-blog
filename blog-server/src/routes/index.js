@@ -13,6 +13,7 @@ import { registerAlbumRoutes } from '../modules/album/album.routes.js'
 import { registerResourceRoutes } from '../modules/resource/resource.routes.js'
 import { registerFriendLinkRoutes } from '../modules/friend-link/friend-link.routes.js'
 import { registerDashboardRoutes } from '../modules/dashboard/dashboard.routes.js'
+import { registerVisitRoutes } from '../modules/visit/visit.routes.js'
 
 const apiRouter = new Router()
 
@@ -30,6 +31,7 @@ const registrars = [
   registerResourceRoutes,
   registerFriendLinkRoutes,
   registerDashboardRoutes,
+  registerVisitRoutes,
 ]
 
 for (const register of registrars) register(apiRouter)

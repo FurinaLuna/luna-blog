@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { Article, Category, Comment, Message, Photo, SiteConfig, Tag, Talk } from '../../db/models/index.js'
+import { getVisitStats } from '../visit/visit.service.js'
 
 /** 站点配置缺省值（前端首屏在配置未保存时也能正常渲染） */
 export const SITE_CONFIG_DEFAULTS = Object.freeze({
@@ -116,6 +117,7 @@ export async function getSiteStats() {
 
   const viewsRow = await Article.sum('views', { where: { status: 'published' } })
   const words = await Article.sum('readingTime', { where: { status: 'published' } })
+  const visit = await getVisitStats()
 
   return {
     article,
@@ -127,5 +129,6 @@ export async function getSiteStats() {
     message,
     views: Number(viewsRow ?? 0),
     words: Number(words ?? 0) * 400,
+    visit,
   }
 }
