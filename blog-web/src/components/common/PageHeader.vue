@@ -83,9 +83,9 @@ const bannerStyle = computed(() =>
 </template>
 
 <style scoped>
-/* 关于页：banner 加高、标题整体上移，避免被压在卡片上的头像盖住 */
+/* 关于页：banner 再高一档、标题整体上移，避免被压在卡片上的头像盖住 */
 .page-header--tall {
-  height: 26rem;
+  height: 30rem;
 }
 
 .page-header--tall .route-font {
