@@ -347,6 +347,8 @@ export interface SiteConfig {
   footerText: string
   icp: string
   startDate: string
+  visitBasePv: number
+  visitBaseUv: number
   socialLinks: SocialLink[]
   commentNeedReview: boolean
   pageBanners: PageBanners

@@ -18,6 +18,9 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   footerText: '',
   icp: '',
   startDate: '2024-01-01',
+  /** 从旧站迁移过来的访问量基数（总访问量 / 总访客数在此基础上叠加本站真实统计） */
+  visitBasePv: 0,
+  visitBaseUv: 0,
   socialLinks: [],
   commentNeedReview: true,
   // 每个页面的横幅图（空字符串 = 使用内置天空渐变默认横幅）
@@ -59,6 +62,8 @@ export const siteConfigSchema = z.object({
   footerText: z.string().trim().max(200).optional(),
   icp: z.string().trim().max(100).optional(),
   startDate: z.string().trim().max(20).optional(),
+  visitBasePv: z.number().int().min(0).max(1_000_000_000).optional(),
+  visitBaseUv: z.number().int().min(0).max(1_000_000_000).optional(),
   socialLinks: z.array(socialLinkSchema).max(16).optional(),
   commentNeedReview: z.boolean().optional(),
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
@@ -103,6 +108,17 @@ export async function updateSiteConfig(patch) {
   return getSiteConfig()
 }
 
+/**
+ * 总访问量 / 总访客数：真实统计 + 站点配置里的迁移基数。
+ * 单独导出，访问上报接口也用它，保证页脚与统计卡片口径一致。
+ */
+export async function getVisitTotals() {
+  const [stats, config] = await Promise.all([getVisitStats(), getSiteConfig()])
+  const basePv = Number(config.visitBasePv ?? 0)
+  const baseUv = Number(config.visitBaseUv ?? 0)
+  return { pv: basePv + stats.pv, uv: baseUv + stats.uv }
+}
+
 /** 站点统计数字（关于页 / 首页侧栏） */
 export async function getSiteStats() {
   const [article, category, tag, comment, talk, photo, message] = await Promise.all([
@@ -117,7 +133,7 @@ export async function getSiteStats() {
 
   const viewsRow = await Article.sum('views', { where: { status: 'published' } })
   const words = await Article.sum('readingTime', { where: { status: 'published' } })
-  const visit = await getVisitStats()
+  const visit = await getVisitTotals()
 
   return {
     article,

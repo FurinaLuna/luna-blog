@@ -65,6 +65,8 @@ const form = reactive<SiteConfig>({
   footerText: '',
   icp: '',
   startDate: '',
+  visitBasePv: 0,
+  visitBaseUv: 0,
   socialLinks: [],
   commentNeedReview: true,
   pageBanners: { ...EMPTY_PAGE_BANNERS },
@@ -89,6 +91,8 @@ function fillForm(data: SiteConfig): void {
   form.footerText = data.footerText ?? ''
   form.icp = data.icp ?? ''
   form.startDate = data.startDate ?? ''
+  form.visitBasePv = Number(data.visitBasePv ?? 0)
+  form.visitBaseUv = Number(data.visitBaseUv ?? 0)
   form.socialLinks = Array.isArray(data.socialLinks)
     ? data.socialLinks.map((link) => ({ name: link.name ?? '', url: link.url ?? '', icon: link.icon ?? '' }))
     : []
@@ -179,6 +183,8 @@ async function save(): Promise<void> {
       footerText: form.footerText.trim(),
       icp: form.icp.trim(),
       startDate: form.startDate.trim(),
+      visitBasePv: Number(form.visitBasePv) || 0,
+      visitBaseUv: Number(form.visitBaseUv) || 0,
       socialLinks: normalizeLinks(),
       commentNeedReview: form.commentNeedReview,
       pageBanners: collectBanners(),
@@ -330,6 +336,18 @@ onMounted(load)
                 <el-input v-model="form.footerText" placeholder="保留所有权利 / 用 ❤️ 制作" maxlength="120" />
               </el-form-item>
               <div class="grid grid-cols-1 gap-x-5 md:grid-cols-2">
+                <el-form-item label="旧站访问量基数">
+                  <div class="flex items-center gap-3">
+                    <el-input-number v-model="form.visitBasePv" :min="0" :step="100" controls-position="right" />
+                    <span class="text-[12px] text-[var(--text-3)]">总访问量从该数字开始累加</span>
+                  </div>
+                </el-form-item>
+                <el-form-item label="旧站访客数基数">
+                  <div class="flex items-center gap-3">
+                    <el-input-number v-model="form.visitBaseUv" :min="0" :step="100" controls-position="right" />
+                    <span class="text-[12px] text-[var(--text-3)]">总访客数从该数字开始累加</span>
+                  </div>
+                </el-form-item>
                 <el-form-item label="ICP 备案号">
                   <el-input v-model="form.icp" placeholder="京ICP备xxxxxxxx号" />
                 </el-form-item>

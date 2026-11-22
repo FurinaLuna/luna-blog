@@ -3,7 +3,8 @@ import { ok } from '../../core/response.js'
 import { parseInput } from '../../core/validate.js'
 import { clientIp } from '../../core/text.js'
 import { assertRateLimit } from '../../core/rate-limit.js'
-import { getVisitStats, recordVisit } from './visit.service.js'
+import { recordVisit } from './visit.service.js'
+import { getVisitTotals } from '../site/site-config.service.js'
 
 const visitSchema = z.object({
   path: z.string().trim().max(255).optional(),
@@ -30,7 +31,7 @@ export async function handleVisit(ctx) {
   })
 
   /** 顺带把最新统计回给前端，页脚无需再发一次请求 */
-  const visit = await getVisitStats()
+  const visit = await getVisitTotals()
   ctx.status = 201
   ok(ctx, { recorded: true, visit })
 }
