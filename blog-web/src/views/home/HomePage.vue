@@ -25,6 +25,12 @@ const failed = ref(false)
 const typed = ref('')
 const showArrow = computed(() => y.value < 50)
 
+/** 站点配置里给首页配了横幅图就用图片，否则用内置天空 + 云层 */
+const heroBanner = computed(() => (site.config?.pageBanners?.home ?? '').trim())
+const heroBannerStyle = computed(() =>
+  heroBanner.value ? { backgroundImage: `url("${heroBanner.value}")` } : undefined,
+)
+
 const phrases = computed<string[]>(() => {
   const list = [site.config?.heroTitle, site.config?.heroSubtitle, site.announcement]
     .map((item) => (item ?? '').trim())
@@ -100,10 +106,10 @@ onBeforeUnmount(() => {
 
 <template>
   <div>
-    <section id="home">
-      <div class="home_sky" aria-hidden="true"></div>
-      <div class="home_clouds" aria-hidden="true"></div>
-      <div class="home_clouds home_clouds--far" aria-hidden="true"></div>
+    <section id="home" :class="{ 'home--custom-hero': !!heroBanner }" :style="heroBannerStyle">
+      <div v-if="!heroBanner" class="home_sky" aria-hidden="true"></div>
+      <div v-if="!heroBanner" class="home_clouds" aria-hidden="true"></div>
+      <div v-if="!heroBanner" class="home_clouds home_clouds--far" aria-hidden="true"></div>
 
       <h1 class="home_font">{{ site.siteName }}</h1>
       <p class="home_typewriter" aria-live="off">

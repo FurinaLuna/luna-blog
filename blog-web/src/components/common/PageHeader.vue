@@ -1,23 +1,68 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import PrototypeWaves from '@/components/common/PrototypeWaves.vue'
+import { useSiteStore } from '@/stores/site'
 
 /**
- * 原型内页 banner：天空+云层背景（纯 CSS，离线可看）→ 暗色遮罩 → 居中标题 → 底部波浪。
+ * 原型内页 banner：默认天空+云层背景（纯 CSS，离线可看）→ 暗色遮罩 → 居中标题 → 底部波浪。
+ * 站点配置里给对应页面传了横幅图时，改用图片背景（clouds/天空层自动隐藏）。
  * 文章详情等页面用默认插槽自定义内容（标题 / meta / 按钮）。
  */
-withDefaults(
+const props = withDefaults(
   defineProps<{
     title?: string
     subtitle?: string
+    /** 覆盖自动推导的横幅配置键（默认按首段路由推导） */
+    bannerKey?: string
   }>(),
-  { title: '', subtitle: '' },
+  { title: '', subtitle: '', bannerKey: '' },
+)
+
+const route = useRoute()
+const site = useSiteStore()
+
+/** 路由首段 → 横幅配置键；相册详情（/albums/:id）单独用 album */
+const BANNER_KEYS = new Set([
+  'home',
+  'archives',
+  'category',
+  'tag',
+  'article',
+  'talks',
+  'albums',
+  'album',
+  'resources',
+  'friends',
+  'message',
+  'about',
+  'search',
+])
+
+function deriveBannerKey(path: string): string {
+  const segments = path.split('/').filter(Boolean)
+  const first = segments[0] ?? 'home'
+  if (first === 'albums' && segments.length > 1) return 'album'
+  return BANNER_KEYS.has(first) ? first : ''
+}
+
+const bannerKey = computed(() => props.bannerKey || deriveBannerKey(route.path))
+
+const bannerUrl = computed(() => {
+  const banners = site.config?.pageBanners
+  if (!banners || !bannerKey.value) return ''
+  return (banners[bannerKey.value] ?? '').trim()
+})
+
+const bannerStyle = computed(() =>
+  bannerUrl.value ? { backgroundImage: `url("${bannerUrl.value}")` } : undefined,
 )
 </script>
 
 <template>
-  <header class="page-header">
-    <div class="page-header__sky" aria-hidden="true"></div>
-    <div class="page-header__clouds" aria-hidden="true"></div>
+  <header class="page-header" :class="{ 'page-header--custom': !!bannerUrl }" :style="bannerStyle">
+    <div v-if="!bannerUrl" class="page-header__sky" aria-hidden="true"></div>
+    <div v-if="!bannerUrl" class="page-header__clouds" aria-hidden="true"></div>
 
     <div v-if="$slots.default" class="page-header__body">
       <slot />

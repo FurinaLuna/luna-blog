@@ -298,6 +298,8 @@ export interface SiteConfig {
   startDate: string
   socialLinks: SocialLink[]
   commentNeedReview: boolean
+  /** 每个页面的横幅图（空字符串 = 用内置天空渐变） */
+  pageBanners?: Record<string, string>
 }
 
 export interface SiteStats {
