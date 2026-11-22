@@ -1,361 +1,327 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
-import Danmaku from 'vue3-danmaku'
-import 'vue3-danmaku/dist/vue3-danmaku.css'
-import EmptyState from '@/components/common/EmptyState.vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Loading, Plus } from '@element-plus/icons-vue'
 import PageHeader from '@/components/common/PageHeader.vue'
-import Pagination from '@/components/common/Pagination.vue'
-import SkeletonList from '@/components/common/SkeletonList.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
+import DanmakuStage from '@/components/message/DanmakuStage.vue'
 import MessageCard from '@/components/message/MessageCard.vue'
-import { createMessage, getMessages } from '@/api/message'
+import MessagePublishDialog from '@/components/message/MessagePublishDialog.vue'
+import { getMessages } from '@/api/message'
 import type { Message } from '@/api/types'
-import { formatCompact } from '@/utils/format'
-import { loadVisitor, saveVisitor } from '@/utils/visitor'
 
-type ViewMode = 'card' | 'danmaku'
+type MessageMode = 'card' | 'danmaku'
 
-interface MessageForm {
-  nickname: string
-  content: string
-  color: string
-}
-
-const PAGE_SIZE = 9
+const CARD_PAGE_SIZE = 10
 const DANMAKU_PAGE_SIZE = 50
-const COLOR_PALETTE = ['#49b1f5', '#ff7242', '#4c7bd9', '#a35fd1', '#3f9d68', '#d95f8a']
 
-const mode = ref<ViewMode>('card')
+const mode = ref<MessageMode>('card')
 const messages = ref<Message[]>([])
-const total = ref(0)
 const page = ref(1)
-const loading = ref(false)
-const submitting = ref(false)
-const formRef = ref<FormInstance>()
+const totalPages = ref(1)
+const loadingFirst = ref(true)
+const loadingMore = ref(false)
+const danmakuMessages = ref<Message[]>([])
+const danmakuLoading = ref(false)
+const publishVisible = ref(false)
 
-const visitor = loadVisitor()
-const form = reactive<MessageForm>({
-  nickname: visitor.nickname,
-  content: '',
-  color: COLOR_PALETTE[0],
-})
+const sentinelRef = ref<HTMLDivElement | null>(null)
+let observer: IntersectionObserver | null = null
 
-const rules: FormRules<MessageForm> = {
-  nickname: [
-    { required: true, message: '请填写昵称', trigger: 'blur' },
-    { min: 1, max: 20, message: '昵称长度为 1-20 个字符', trigger: 'blur' },
-  ],
-  content: [
-    { required: true, message: '请填写留言内容', trigger: 'blur' },
-    { min: 1, max: 200, message: '留言长度为 1-200 个字符', trigger: 'blur' },
-  ],
+const ended = computed(() => messages.value.length > 0 && page.value >= totalPages.value)
+
+function scrollTop(): void {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-const escapedHtml = computed(() => {
-  const entities: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }
-  return entities
-})
-
-function escapeHtml(input: string): string {
-  return input.replace(/[&<>"']/g, (char) => escapedHtml.value[char] ?? char)
+function switchMode(): void {
+  mode.value = mode.value === 'card' ? 'danmaku' : 'card'
+  scrollTop()
 }
 
-function safeColor(color: string | null, index: number): string {
-  if (color && /^#[0-9a-f]{3,8}$/i.test(color)) return color
-  return COLOR_PALETTE[index % COLOR_PALETTE.length]
+function openPublish(): void {
+  publishVisible.value = true
 }
 
-const danmakuItems = computed(() =>
-  messages.value.map((message, index) => {
-    const color = safeColor(message.color, index)
-    const nickname = escapeHtml(message.nickname)
-    const content = escapeHtml(message.content)
-    return `<span style="color:${color};font-weight:600">${nickname}</span><span style="color:${color};margin-left:.45em">${content}</span>`
-  }),
-)
-
-async function loadMessages(): Promise<void> {
-  loading.value = true
+async function loadFirstPage(): Promise<void> {
+  loadingFirst.value = true
   try {
-    const pageSize = mode.value === 'danmaku' ? DANMAKU_PAGE_SIZE : PAGE_SIZE
-    const currentPage = mode.value === 'danmaku' ? 1 : page.value
-    const data = await getMessages({ page: currentPage, pageSize }, { silent: true })
-    messages.value = data.list
-    total.value = data.total
-  } catch {
-    messages.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-function switchMode(next: ViewMode): void {
-  if (mode.value === next) return
-  mode.value = next
-  page.value = 1
-}
-
-async function submit(): Promise<void> {
-  const instance = formRef.value
-  if (!instance) return
-  const valid = await instance.validate().catch(() => false)
-  if (!valid) return
-
-  submitting.value = true
-  try {
-    await createMessage({
-      nickname: form.nickname.trim(),
-      content: form.content.trim(),
-      color: form.color,
-    })
-    ElMessage.success('留言已提交，审核通过后展示')
-    saveVisitor({ nickname: form.nickname.trim(), email: '', website: '' })
-    form.content = ''
+    const result = await getMessages({ page: 1, pageSize: CARD_PAGE_SIZE })
+    messages.value = result.list
     page.value = 1
-    await loadMessages()
+    totalPages.value = Math.max(1, result.totalPages)
   } finally {
-    submitting.value = false
+    loadingFirst.value = false
   }
 }
 
-watch([mode, page], () => {
-  void loadMessages()
+async function loadMore(): Promise<void> {
+  if (loadingFirst.value || loadingMore.value || page.value >= totalPages.value) return
+  loadingMore.value = true
+  try {
+    const nextPage = page.value + 1
+    const result = await getMessages({ page: nextPage, pageSize: CARD_PAGE_SIZE })
+    const known = new Set(messages.value.map((item) => item.id))
+    messages.value = [...messages.value, ...result.list.filter((item) => !known.has(item.id))]
+    page.value = nextPage
+    totalPages.value = Math.max(1, result.totalPages)
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+function stopObserver(): void {
+  observer?.disconnect()
+  observer = null
+}
+
+function observeSentinel(el: HTMLDivElement | null): void {
+  stopObserver()
+  if (!el || typeof IntersectionObserver === 'undefined') return
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) void loadMore()
+    },
+    { rootMargin: '0px 0px 300px 0px' },
+  )
+  observer.observe(el)
+}
+
+async function loadDanmaku(): Promise<void> {
+  danmakuLoading.value = true
+  try {
+    const result = await getMessages({ page: 1, pageSize: DANMAKU_PAGE_SIZE }, { silent: true })
+    danmakuMessages.value = result.list
+  } finally {
+    danmakuLoading.value = false
+  }
+}
+
+function handlePublished(): void {
+  ElMessage.success('留言已提交，等待站长审核')
+  void loadFirstPage()
+  if (mode.value === 'danmaku') void loadDanmaku()
+}
+
+function handleDanmakuPublished(): void {
+  void loadDanmaku()
+}
+
+watch(mode, (next) => {
+  if (next === 'danmaku') void loadDanmaku()
+})
+
+watch(sentinelRef, (el) => {
+  observeSentinel(el)
 })
 
 onMounted(() => {
-  void loadMessages()
+  void loadFirstPage()
+})
+
+onBeforeUnmount(() => {
+  stopObserver()
 })
 </script>
 
 <template>
-  <div>
-    <PageHeader
-      title="留言板"
-      :subtitle="`想说什么都可以留下 · ${formatCompact(total)} 条留言正在这里发光`"
-    />
-
-    <div class="center_box">
-      <div class="card message-panel">
-        <div class="message-panel__bar">
-          <div class="mode-tabs">
-            <button
-              type="button"
-              class="mode-tab"
-              :class="{ 'is-active': mode === 'card' }"
-              :aria-pressed="mode === 'card'"
-              @click="switchMode('card')"
-            >
-              卡片模式
-            </button>
-            <button
-              type="button"
-              class="mode-tab"
-              :class="{ 'is-active': mode === 'danmaku' }"
-              :aria-pressed="mode === 'danmaku'"
-              @click="switchMode('danmaku')"
-            >
-              弹幕模式
-            </button>
-          </div>
-
-          <button type="button" class="message-panel__refresh" aria-label="刷新留言" @click="loadMessages">
-            <el-icon :size="13"><Refresh /></el-icon>
-            刷新
-          </button>
+  <div class="message-page">
+    <template v-if="mode === 'card'">
+      <PageHeader>
+        <div class="message-page__heading">
+          <el-popover placement="bottom" trigger="hover" :width="150">
+            <template #reference>
+              <button type="button" class="message-page__title" @click="switchMode">留言板</button>
+            </template>
+            <span>切换成弹幕模式</span>
+          </el-popover>
+          <p class="message-page__subtitle">生活原本沉闷，但跑起来就会有风</p>
         </div>
+      </PageHeader>
 
-        <SkeletonList v-if="loading" variant="card" :count="6" />
+      <div class="message-page__toolbar">
+        <button type="button" class="message-page__publish" @click="openPublish">
+          <el-icon :size="18"><Plus /></el-icon>
+          <span>发布留言</span>
+        </button>
+      </div>
+
+      <div class="center_box">
+        <el-row v-if="loadingFirst" :gutter="20">
+          <el-col v-for="item in 4" :key="item" :xs="24" :sm="12" class="message-page__cell">
+            <el-skeleton animated>
+              <template #template>
+                <el-skeleton-item variant="rect" class="message-page__skeleton-panel" />
+              </template>
+            </el-skeleton>
+          </el-col>
+        </el-row>
 
         <EmptyState
           v-else-if="messages.length === 0"
           icon="comment"
           title="还没有留言"
-          description="写下第一条吧，让这块板子开始有温度。"
+          description="这里是一面留言墙，写下想说的话，站长审核通过后就会贴上来。"
+          action-text="写一条留言"
+          @action="openPublish"
         />
 
         <template v-else>
-          <div v-if="mode === 'danmaku'" class="danmaku-stage">
-            <div class="danmaku-layer">
-              <Danmaku :danmus="danmakuItems" :speeds="120" :font-size="20" :loop="true" class="danmaku-layer__inner" />
-            </div>
-            <p class="danmaku-stage__title">弹幕仅展示已通过审核的留言</p>
+          <el-row :gutter="20">
+            <el-col
+              v-for="(message, index) in messages"
+              :key="message.id"
+              :xs="24"
+              :sm="12"
+              class="message-page__cell"
+            >
+              <MessageCard :message="message" :order="index + 1" />
+            </el-col>
+          </el-row>
+
+          <div class="message-page__observer">
+            <template v-if="loadingMore">
+              <el-icon class="is-loading"><Loading /></el-icon>
+              <span>加载中…</span>
+            </template>
+            <span v-else-if="ended">已经到底了~</span>
+            <span v-else>下拉加载更多～</span>
           </div>
 
-          <div v-else class="message-grid">
-            <MessageCard v-for="message in messages" :key="message.id" :message="message" />
-          </div>
-
-          <Pagination
-            v-if="mode === 'card'"
-            :page="page"
-            :total="total"
-            :page-size="PAGE_SIZE"
-            @update:page="page = $event"
-          />
+          <div ref="sentinelRef" class="message-page__sentinel" aria-hidden="true" />
         </template>
       </div>
+    </template>
 
-      <div class="card message-form-card">
-        <h2 class="message-form-card__title">写下留言</h2>
-        <p class="message-form-card__hint">访客免登录，提交后需要等站长审核。</p>
-
-        <el-form
-          ref="formRef"
-          :model="form"
-          :rules="rules"
-          label-position="top"
-          class="message-form"
-          @submit.prevent="submit"
-        >
-          <div class="message-form__row">
-            <el-form-item label="昵称" prop="nickname">
-              <el-input v-model="form.nickname" maxlength="20" placeholder="怎么称呼你" />
-            </el-form-item>
-
-            <el-form-item label="弹幕颜色">
-              <div class="message-form__colors">
-                <button
-                  v-for="color in COLOR_PALETTE"
-                  :key="color"
-                  type="button"
-                  class="message-form__color"
-                  :class="{ 'is-active': form.color === color }"
-                  :style="{ background: color }"
-                  :aria-label="`选择颜色 ${color}`"
-                  :aria-pressed="form.color === color"
-                  @click="form.color = color"
-                />
-              </div>
-            </el-form-item>
-          </div>
-
-          <el-form-item label="留言内容" prop="content">
-            <el-input
-              v-model="form.content"
-              type="textarea"
-              :rows="4"
-              maxlength="200"
-              show-word-limit
-              placeholder="想说的话…"
-              resize="vertical"
-            />
-          </el-form-item>
-
-          <button type="submit" class="apply-button message-form__submit" :disabled="submitting">
-            {{ submitting ? '提交中…' : '提交留言' }}
-          </button>
-        </el-form>
+    <div v-else class="message-page__danmaku">
+      <div class="message-page__danmaku-shell">
+        <DanmakuStage
+          :messages="danmakuMessages"
+          :loading="danmakuLoading"
+          @switch-mode="switchMode"
+          @submitted="handleDanmakuPublished"
+        />
       </div>
     </div>
+
+    <MessagePublishDialog v-model="publishVisible" @submitted="handlePublished" />
   </div>
 </template>
 
 <style scoped>
-.message-panel {
-  padding: 1.6rem clamp(1rem, 3vw, 2rem) 2rem;
-}
-
-.message-panel__bar {
+.message-page__heading {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  margin-bottom: 1.2rem;
 }
 
-.message-panel__refresh {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
+.message-page__title {
+  padding: 0;
   border: 0;
   background: transparent;
-  color: var(--meta-color);
-  font-size: 0.82rem;
-  transition: color 0.2s ease;
-}
-
-.message-panel__refresh:hover {
-  color: var(--primary);
-}
-
-.message-form-card {
-  margin-top: 1.2rem;
-  padding: 1.6rem clamp(1rem, 3vw, 2rem) 2rem;
-}
-
-.message-form-card__title {
-  color: var(--font-color);
-  font-size: 1.2rem;
+  color: var(--router-color);
+  font-size: 2.4rem;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    color 0.25s ease,
+    text-shadow 0.25s ease;
 }
 
-.message-form-card__hint {
-  margin-top: 0.2rem;
-  color: var(--meta-color);
-  font-size: 0.82rem;
+.message-page__title:hover {
+  color: #fff;
+  text-shadow: 0 0 24px rgba(73, 177, 245, 0.75);
 }
 
-.message-form {
-  margin-top: 0.6rem;
+.message-page__subtitle {
+  margin-top: 0.7rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
 }
 
-.message-form__row {
-  display: grid;
-  gap: 0 1.2rem;
-}
-
-@media (min-width: 768px) {
-  .message-form__row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-}
-
-.message-form :deep(.el-form-item) {
-  margin-bottom: 1rem;
-}
-
-.message-form__colors {
+/* 头部下方浮起的胶囊发布入口 */
+.message-page__toolbar {
+  position: relative;
+  z-index: 1200;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  justify-content: center;
+  margin-top: -1.6rem;
+}
+
+.message-page__publish {
+  display: inline-flex;
   align-items: center;
-  height: 32px;
+  gap: 0.45rem;
+  padding: 0.62rem 1.35rem;
+  border: 0;
+  border-radius: 999px;
+  background-image: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  box-shadow: 0 10px 24px -12px rgba(73, 177, 245, 0.9);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
-.message-form__color {
-  width: 22px;
-  height: 22px;
-  border: 2px solid transparent;
-  border-radius: 50%;
-  transition: transform 0.2s ease;
+.message-page__publish:hover {
+  box-shadow: 0 14px 28px -12px rgba(73, 177, 245, 1);
+  transform: translateY(-2px);
 }
 
-.message-form__color.is-active {
-  border-color: var(--font-color);
-  transform: scale(1.15);
+.message-page__cell {
+  margin-bottom: 20px;
 }
 
-.message-form__submit {
-  width: 100%;
-  margin-top: 0.2rem;
+.message-page__skeleton-panel {
+  height: 22rem;
+  border-radius: 8px;
 }
 
-.danmaku-layer {
-  position: absolute;
-  inset: 0;
+.message-page__observer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 10px;
+  color: var(--meta-color);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
 }
 
-.danmaku-layer__inner {
-  width: 100%;
-  height: 100%;
+.message-page__sentinel {
+  height: 1px;
+}
+
+/* 弹幕模式：深色从页面顶部铺满（透明顶栏白字才可读），舞台居中并对齐栅格 */
+.message-page__danmaku {
+  min-height: 100vh;
+  padding: calc(var(--header-h) + 1.1rem) 10px 1.4rem;
+  background: radial-gradient(ellipse at top, #10151f 0%, #090a0f 100%);
+}
+
+.message-page__danmaku-shell {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .message-page__title {
+    font-size: 1.9rem;
+  }
+
+  .message-page__subtitle {
+    font-size: 0.85rem;
+  }
+
+  .message-page__danmaku {
+    padding: calc(var(--header-h) + 0.8rem) 8px 1rem;
+  }
 }
 </style>
