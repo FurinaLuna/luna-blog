@@ -19,6 +19,22 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   startDate: '2024-01-01',
   socialLinks: [],
   commentNeedReview: true,
+  // 每个页面的横幅图（空字符串 = 使用内置天空渐变默认横幅）
+  pageBanners: {
+    home: '',
+    archives: '',
+    category: '',
+    tag: '',
+    article: '',
+    talks: '',
+    albums: '',
+    album: '',
+    resources: '',
+    friends: '',
+    message: '',
+    about: '',
+    search: '',
+  },
 })
 
 const socialLinkSchema = z.object({
@@ -44,6 +60,7 @@ export const siteConfigSchema = z.object({
   startDate: z.string().trim().max(20).optional(),
   socialLinks: z.array(socialLinkSchema).max(10).optional(),
   commentNeedReview: z.boolean().optional(),
+  pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
 })
 
 /** 解析单行配置值（JSON 优先，失败回退字符串） */
@@ -60,7 +77,15 @@ export async function getSiteConfig() {
   const rows = await SiteConfig.findAll()
   const stored = {}
   for (const row of rows) stored[row.key] = parseValue(row.value)
-  return { ...SITE_CONFIG_DEFAULTS, ...stored }
+  return {
+    ...SITE_CONFIG_DEFAULTS,
+    ...stored,
+    // 横幅是对象，单独做一次浅合并，避免缺 key 时整块被覆盖掉
+    pageBanners: {
+      ...SITE_CONFIG_DEFAULTS.pageBanners,
+      ...(stored.pageBanners && typeof stored.pageBanners === 'object' ? stored.pageBanners : {}),
+    },
+  }
 }
 
 /**
