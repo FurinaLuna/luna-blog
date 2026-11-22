@@ -13,6 +13,7 @@ import {
   Link as LinkIcon,
   Message,
   Picture,
+  PriceTag,
   Search,
   User,
 } from '@element-plus/icons-vue'
@@ -46,7 +47,10 @@ const primaryNav: MenuLink[] = [
   { label: '时间轴', to: '/archives', icon: Clock },
 ]
 
-const taxonomyLink: MenuLink = { label: '分类', to: '/categories', icon: FolderOpened }
+const taxonomyLinks: MenuLink[] = [
+  { label: '分类', to: '/categories', icon: FolderOpened },
+  { label: '标签', to: '/tags', icon: PriceTag },
+]
 
 const tailNav: MenuLink[] = [
   { label: '相册', to: '/albums', icon: Picture },
@@ -92,6 +96,11 @@ function isActive(to: string): boolean {
 const taxonomyActive = computed(
   () => route.name === 'category' || route.name === 'categories' || route.name === 'tag',
 )
+
+function isTaxonomyActive(to: string): boolean {
+  if (to === '/tags') return route.name === 'tags'
+  return taxonomyActive.value
+}
 
 function go(path: string): void {
   drawerOpen.value = false
@@ -161,13 +170,15 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
           </RouterLink>
 
           <RouterLink
-            :to="taxonomyLink.to"
+            v-for="item in taxonomyLinks"
+            :key="item.to"
+            :to="item.to"
             class="menu_item"
-            :class="{ 'is-active': taxonomyActive }"
-            :aria-current="taxonomyActive ? 'page' : undefined"
+            :class="{ 'is-active': isTaxonomyActive(item.to) }"
+            :aria-current="isTaxonomyActive(item.to) ? 'page' : undefined"
           >
-            <el-icon class="menu_icon"><component :is="taxonomyLink.icon" /></el-icon>
-            <span>{{ taxonomyLink.label }}</span>
+            <el-icon class="menu_icon"><component :is="item.icon" /></el-icon>
+            <span>{{ item.label }}</span>
           </RouterLink>
 
           <RouterLink

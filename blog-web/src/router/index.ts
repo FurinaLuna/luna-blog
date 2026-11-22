@@ -28,6 +28,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/tag/TagPage.vue'),
   },
   {
+    path: '/tags',
+    name: 'tags',
+    component: () => import('@/views/tag/TagsPage.vue'),
+  },
+  {
     path: '/archives',
     name: 'archives',
     component: () => import('@/views/archive/ArchivesPage.vue'),

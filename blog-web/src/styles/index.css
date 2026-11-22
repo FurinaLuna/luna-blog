@@ -1410,12 +1410,21 @@ html.dark .page-header::before {
   overflow: hidden;
 }
 
+.home-profile__banner-link {
+  display: block;
+}
+
 .home-profile__banner {
-  height: 10rem;
+  height: 8.6rem;
   background-color: var(--bg-soft);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+  transition: transform 0.4s ease;
+}
+
+.home-profile__banner-link:hover .home-profile__banner {
+  transform: scale(1.03);
 }
 
 .home-profile__banner--fallback {
@@ -1497,6 +1506,16 @@ html.dark .home-profile__banner--fallback {
   align-items: center;
   gap: 0.1rem;
   min-width: 0;
+  padding: 0.2rem 0;
+  border-radius: 8px;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.home-profile__stat:hover {
+  background: var(--bg-soft);
+  transform: translateY(-1px);
 }
 
 .home-profile__stat-value {
@@ -1505,6 +1524,11 @@ html.dark .home-profile__banner--fallback {
   font-weight: 700;
   line-height: 1.3;
   font-variant-numeric: tabular-nums;
+  transition: color 0.2s ease;
+}
+
+.home-profile__stat:hover .home-profile__stat-value {
+  color: var(--primary);
 }
 
 .home-profile__stat-label {
@@ -1512,21 +1536,30 @@ html.dark .home-profile__banner--fallback {
   font-size: 0.85rem;
 }
 
-.home-profile__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1rem 1rem;
-}
-
-.home-profile__about {
-  flex: 1;
-  padding: 0.45rem 1rem;
+.home-profile__cta {
+  display: block;
+  margin: 0.35rem 1rem 0;
+  padding: 0.5rem 1rem;
+  color: #fff;
   font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  background: var(--primary);
+  border-radius: 8px;
+  transition:
+    filter 0.2s ease,
+    transform 0.2s ease;
 }
 
-.home-profile__actions > ul {
-  flex-shrink: 0;
+.home-profile__cta:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.home-profile__socials {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 1rem 1rem;
 }
 
 /* 推荐阅读 */
