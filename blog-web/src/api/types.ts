@@ -300,6 +300,8 @@ export interface SiteConfig {
   commentNeedReview: boolean
   /** 每个页面的横幅图（空字符串 = 用内置天空渐变） */
   pageBanners?: Record<string, string>
+  /** 首页侧栏资料卡横幅（空字符串 = 回退 pageBanners.home） */
+  profileBanner?: string
 }
 
 export interface SiteStats {

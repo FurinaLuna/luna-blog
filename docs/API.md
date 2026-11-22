@@ -186,7 +186,7 @@
 | GET | `/api/site-stats` | — | `{article, category, tag, comment, talk, photo, message, views, words, visit:{pv,uv}}`；`views`=文章阅读数之和，`visit.pv`=页面浏览总数，`visit.uv`=去重访客数 |
 | POST | `/api/visit` | — | 前台每次路由切换上报 `{path, referer?}`；按 IP 哈希去重统计 UV，限频 60 次/分/IP；返回 `{recorded:true}` |
 
-配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon}], commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), pageBanners(13 个页面键 → 横幅图 URL)
+配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon}], commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), profileBanner(首页侧栏资料卡横幅图 URL，空则回退 pageBanners.home), pageBanners(13 个页面键 → 横幅图 URL)
 
 `pageBanners` 为页面横幅图映射（值是图片 URL，最长 500，空字符串表示使用内置天空渐变横幅）：
 `{ home, archives, category, tag, article, talks, albums, album, resources, friends, message, about, search }`。

@@ -21,6 +21,8 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   socialLinks: [],
   commentNeedReview: true,
   messageNeedReview: true,
+  // 首页侧栏资料卡的横幅图（空字符串 = 回退到 pageBanners.home，再回退内置渐变）
+  profileBanner: '',
   // 每个页面的横幅图（空字符串 = 使用内置天空渐变默认横幅）
   pageBanners: {
     home: '',
@@ -63,6 +65,7 @@ export const siteConfigSchema = z.object({
   socialLinks: z.array(socialLinkSchema).max(16).optional(),
   commentNeedReview: z.boolean().optional(),
   messageNeedReview: z.boolean().optional(),
+  profileBanner: z.string().trim().max(500).optional(),
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
 })
 

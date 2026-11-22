@@ -1411,6 +1411,8 @@ html.dark .page-header::before {
 }
 
 .home-profile__banner-link {
+  position: relative;
+  z-index: 0;
   display: block;
 }
 
@@ -1425,6 +1427,12 @@ html.dark .page-header::before {
 
 .home-profile__banner-link:hover .home-profile__banner {
   transform: scale(1.03);
+}
+
+/* 头像与站名压在横幅之上，任何情况下都不被横幅覆盖 */
+.home-profile__head {
+  position: relative;
+  z-index: 1;
 }
 
 .home-profile__banner--fallback {

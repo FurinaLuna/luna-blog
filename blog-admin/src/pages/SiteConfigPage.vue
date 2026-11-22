@@ -68,6 +68,7 @@ const form = reactive<SiteConfig>({
   socialLinks: [],
   commentNeedReview: true,
   messageNeedReview: true,
+  profileBanner: '',
   pageBanners: { ...EMPTY_PAGE_BANNERS },
 })
 
@@ -90,6 +91,7 @@ function fillForm(data: SiteConfig): void {
   form.footerText = data.footerText ?? ''
   form.icp = data.icp ?? ''
   form.startDate = data.startDate ?? ''
+  form.profileBanner = data.profileBanner ?? ''
 
   form.socialLinks = Array.isArray(data.socialLinks)
     ? data.socialLinks.map((link) => ({ name: link.name ?? '', url: link.url ?? '', icon: link.icon ?? '' }))
@@ -186,6 +188,7 @@ async function save(): Promise<void> {
       socialLinks: normalizeLinks(),
       commentNeedReview: form.commentNeedReview,
       messageNeedReview: form.messageNeedReview,
+      profileBanner: form.profileBanner.trim(),
       pageBanners: collectBanners(),
     })
     ElMessage.success('站点配置已保存')
@@ -280,6 +283,37 @@ onMounted(load)
 
         <el-tab-pane label="页面横幅" name="banners">
           <div class="pt-2">
+            <div
+              class="mb-4 rounded border px-4 py-3"
+              :style="{ borderColor: 'var(--border)', background: 'var(--bg-soft)' }"
+            >
+              <div class="mb-2 flex items-center justify-between gap-2">
+                <span class="text-[13px] font-medium text-[var(--text)]">首页资料卡背景（侧栏）</span>
+                <el-tag :type="form.profileBanner ? 'success' : 'info'" size="small" disable-transitions>
+                  {{ form.profileBanner ? '已配置' : '使用默认' }}
+                </el-tag>
+              </div>
+              <div class="flex items-start gap-3">
+                <ImageUpload v-model="form.profileBanner" :limit="1" :size="96" />
+                <div class="min-w-0 flex-1">
+                  <p class="clamp-2 m-0 break-all text-[12px] leading-5 text-[var(--text-3)]">
+                    {{ form.profileBanner || '未配置时依次回退到「首页 Hero」横幅、内置渐变' }}
+                  </p>
+                  <p class="m-0 mt-1 text-[12px] leading-5 text-[var(--text-3)]">
+                    只影响首页右侧资料卡顶部那条横幅，建议 2:1（如 800×400），头像会压在横幅下沿显示。
+                  </p>
+                  <el-button
+                    size="small"
+                    class="mt-2"
+                    :disabled="!form.profileBanner"
+                    @click="form.profileBanner = ''"
+                  >
+                    清除
+                  </el-button>
+                </div>
+              </div>
+            </div>
+
             <p class="mb-3 text-[12px] leading-5 text-[var(--text-3)]">
               按页面配置横幅图；不上传则使用内置天空渐变横幅。图片建议 1600×600 以上、宽高比 ≥ 2.4:1。
             </p>

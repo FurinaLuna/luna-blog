@@ -15,8 +15,10 @@ watch(
   },
 )
 
-/** 资料卡横幅：优先用后台给首页配的横幅，否则用渐变兜底 */
-const bannerUrl = computed(() => (site.config?.pageBanners?.home ?? '').trim())
+/** 资料卡横幅：优先用后台单独配置的 profileBanner，其次首页横幅，最后渐变兜底 */
+const bannerUrl = computed(() =>
+  (site.config?.profileBanner || site.config?.pageBanners?.home || '').trim(),
+)
 const bannerStyle = computed(() =>
   bannerUrl.value ? { backgroundImage: `url("${bannerUrl.value}")` } : undefined,
 )

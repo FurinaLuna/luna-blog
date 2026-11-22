@@ -350,6 +350,8 @@ export interface SiteConfig {
   socialLinks: SocialLink[]
   commentNeedReview: boolean
   messageNeedReview: boolean
+  /** 首页侧栏资料卡横幅（空字符串 = 回退 pageBanners.home） */
+  profileBanner: string
   pageBanners: PageBanners
 }
 
