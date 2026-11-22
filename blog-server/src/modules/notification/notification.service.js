@@ -56,3 +56,24 @@ export async function markRead(id) {
 export function markAllRead() {
   return Notification.update({ isRead: true }, { where: { isRead: false } })
 }
+
+/**
+ * 批量删除通知；action='read' 时改为删除全部已读通知。
+ * @param {number[]} ids
+ */
+export async function deleteNotifications(ids) {
+  const affected = await Notification.destroy({ where: { id: ids } })
+  return { affected, requested: ids.length }
+}
+
+/** 清空已读通知 */
+export async function clearReadNotifications() {
+  const affected = await Notification.destroy({ where: { isRead: true } })
+  return { affected }
+}
+
+/** 清空全部通知 */
+export async function clearAllNotifications() {
+  const affected = await Notification.destroy({ where: {} })
+  return { affected }
+}

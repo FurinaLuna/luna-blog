@@ -5,6 +5,9 @@ import { Check, Refresh } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import {
+  batchDeleteNotifications,
+  clearNotifications,
+  deleteNotification,
   getNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -83,6 +86,96 @@ function toggleUnreadOnly(value: string | number | boolean): void {
   void load()
 }
 
+const selectedIds = ref<number[]>([])
+
+const allSelected = computed(() => rows.value.length > 0 && selectedIds.value.length === rows.value.length)
+
+function isSelected(id: number): boolean {
+  return selectedIds.value.includes(id)
+}
+
+function toggleSelect(id: number): void {
+  selectedIds.value = isSelected(id)
+    ? selectedIds.value.filter((item) => item !== id)
+    : [...selectedIds.value, id]
+}
+
+function toggleSelectAll(): void {
+  selectedIds.value = allSelected.value ? [] : rows.value.map((item) => item.id)
+}
+
+async function deleteOne(item: NotificationItem): Promise<void> {
+  try {
+    await ElMessageBox.confirm(`确定删除这条通知吗？删除后无法恢复。`, '删除通知', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+
+  try {
+    await deleteNotification(item.id)
+    selectedIds.value = selectedIds.value.filter((id) => id !== item.id)
+    ElMessage.success('已删除')
+    if (rows.value.length === 1 && query.page > 1) query.page -= 1
+    await load()
+  } catch {
+    // 请求层已提示
+  }
+}
+
+async function deleteSelected(): Promise<void> {
+  const ids = [...selectedIds.value]
+  if (!ids.length) {
+    ElMessage.warning('请先勾选要删除的通知')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(`确定删除选中的 ${ids.length} 条通知吗？删除后无法恢复。`, '批量删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+
+  try {
+    const result = await batchDeleteNotifications(ids)
+    selectedIds.value = []
+    ElMessage.success(`已删除 ${result.affected} 条通知`)
+    await load()
+  } catch {
+    // 请求层已提示
+  }
+}
+
+async function clearScope(scope: 'read' | 'all'): Promise<void> {
+  const label = scope === 'all' ? '全部通知' : '已读通知'
+  try {
+    await ElMessageBox.confirm(
+      scope === 'all' ? '将清空全部通知（含未读），删除后无法恢复，确定继续吗？' : `将清空全部${label}，未读通知会保留，确定继续吗？`,
+      scope === 'all' ? '清空全部通知' : '清空已读通知',
+      { confirmButtonText: '清空', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return
+  }
+
+  try {
+    const result = await clearNotifications(scope)
+    selectedIds.value = []
+    ElMessage.success(`已清空 ${result.affected} 条通知`)
+    query.page = 1
+    await load()
+  } catch {
+    // 请求层已提示
+  }
+}
+
 function handleSizeChange(): void {
   query.page = 1
   void load()
@@ -98,9 +191,19 @@ onMounted(load)
         <PageHeader title="通知中心" description="评论、留言与友链申请产生的提醒">
           <el-switch :model-value="query.unreadOnly" active-text="只看未读" @change="toggleUnreadOnly" />
           <el-button :icon="Check" :disabled="unreadCount === 0" @click="markAllRead">全部已读</el-button>
+          <el-button :disabled="total === 0" @click="clearScope('read')">清空已读</el-button>
+          <el-button :disabled="total === 0" type="danger" plain @click="clearScope('all')">清空全部</el-button>
           <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
         </PageHeader>
       </template>
+
+      <div class="mb-3 flex flex-wrap items-center gap-3 text-[12px] text-[var(--text-2)]">
+        <el-checkbox :model-value="allSelected" :indeterminate="selectedIds.length > 0 && !allSelected" @change="toggleSelectAll">
+          全选本页
+        </el-checkbox>
+        <span>已选 {{ selectedIds.length }} 条</span>
+        <el-button size="small" type="danger" plain :disabled="selectedIds.length === 0" @click="deleteSelected">删除勾选</el-button>
+      </div>
 
       <div class="notice-scroll">
         <div v-loading="loading" class="flex flex-col gap-2">
@@ -110,6 +213,11 @@ onMounted(load)
             class="notice-item"
             :class="{ 'is-unread': !item.isRead }"
           >
+            <el-checkbox
+              :model-value="isSelected(item.id)"
+              class="shrink-0"
+              @change="toggleSelect(item.id)"
+            />
             <span class="notice-item__dot" :class="{ 'is-visible': !item.isRead }" />
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
@@ -122,14 +230,16 @@ onMounted(load)
               </div>
               <p class="mt-1 text-[12px] leading-5 text-[var(--text-2)]">{{ item.content }}</p>
             </div>
-            <el-button
-              v-if="!item.isRead"
-              link
-              type="primary"
-              size="small"
-              class="shrink-0"
-              @click="markRead(item)"
-            >标为已读</el-button>
+            <div class="flex shrink-0 items-center gap-1">
+              <el-button
+                v-if="!item.isRead"
+                link
+                type="primary"
+                size="small"
+                @click="markRead(item)"
+              >标为已读</el-button>
+              <el-button link type="danger" size="small" @click="deleteOne(item)">删除</el-button>
+            </div>
           </div>
 
           <EmptyState

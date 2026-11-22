@@ -200,6 +200,9 @@
 | GET | `/api/admin/notifications/unread-count` | A → `{count}` |
 | PATCH | `/api/admin/notifications/:id/read` | A |
 | POST | `/api/admin/notifications/read-all` | A |
+| DELETE | `/api/admin/notifications/:id` | A |
+| POST | `/api/admin/notifications/batch-delete` | A · body `{ids:number[]}`（1–200）→ `{affected,requested}` |
+| POST | `/api/admin/notifications/clear` | A · body `{scope:'read'\|'all'}` → `{affected}` |
 
 写入时机：新评论、新留言、新友链申请、系统事件（各生成一条 `isRead=false`）。
 
