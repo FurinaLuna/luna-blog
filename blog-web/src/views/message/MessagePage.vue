@@ -14,8 +14,18 @@ type MessageMode = 'card' | 'danmaku'
 
 const CARD_PAGE_SIZE = 10
 const DANMAKU_PAGE_SIZE = 50
+const MODE_STORAGE_KEY = 'luna-message-mode'
 
-const mode = ref<MessageMode>('card')
+function initialMode(): MessageMode {
+  try {
+    const stored = window.localStorage.getItem(MODE_STORAGE_KEY)
+    return stored === 'card' || stored === 'danmaku' ? stored : 'danmaku'
+  } catch {
+    return 'danmaku'
+  }
+}
+
+const mode = ref<MessageMode>(initialMode())
 const messages = ref<Message[]>([])
 const page = ref(1)
 const totalPages = ref(1)
@@ -36,6 +46,11 @@ function scrollTop(): void {
 
 function switchMode(): void {
   mode.value = mode.value === 'card' ? 'danmaku' : 'card'
+  try {
+    window.localStorage.setItem(MODE_STORAGE_KEY, mode.value)
+  } catch {
+    /* localStorage 不可用时忽略 */
+  }
   scrollTop()
 }
 
@@ -117,6 +132,7 @@ watch(sentinelRef, (el) => {
 
 onMounted(() => {
   void loadFirstPage()
+  if (mode.value === 'danmaku') void loadDanmaku()
 })
 
 onBeforeUnmount(() => {
