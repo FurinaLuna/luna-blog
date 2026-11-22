@@ -78,6 +78,7 @@ async function handleSubmit(): Promise<void> {
 <template>
   <div class="login-container">
     <img class="login-wave" :src="bgImage" alt="" />
+    <div class="login-scrim" aria-hidden="true"></div>
 
     <div class="login-marketing">
       <div class="login-brand">
@@ -189,6 +190,15 @@ async function handleSubmit(): Promise<void> {
   height: 100%;
   object-fit: cover;
   pointer-events: none;
+}
+
+.login-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: transparent;
+  transition: background-color 0.3s ease;
 }
 
 .login-marketing,
@@ -322,15 +332,6 @@ async function handleSubmit(): Promise<void> {
 
 .login-theme:hover {
   color: var(--el-color-primary);
-}
-
-:global(html.dark) .login-wave {
-  opacity: 0.16;
-}
-
-:global(html.dark) .login-brand__sub,
-:global(html.dark) .login-marketing__tip {
-  color: var(--text-2);
 }
 
 @media (max-width: 1180px) {
