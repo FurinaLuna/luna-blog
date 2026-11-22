@@ -212,8 +212,8 @@ export function findIdsByTag(tagId) {
   return ArticleTag.findAll({ where: { tagId }, attributes: ['articleId'], raw: true })
 }
 
-/** 管理端分页列表 */
-export function findAdminPage({ limit, offset, status, keyword, categoryId }) {
+/** 管理端分页列表：先查 id 再取详情，避免标签连表吃掉 limit 配额 */
+export async function findAdminPage({ limit, offset, status, keyword, categoryId }) {
   const where = {}
   if (status) where.status = status
   if (categoryId) where.categoryId = categoryId
@@ -224,16 +224,18 @@ export function findAdminPage({ limit, offset, status, keyword, categoryId }) {
     ]
   }
 
-  return Article.findAndCountAll({
-    where,
-    attributes: LIST_ATTRIBUTES,
-    include: withRelations(),
-    order: [['updatedAt', 'DESC'], ['id', 'DESC']],
-    limit,
-    offset,
-    distinct: true,
-    subQuery: false,
-  })
+  const [count, pageRows] = await Promise.all([
+    Article.count({ where }),
+    Article.findAll({
+      where,
+      attributes: ['id'],
+      order: [['updatedAt', 'DESC'], ['id', 'DESC']],
+      limit,
+      offset,
+    }),
+  ])
+
+  return { count, rows: await findArticlesByIds(pageRows.map((row) => row.id)) }
 }
 
 /** 同步文章标签关联 */
