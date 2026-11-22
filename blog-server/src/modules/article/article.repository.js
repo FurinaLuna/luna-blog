@@ -61,35 +61,25 @@ export async function findPublishedPage({
       ? [['views', 'DESC'], ['id', 'DESC']]
       : [['isTop', 'DESC'], ['publishedAt', 'DESC'], ['id', 'DESC']]
 
-  const filterInclude = tagId
-    ? [
-        {
-          model: Tag,
-          as: 'tags',
-          attributes: [],
-          through: { attributes: [] },
-          where: { id: tagId },
-          required: true,
-        },
-      ]
-    : []
+  // 按标签过滤时先取该标签下的文章 id：既能避免 hasMany 连表吃掉 limit，
+  // 也避免 Sequelize 在「只查 id 的子查询」外面按 Article.is_top 排序时报 Unknown column。
+  if (tagId) {
+    const taggedRows = await ArticleTag.findAll({
+      where: { tagId },
+      attributes: ['articleId'],
+      raw: true,
+    })
+    const taggedIds = taggedRows.map((row) => row.articleId)
+    if (taggedIds.length === 0) return { ids: [], count: 0 }
+    where.id = { [Op.in]: taggedIds }
+  }
 
-  const idRows = await Article.findAll({
-    where,
-    attributes: ['id'],
-    include: filterInclude,
-    order,
-    limit,
-    offset,
-  })
-  const ids = idRows.map((row) => row.id)
+  const [idRows, count] = await Promise.all([
+    Article.findAll({ where, attributes: ['id'], order, limit, offset }),
+    Article.count({ where }),
+  ])
 
-  const count = await Article.count({
-    where,
-    ...(filterInclude.length > 0 ? { include: filterInclude, distinct: true } : {}),
-  })
-
-  return { ids, count }
+  return { ids: idRows.map((row) => row.id), count }
 }
 
 /** 按 id 顺序取完整列表（带分类与标签） */
