@@ -3429,3 +3429,16 @@ html.dark .el-popper.is-light {
     transition: none;
   }
 }
+
+/* 留言板弹幕模式：整屏铺满时隐藏页脚与底部留白 */
+html.is-danmaku-wall .blog-footer {
+  display: none;
+}
+
+html.is-danmaku-wall .app-main {
+  padding-bottom: 0;
+}
+
+html.is-danmaku-wall body {
+  background: #090a0f;
+}

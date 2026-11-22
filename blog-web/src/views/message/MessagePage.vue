@@ -122,8 +122,14 @@ function handleDanmakuPublished(): void {
   void loadDanmaku()
 }
 
+/** 弹幕模式要整屏铺满：给 <html> 打标记，由全局样式隐藏页脚 */
+function syncWallClass(next: MessageMode): void {
+  document.documentElement.classList.toggle('is-danmaku-wall', next === 'danmaku')
+}
+
 watch(mode, (next) => {
   if (next === 'danmaku') void loadDanmaku()
+  syncWallClass(next)
 })
 
 watch(sentinelRef, (el) => {
@@ -131,12 +137,14 @@ watch(sentinelRef, (el) => {
 })
 
 onMounted(() => {
+  syncWallClass(mode.value)
   void loadFirstPage()
   if (mode.value === 'danmaku') void loadDanmaku()
 })
 
 onBeforeUnmount(() => {
   stopObserver()
+  document.documentElement.classList.remove('is-danmaku-wall')
 })
 </script>
 
@@ -315,16 +323,18 @@ onBeforeUnmount(() => {
   height: 1px;
 }
 
-/* 弹幕模式：深色从页面顶部铺满（透明顶栏白字才可读），舞台居中并对齐栅格 */
+/* 弹幕模式：整屏铺满（顶栏透明浮在其上），隐藏页脚避免出现第二屏 */
 .message-page__danmaku {
   min-height: 100vh;
-  padding: calc(var(--header-h) + 1.1rem) 10px 1.4rem;
+  min-height: 100dvh;
+  padding: 0;
   background: radial-gradient(ellipse at top, #10151f 0%, #090a0f 100%);
 }
 
 .message-page__danmaku-shell {
-  max-width: 880px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 @media (max-width: 768px) {

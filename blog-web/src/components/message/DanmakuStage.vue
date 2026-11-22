@@ -224,12 +224,24 @@ async function send(): Promise<void> {
 .danmaku-stage {
   position: relative;
   width: 100%;
-  height: calc(100vh - var(--header-h) - 2.5rem);
+  height: 100vh;
+  height: 100dvh;
   min-height: 560px;
   overflow: hidden;
-  border-radius: 12px;
   background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-  box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.85);
+}
+
+/* 顶栏区域压一层暗色渐变，弹幕飘到顶栏下面时逐渐隐去 */
+.danmaku-stage::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 3;
+  height: calc(var(--header-h) + 1.4rem);
+  background: linear-gradient(180deg, rgb(9 10 15 / 92%) 0%, rgb(9 10 15 / 0%) 100%);
+  pointer-events: none;
+  content: '';
 }
 
 /* 流星：45° 旋转的夜空层 + 长尾渐变，tail 拉宽 / shooting 位移 */
@@ -324,7 +336,7 @@ async function send(): Promise<void> {
 
 .danmaku-stage__layer {
   position: absolute;
-  top: 60px;
+  top: calc(var(--header-h) + 0.6rem);
   right: 0;
   bottom: 0;
   left: 0;
