@@ -86,7 +86,7 @@
 | --- | --- | --- | --- |
 | GET | `/api/articles` | — | query `page,pageSize,categoryId,tagId,keyword,sort(latest\|popular)`；仅 published |
 | GET | `/api/articles/recommend` | — | query `limit`(默认 6，最大 12)；先取 `isRecommend` 最新，不足补最新 published |
-| GET | `/api/articles/archives` | — | → `[{year, count, months:[{month, count, articles:[{id,title,createdAt}]}]}]` |
+| GET | `/api/articles/archives` | — | → `[{year, count, months:[{month, count, articles:[{id,title,cover,createdAt}]}]}]`（时间轴页用，按发布年份/月份倒序） |
 | GET | `/api/articles/:id` | — | 详情 + `prev{id,title}\|null` + `next{id,title}\|null` + `related[{id,title,cover}]`(同分类/同标签最多 4)；仅 published 可查，浏览数 +1（同 IP+文章 1 小时内不重复计） |
 | POST | `/api/articles/:id/like` | — | 按 IP 去重 → `{liked:true, likeCount}`；重复点击返回 `{liked:true, likeCount}` 幂等（不报错） |
 | POST | `/api/admin/articles` | A! | body 见下，缺省 `status='draft'` |

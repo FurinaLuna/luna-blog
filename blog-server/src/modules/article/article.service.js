@@ -77,7 +77,7 @@ export async function listArchives() {
     if (!grouped.has(year)) grouped.set(year, new Map())
     const months = grouped.get(year)
     if (!months.has(month)) months.set(month, [])
-    months.get(month)?.push({ id: row.id, title: row.title, createdAt: date })
+    months.get(month)?.push({ id: row.id, title: row.title, cover: row.cover ?? null, createdAt: date })
   }
 
   return [...grouped.entries()]

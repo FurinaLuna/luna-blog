@@ -92,7 +92,7 @@ export async function findRecommended(limit) {
 export function findAllForArchive() {
   return Article.findAll({
     where: { status: 'published' },
-    attributes: ['id', 'title', 'createdAt', 'publishedAt'],
+    attributes: ['id', 'title', 'cover', 'createdAt', 'publishedAt'],
     order: [['publishedAt', 'DESC'], ['id', 'DESC']],
     raw: true,
   })
