@@ -3467,7 +3467,7 @@ html.is-danmaku-wall .music-ball {
 
 @media (max-width: 768px) {
   .music-ball {
-    bottom: 72px;
+    bottom: 70px;
     left: 12px;
   }
 
@@ -4056,10 +4056,9 @@ html.is-danmaku-wall body {
 /* 站长公告悬浮球：默认固定在视口左侧中部，点开才展开内容 */
 .announce-ball {
   position: fixed;
-  top: 50%;
-  left: 1.1rem;
+  bottom: 138px;
+  left: 20px;
   z-index: 1200;
-  transform: translateY(-50%);
 }
 
 .announce-ball__trigger {
@@ -4168,15 +4167,20 @@ html.is-danmaku-wall body {
 
 @media (max-width: 768px) {
   .announce-ball {
-    top: auto;
-    bottom: 5.4rem;
-    left: 0.8rem;
-    transform: none;
+    bottom: 126px;
+    left: 12px;
   }
 
   .announce-ball__trigger {
     width: 2.6rem;
     height: 2.6rem;
+  }
+
+  /* 三球同列：手机端铃铛与回到顶部都用 42px，视觉尺寸统一 */
+  .announce-ball__trigger,
+  .back-top {
+    width: 42px;
+    height: 42px;
   }
 
   .announce-ball__panel {
