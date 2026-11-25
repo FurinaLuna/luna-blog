@@ -17,6 +17,15 @@ function syncDocumentMeta(): void {
 
   const description = document.querySelector<HTMLMetaElement>('meta[name="description"]')
   if (description) description.content = site.siteDescription
+
+  // 站点关键词：后台「基础信息 → 站点关键词」配置的 SEO keywords
+  let keywords = document.querySelector<HTMLMetaElement>('meta[name="keywords"]')
+  if (!keywords) {
+    keywords = document.createElement('meta')
+    keywords.name = 'keywords'
+    document.head.appendChild(keywords)
+  }
+  keywords.content = site.siteKeywords
 }
 
 function syncFavicon(): void {

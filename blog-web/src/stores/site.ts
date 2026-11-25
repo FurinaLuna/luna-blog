@@ -18,6 +18,7 @@ export const useSiteStore = defineStore('site', () => {
 
   const siteName = computed(() => config.value?.siteName || 'Luna Blog')
   const siteDescription = computed(() => config.value?.siteDescription || '记录生活与代码的数字花园')
+  const siteKeywords = computed(() => config.value?.siteKeywords || '博客,前端,技术,随笔')
   const author = computed(() => config.value?.author || 'Luna')
   const avatar = computed(() => config.value?.avatar || '')
   const announcement = computed(() => config.value?.announcement || '')
@@ -82,6 +83,7 @@ export const useSiteStore = defineStore('site', () => {
     tags,
     siteName,
     siteDescription,
+    siteKeywords,
     author,
     avatar,
     announcement,
