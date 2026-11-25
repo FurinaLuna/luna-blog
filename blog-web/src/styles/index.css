@@ -840,8 +840,8 @@ html.dark #home.home--custom-hero::after {
 
 /* 自定义横幅（后台传图）：图片直接铺在 header 上（第一版做法），遮罩轻一些别把照片糊死 */
 .page-header--custom {
-  /* 纵向贴顶，保证画面主体的上半部分不被裁到下面去 */
-  background-position: center top;
+  /* 从上往下偏一点（30%），比纯贴顶多带出画面中间的内容，又不会切掉上沿 */
+  background-position: center 30%;
 }
 
 .page-header--custom::before {
