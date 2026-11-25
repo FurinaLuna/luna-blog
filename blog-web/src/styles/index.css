@@ -285,6 +285,12 @@ html.dark {
 @media (max-width: 768px) {
   .center_box {
     padding: 1.6rem 10px;
+    /* 手机横幅更矮（25rem），把「拉满」的上移量限制在 -120px，避免盖住横幅标题 */
+    margin-top: max(var(--page-card-offset, 0px), -120px);
+  }
+
+  .article-center {
+    margin-top: max(var(--page-card-offset, 0px), -120px);
   }
 }
 

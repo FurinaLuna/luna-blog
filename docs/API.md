@@ -201,7 +201,7 @@
 
 `meteorCount` 是弹幕舞台背景流星的数量（0 表示不显示）。
 
-`pageCardOffsets` 为每个页面内容卡片的上移像素（0–400 整数，缺省 0＝保持默认位置）：前台按当前路由取键（总览页回退到分类/标签详情键），写入 `document.documentElement` 的 `--page-card-offset`（负值），由 `.center_box` / `.article-center` 的 `margin-top` 消费，用来把卡片压到 banner 与波浪上。
+`pageCardOffsets` 为每个页面内容卡片的上移像素（0–400 整数，缺省值：首页 0，其余页面 200＝拉满贴合横幅；小屏前台自动把上移量限制在 120px 以内以免盖住横幅标题）：前台按当前路由取键（总览页回退到分类/标签详情键），写入 `document.documentElement` 的 `--page-card-offset`（负值），由 `.center_box` / `.article-center` 的 `margin-top` 消费，用来把卡片压到 banner 与波浪上。
 
 后端读取时与缺省对象做浅合并，因此只 PUT 其中几个 key 不会把其它页面冲成空。
 

@@ -57,9 +57,12 @@ const EMPTY_PAGE_BANNERS: PageBanners = {
 /** 横幅默认取景位置（30% 偏上，兼顾上沿留白与画面中部） */
 const DEFAULT_BANNER_FOCUS = 30
 
-/** 15 个页面内容卡片默认上移 0px（不改变原有位置） */
+/** 卡片上移滑块上限：拉满 = 贴着横幅下沿 */
+const MAX_CARD_OFFSET = 200
+
+/** 15 个页面内容卡片的默认上移量：首页满屏 Hero 不动，其余页面默认拉满 */
 const EMPTY_PAGE_CARD_OFFSETS: Record<string, number> = Object.fromEntries(
-  PAGE_BANNER_ITEMS.map((item) => [item.key, 0]),
+  PAGE_BANNER_ITEMS.map((item) => [item.key, item.key === 'home' ? 0 : MAX_CARD_OFFSET]),
 )
 
 /** 15 个页面横幅的默认取景位置 */
@@ -173,15 +176,17 @@ function normalizePositions(
   return next
 }
 
-/** 补齐 15 个卡片上移量，缺省 0 */
+/** 补齐 15 个卡片上移量：首页缺省 0，其余页面缺省拉满（200） */
 function normalizeCardOffsets(raw: Record<string, number> | undefined): Record<string, number> {
   const next: Record<string, number> = { ...EMPTY_PAGE_CARD_OFFSETS }
   for (const item of PAGE_BANNER_ITEMS) {
     const value = raw?.[item.key]
     next[item.key] =
       typeof value === 'number' && Number.isFinite(value)
-        ? Math.min(400, Math.max(0, Math.round(value)))
-        : 0
+        ? Math.min(MAX_CARD_OFFSET, Math.max(0, Math.round(value)))
+        : item.key === 'home'
+          ? 0
+          : MAX_CARD_OFFSET
   }
   return next
 }
@@ -547,13 +552,13 @@ onMounted(load)
                         <div class="mb-1 flex items-center justify-between gap-2">
                           <span class="text-[12px] text-[var(--text-3)]">卡片上移</span>
                           <span class="text-[12px] text-[var(--text-3)]">
-                            {{ form.pageCardOffsets[item.key] }}px（0 = 保持默认）
+                            {{ form.pageCardOffsets[item.key] }}px（{{ item.key === 'home' ? '0 = 保持默认' : '200 = 拉满贴合横幅' }}）
                           </span>
                         </div>
                         <el-slider
                           v-model="form.pageCardOffsets[item.key]"
                           :min="0"
-                          :max="200"
+                          :max="MAX_CARD_OFFSET"
                           :step="4"
                           size="small"
                           :show-tooltip="false"

@@ -46,8 +46,25 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   },
   // 每个页面横幅的取景位置（0 = 贴顶，100 = 贴底，默认 30 偏上）
   pageBannerPositions: {},
-  // 每个页面内容卡片的上移量（px，0 = 保持默认位置）
-  pageCardOffsets: {},
+  // 每个页面内容卡片的上移量（px，0 = 保持默认位置，200 = 拉满贴合横幅）
+  // 除首页（满屏 Hero，不需要上移）外，其余页面默认拉满，卡片压住横幅下沿
+  pageCardOffsets: {
+    home: 0,
+    archives: 200,
+    categories: 200,
+    category: 200,
+    tags: 200,
+    tag: 200,
+    article: 200,
+    talks: 200,
+    albums: 200,
+    album: 200,
+    resources: 200,
+    friends: 200,
+    message: 200,
+    about: 200,
+    search: 200,
+  },
   /** 留言板弹幕速度（vue3-danmaku 的 speeds，越大越快） */
   danmakuSpeed: 180,
   /** 留言板弹幕背景的流星数量 */
