@@ -76,6 +76,11 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   friendsContact: '',
   friendsTip: '申请前请先添加本站友链，审核通过后会尽快上线。',
   /** 进站欢迎通知（后台「欢迎通知」页签可改）：标题、称呼、8 个时段的问候文案（{name} 会被替换成称呼） */
+  /** 音乐悬浮球：总开关 / 音源（local = 站内歌单，netease = 网易云歌单）/ 默认音量 / 网易云歌单 id */
+  musicEnabled: true,
+  musicSource: 'local',
+  musicVolume: 0.7,
+  neteasePlaylistId: '',
   welcomeTitle: '欢迎～',
   welcomeName: '我的朋友',
   welcomeGreetings: [
@@ -129,6 +134,10 @@ export const siteConfigSchema = z.object({
   friendsContactLabel: z.string().trim().max(20).optional(),
   friendsContact: z.string().trim().max(100).optional(),
   friendsTip: z.string().trim().max(200).optional(),
+  musicEnabled: z.boolean().optional(),
+  musicSource: z.enum(['local', 'netease']).optional(),
+  musicVolume: z.number().min(0).max(1).optional(),
+  neteasePlaylistId: z.string().trim().max(40).optional(),
   welcomeTitle: z.string().trim().max(40).optional(),
   welcomeName: z.string().trim().max(20).optional(),
   welcomeGreetings: z.array(z.string().trim().max(120)).length(8).optional(),

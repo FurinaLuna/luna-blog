@@ -15,6 +15,18 @@ const IMAGE_TYPES = new Map([
 ])
 
 /** 允许上传的普通文件类型（不接收可执行脚本与 svg，避免存储型 XSS） */
+/** 允许上传的音频类型（站内自建歌单） */
+const AUDIO_TYPES = new Map([
+  ['audio/mpeg', '.mp3'],
+  ['audio/mp3', '.mp3'],
+  ['audio/mp4', '.m4a'],
+  ['audio/x-m4a', '.m4a'],
+  ['audio/aac', '.aac'],
+  ['audio/wav', '.wav'],
+  ['audio/x-wav', '.wav'],
+  ['audio/ogg', '.ogg'],
+])
+
 const FILE_TYPES = new Map([
   ['application/pdf', '.pdf'],
   ['application/zip', '.zip'],
@@ -30,7 +42,7 @@ const storage = multer.diskStorage({
     callback(null, dir)
   },
   filename(_req, file, callback) {
-    const ext = IMAGE_TYPES.get(file.mimetype) ?? FILE_TYPES.get(file.mimetype) ?? path.extname(file.originalname)
+    const ext = IMAGE_TYPES.get(file.mimetype) ?? FILE_TYPES.get(file.mimetype) ?? AUDIO_TYPES.get(file.mimetype) ?? path.extname(file.originalname)
     callback(null, `${randomUUID()}${ext}`)
   },
 })
@@ -41,9 +53,9 @@ const uploader = multer({
   storage,
   limits: { fileSize: maxBytes, files: 1 },
   fileFilter(_req, file, callback) {
-    const allowed = IMAGE_TYPES.has(file.mimetype) || FILE_TYPES.has(file.mimetype)
+    const allowed = IMAGE_TYPES.has(file.mimetype) || FILE_TYPES.has(file.mimetype) || AUDIO_TYPES.has(file.mimetype)
     if (!allowed) {
-      callback(new Error('不支持的文件类型，仅允许 jpg/png/webp/gif/avif/pdf/zip/txt/md'))
+      callback(new Error('不支持的文件类型，仅允许 jpg/png/webp/gif/avif/pdf/zip/txt/md 与 mp3/m4a/aac/wav/ogg'))
       return
     }
     callback(null, true)
