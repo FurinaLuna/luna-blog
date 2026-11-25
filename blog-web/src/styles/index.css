@@ -3465,6 +3465,30 @@ html.is-danmaku-wall .music-ball {
   display: none;
 }
 
+/* 公告球与音乐球平时「半靠」在左边缘，鼠标移上去才滑出并完全显示 */
+.announce-ball,
+.music-ball {
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .announce-ball,
+  .music-ball {
+    opacity: 0.5;
+    transform: translateX(-55%);
+  }
+
+  .announce-ball:hover,
+  .announce-ball:focus-within,
+  .announce-ball.is-open,
+  .music-ball:hover,
+  .music-ball:focus-within,
+  .music-ball.is-open {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media (max-width: 768px) {
   .music-ball {
     bottom: 70px;
