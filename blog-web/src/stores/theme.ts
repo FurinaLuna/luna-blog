@@ -13,7 +13,8 @@ function readMode(): ThemeMode {
   } catch {
     /* 隐私模式下忽略 */
   }
-  return 'system'
+  // 默认深色：没有本地偏好时先给暗色主题
+  return 'dark'
 }
 
 export const useThemeStore = defineStore('theme', () => {
