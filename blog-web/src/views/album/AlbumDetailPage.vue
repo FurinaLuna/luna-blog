@@ -48,16 +48,17 @@ function photoRatio(photo: Photo): string {
         <SkeletonList variant="card" :count="4" />
       </div>
 
-      <EmptyState
-        v-else-if="error || !album"
-        icon="image"
-        title="相册不存在"
-        description="它可能被删除，或者链接输入有误。"
-        action-text="返回相册列表"
-        @action="$router.push('/albums')"
-      />
+      <div v-else-if="error || !album" class="card album-detail-card">
+        <EmptyState
+          icon="image"
+          title="相册不存在"
+          description="它可能被删除，或者链接输入有误。"
+          action-text="返回相册列表"
+          @action="$router.push('/albums')"
+        />
+      </div>
 
-      <template v-else>
+      <div v-else class="card album-detail-card">
         <div class="album-detail-head">
           <RouterLink to="/albums" class="album-detail-back">
             <el-icon :size="13"><ArrowLeft /></el-icon>
@@ -73,7 +74,7 @@ function photoRatio(photo: Photo): string {
           description="再等等，光正在被装进来。"
         />
 
-        <div v-else class="card photo-wall">
+        <div v-else class="photo-wall">
           <div class="photo-grid">
             <figure v-for="(photo, index) in photos" :key="photo.id" class="photo-item">
               <el-image
@@ -97,7 +98,7 @@ function photoRatio(photo: Photo): string {
             </figure>
           </div>
         </div>
-      </template>
+      </div>
     </div>
   </div>
 </template>
@@ -114,7 +115,7 @@ function photoRatio(photo: Photo): string {
 }
 
 .album-detail-card {
-  padding: 1.2rem;
+  padding: clamp(1.1rem, 3vw, 1.6rem);
 }
 
 .album-detail-head {
@@ -145,6 +146,6 @@ function photoRatio(photo: Photo): string {
 }
 
 .photo-wall {
-  padding: 1rem;
+  margin-top: 0.2rem;
 }
 </style>
