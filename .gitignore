@@ -42,9 +42,10 @@ coverage/
 .tmp-*/
 *.screenshot.png
 
-# 本地提示词/草稿
+# 本地提示词草稿（不入库）
 vue3-blog重写提示词.md
+*.md.bak
 
-# 本地临时脚本/凭据
-.tmp-*
+# 本地临时脚本 / 凭据 / 提交信息文件
+rmsg*.txt
 *.tmp-token.txt
