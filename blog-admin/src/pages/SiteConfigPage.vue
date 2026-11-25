@@ -81,6 +81,8 @@ const form = reactive<SiteConfig>({
   commentNeedReview: true,
   messageNeedReview: true,
   profileBanner: '',
+  favicon: '',
+  adminLoginBg: '',
   pageBanners: { ...EMPTY_PAGE_BANNERS },
   pageBannerPositions: { ...EMPTY_PAGE_POSITIONS },
 })
@@ -105,9 +107,16 @@ function fillForm(data: SiteConfig): void {
   form.icp = data.icp ?? ''
   form.startDate = data.startDate ?? ''
   form.profileBanner = data.profileBanner ?? ''
+  form.favicon = data.favicon ?? ''
+  form.adminLoginBg = data.adminLoginBg ?? ''
 
   form.socialLinks = Array.isArray(data.socialLinks)
-    ? data.socialLinks.map((link) => ({ name: link.name ?? '', url: link.url ?? '', icon: link.icon ?? '' }))
+    ? data.socialLinks.map((link) => ({
+        name: link.name ?? '',
+        url: link.url ?? '',
+        icon: link.icon ?? '',
+        qrcode: link.qrcode ?? '',
+      }))
     : []
   form.commentNeedReview = data.commentNeedReview !== false
   form.messageNeedReview = data.messageNeedReview !== false
@@ -189,7 +198,7 @@ async function load(): Promise<void> {
 }
 
 function addSocialLink(): void {
-  form.socialLinks.push({ name: '', url: '', icon: '' })
+  form.socialLinks.push({ name: '', url: '', icon: '', qrcode: '' })
 }
 
 function removeSocialLink(index: number): void {
@@ -198,8 +207,14 @@ function removeSocialLink(index: number): void {
 
 function normalizeLinks(): SocialLink[] {
   return form.socialLinks
-    .map((link) => ({ name: link.name.trim(), url: link.url.trim(), icon: link.icon.trim() }))
-    .filter((link) => link.name && link.url)
+    .map((link) => ({
+      name: link.name.trim(),
+      url: link.url.trim(),
+      icon: link.icon.trim(),
+      qrcode: (link.qrcode ?? '').trim(),
+    }))
+    // 微信 / QQ 允许只填二维码，不强制要链接
+    .filter((link) => link.name && (link.url || link.qrcode))
 }
 
 async function save(): Promise<void> {
@@ -231,6 +246,8 @@ async function save(): Promise<void> {
       commentNeedReview: form.commentNeedReview,
       messageNeedReview: form.messageNeedReview,
       profileBanner: form.profileBanner.trim(),
+      favicon: form.favicon.trim(),
+      adminLoginBg: form.adminLoginBg.trim(),
       pageBanners: collectBanners(),
     pageBannerPositions: collectPositions(),
     })
@@ -291,6 +308,22 @@ onMounted(load)
               </div>
               <el-form-item label="头像">
                 <ImageUpload v-model="form.avatar" :size="96" tip="建议 1:1，用于首页与页脚" />
+              </el-form-item>
+              <el-form-item label="站点图标（favicon）">
+                <ImageUpload
+                  v-model="form.favicon"
+                  :size="72"
+                  :limit="1"
+                  tip="建议 1:1（64×64 的 PNG 或 ICO），留空用默认图标"
+                />
+              </el-form-item>
+              <el-form-item label="后台登录页背景图">
+                <ImageUpload
+                  v-model="form.adminLoginBg"
+                  :size="112"
+                  :limit="1"
+                  tip="建议 1920×1080，留空用内置蓝色波浪底图"
+                />
               </el-form-item>
               <el-form-item label="站长公告">
                 <el-input v-model="form.announcement" type="textarea" :rows="2" maxlength="200" show-word-limit placeholder="展示在首页的小公告，可留空" />
@@ -397,7 +430,7 @@ onMounted(load)
                           v-model="form.pageBannerPositions[item.key]"
                           :min="0"
                           :max="100"
-                          :step="5"
+                          :step="1"
                           size="small"
                           :disabled="!form.pageBanners[item.key]"
                           :show-tooltip="false"
@@ -451,12 +484,30 @@ onMounted(load)
             <div
               v-for="(link, index) in form.socialLinks"
               :key="index"
-              class="mb-2 flex items-end gap-2"
+              class="mb-3 rounded border p-3"
+              :style="{ borderColor: 'var(--border)' }"
             >
-              <el-input v-model="link.icon" class="w-[92px]!" placeholder="图标" maxlength="16" />
-              <el-input v-model="link.name" class="w-[160px]!" placeholder="名称" maxlength="24" />
-              <el-input v-model="link.url" class="flex-1" placeholder="example.com" />
-              <el-button :icon="Delete" :disabled="form.socialLinks.length <= 1" @click="removeSocialLink(index)" />
+              <div class="flex items-end gap-2">
+                <el-input v-model="link.icon" class="w-[92px]!" placeholder="图标" maxlength="16" />
+                <el-input v-model="link.name" class="w-[160px]!" placeholder="名称" maxlength="24" />
+                <el-input
+                  v-model="link.url"
+                  class="flex-1"
+                  placeholder="example.com（微信 / QQ 可只上传二维码）"
+                />
+                <el-button
+                  :icon="Delete"
+                  :disabled="form.socialLinks.length <= 1"
+                  @click="removeSocialLink(index)"
+                />
+              </div>
+              <div class="mt-2 flex items-start gap-3">
+                <ImageUpload v-model="link.qrcode" :size="56" :limit="1" tip="二维码（可选）" />
+                <p class="m-0 text-[12px] leading-5 text-[var(--text-3)]">
+                  上传二维码后，前台点这个图标会悬浮展示二维码而不是跳转链接，适合微信 / QQ。
+                  <span class="block break-all">{{ link.qrcode || '未上传二维码' }}</span>
+                </p>
+              </div>
             </div>
             <el-button :icon="Plus" class="mt-2" @click="addSocialLink">添加社交链接</el-button>
             <div v-if="form.socialLinks.length === 0" class="mt-2 text-[12px] text-[var(--text-3)]">

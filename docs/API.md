@@ -186,7 +186,11 @@
 | GET | `/api/site-stats` | — | `{article, category, tag, comment, talk, photo, message, views, words, visit:{pv,uv}}`；`views`=文章阅读数之和，`visit.pv`=页面浏览总数，`visit.uv`=去重访客数 |
 | POST | `/api/visit` | — | 前台每次路由切换上报 `{path, referer?}`；按 IP 哈希去重统计 UV，限频 60 次/分/IP；返回 `{recorded:true}` |
 
-配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon}], commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), profileBanner(首页侧栏资料卡横幅图 URL，空则回退 pageBanners.home), pageBanners(15 个页面键 → 横幅图 URL), pageBannerPositions(15 个页面键 → 0–100 取景位置)
+配置 key：`siteName, siteDescription, siteKeywords, author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon,qrcode}], favicon(站点图标 URL，空则用内置 /favicon.svg), adminLoginBg(后台登录页背景图 URL，空则用内置波浪底图), commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), profileBanner(首页侧栏资料卡横幅图 URL，空则回退 pageBanners.home), pageBanners(15 个页面键 → 横幅图 URL), pageBannerPositions(15 个页面键 → 0–100 取景位置)
+
+`socialLinks` 每项为 `{name, url, icon, qrcode}`：`qrcode` 是可选的二维码图片 URL（最长 500）。填了二维码时前台把该图标渲染成 `<button>` 并在 hover 时用弹出层展示二维码（适合微信 / QQ，此时 `url` 可以留空）；不填则仍是普通外链 `<a>`。
+
+`favicon` 是站点图标 URL，前台 `App.vue` 在站点配置加载后写入 `<link rel="icon">`；`adminLoginBg` 是后台登录页背景图 URL，登录页加载配置后替换内置蓝色波浪底图，同时用 `siteName` 作为登录页品牌名。
 
 `pageBanners` 为页面横幅图映射（值是图片 URL，最长 500，空字符串表示使用内置天空渐变横幅）：
 `{ home, archives, categories, category, tags, tag, article, talks, albums, album, resources, friends, message, about, search }`（15 个键）。分类总览 / 标签总览未单独上传时，回退到 category / tag 的图。

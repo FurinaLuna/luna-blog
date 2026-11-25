@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SocialLink } from '@/api/types'
-import { BRAND_ICONS } from './social-icons'
+import SocialIcon from './SocialIcon.vue'
 
 const props = withDefaults(defineProps<{ links: SocialLink[]; size?: 'sm' | 'md' }>(), {
   size: 'sm',
@@ -37,69 +37,95 @@ function resolve(link: SocialLink): Resolved {
 }
 
 const items = computed(() =>
-  props.links.map((link) => ({
-    link,
-    icon: resolve(link),
-    external: link.url.startsWith('http'),
-  })),
+  props.links.map((link) => {
+    const icon = resolve(link)
+    return {
+      link,
+      kind: icon.kind,
+      brand: icon.kind === 'brand' ? icon.brand : '',
+      /** 有二维码时悬浮展示二维码，不再当普通链接跳转 */
+      qrcode: (link.qrcode ?? '').trim(),
+      external: link.url.startsWith('http'),
+    }
+  }),
 )
+
+/** 图标按钮的公共 class（<a> 与 <button> 共用） */
+function btnClass(size: 'sm' | 'md'): string {
+  return ['icon-btn', 'h-9 w-9', size === 'md' ? 'h-10 w-10' : ''].filter(Boolean).join(' ')
+}
 </script>
 
 <template>
   <ul class="flex flex-wrap items-center gap-2">
-    <li v-for="item in items" :key="item.link.url">
+    <li v-for="item in items" :key="`${item.link.name}-${item.link.url}-${item.qrcode}`">
+      <el-popover
+        v-if="item.qrcode"
+        placement="top"
+        :width="196"
+        trigger="hover"
+        popper-class="social-qr-popover"
+      >
+        <template #reference>
+          <span class="inline-flex">
+            <button
+              type="button"
+              :class="btnClass(size)"
+              :aria-label="`${item.link.name} 二维码`"
+              :title="`${item.link.name} 二维码`"
+              style="border-color: var(--border)"
+            >
+              <SocialIcon :kind="item.kind" :brand="item.brand" />
+            </button>
+          </span>
+        </template>
+        <div class="social-qr">
+          <img :src="item.qrcode" :alt="`${item.link.name} 二维码`" />
+          <p class="social-qr__name">{{ item.link.name }}</p>
+          <p class="social-qr__tip">扫码添加</p>
+        </div>
+      </el-popover>
+
       <a
+        v-else
         :href="item.link.url"
         :target="item.external ? '_blank' : undefined"
         :rel="item.external ? 'noopener noreferrer' : undefined"
-        class="icon-btn h-9 w-9"
-        :class="size === 'md' ? 'h-10 w-10' : ''"
+        :class="btnClass(size)"
         :aria-label="item.link.name"
         :title="item.link.name"
         style="border-color: var(--border)"
       >
-        <svg
-          v-if="item.icon.kind === 'brand'"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="h-4 w-4"
-          aria-hidden="true"
-        >
-          <path
-            v-for="(d, index) in BRAND_ICONS[item.icon.brand]?.paths ?? []"
-            :key="index"
-            :d="d"
-          />
-        </svg>
-        <svg
-          v-else-if="item.icon.kind === 'mail'"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="h-4 w-4"
-          aria-hidden="true"
-        >
-          <rect x="3" y="5" width="18" height="14" rx="2" />
-          <path d="m3.5 7 8.5 6 8.5-6" />
-        </svg>
-        <svg
-          v-else
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.7"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="h-4 w-4"
-          aria-hidden="true"
-        >
-          <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1.5 1.5" />
-          <path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1.5-1.5" />
-        </svg>
+        <SocialIcon :kind="item.kind" :brand="item.brand" />
       </a>
     </li>
   </ul>
 </template>
+
+<style scoped>
+.social-qr {
+  text-align: center;
+}
+
+.social-qr img {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #fff;
+}
+
+.social-qr__name {
+  margin: 0.5rem 0 0;
+  color: var(--font-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.social-qr__tip {
+  margin: 0.1rem 0 0;
+  color: var(--meta-color);
+  font-size: 0.75rem;
+}
+</style>

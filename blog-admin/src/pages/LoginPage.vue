@@ -7,6 +7,8 @@ import { Lock, Moon, Sunny, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { ApiError } from '@/api/http'
+import { getSiteConfig } from '@/api/siteConfig'
+import type { SiteConfig } from '@/api/types'
 import bgImage from '@/assets/login/bg.png'
 import avatarImage from '@/assets/login/avatar.svg'
 import illustrationImage from '@/assets/login/illustration.svg'
@@ -37,6 +39,13 @@ const rules: FormRules<LoginForm> = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
+/** 后台登录页可配置的站点信息（背景图、站名），加载失败就退回内置资源 */
+const siteConfig = ref<Partial<SiteConfig> | null>(null)
+
+const brandName = computed(() => (siteConfig.value?.siteName ?? '').trim() || 'Luna Blog')
+const loginBg = computed(() => (siteConfig.value?.adminLoginBg ?? '').trim() || bgImage)
+const avatarSrc = computed(() => (siteConfig.value?.avatar ?? '').trim() || avatarImage)
+
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const errorText = ref('')
@@ -47,6 +56,14 @@ const redirect = computed(() => {
 })
 
 onMounted(() => {
+  getSiteConfig()
+    .then((data) => {
+      siteConfig.value = data
+    })
+    .catch(() => {
+      // 静默失败：登录页用内置背景与默认站名即可
+    })
+
   if (auth.isAuthenticated) {
     void router.replace(auth.needPasswordChange ? { name: 'ChangePassword' } : redirect.value)
   }
@@ -77,14 +94,14 @@ async function handleSubmit(): Promise<void> {
 
 <template>
   <div class="login-container">
-    <img class="login-wave" :src="bgImage" alt="" />
+    <img class="login-wave" :src="loginBg" alt="" />
     <div class="login-scrim" aria-hidden="true"></div>
 
     <div class="login-marketing">
       <div class="login-brand">
-        <img class="login-brand__mark" :src="avatarImage" alt="Luna Blog" />
+        <img class="login-brand__mark" :src="avatarSrc" :alt="brandName" />
         <div>
-          <p class="login-brand__title">Luna Blog</p>
+          <p class="login-brand__title">{{ brandName }}</p>
           <p class="login-brand__sub">内容管理后台</p>
         </div>
       </div>
@@ -95,8 +112,8 @@ async function handleSubmit(): Promise<void> {
     <div class="login-panel">
       <div class="login-box">
         <div class="login-head">
-          <img class="login-avatar" :src="avatarImage" alt="Luna Blog" />
-          <h2>Luna Blog</h2>
+          <img class="login-avatar" :src="avatarSrc" :alt="brandName" />
+          <h2>{{ brandName }}</h2>
           <p>登录管理后台</p>
         </div>
 

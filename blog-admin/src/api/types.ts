@@ -311,6 +311,8 @@ export interface SocialLink {
   name: string
   url: string
   icon: string
+  /** 微信 / QQ 等平台的二维码图（前台悬浮展示），留空则照常跳链接 */
+  qrcode: string
 }
 
 /** 前台页面横幅的固定键（与后端 pageBanners 对象的键一致） */
@@ -357,6 +359,10 @@ export interface SiteConfig {
   pageBanners: PageBanners
   /** 每个页面横幅的取景位置（0 = 贴顶，100 = 贴底） */
   pageBannerPositions: Record<string, number>
+  /** 站点图标（favicon），空 = 用内置 favicon.svg */
+  favicon: string
+  /** 后台登录页背景图，空 = 用内置蓝色波浪底图 */
+  adminLoginBg: string
 }
 
 /* ------------------------------- 通知 ------------------------------- */

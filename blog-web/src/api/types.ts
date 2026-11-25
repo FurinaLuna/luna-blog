@@ -279,6 +279,8 @@ export interface SocialLink {
   name: string
   url: string
   icon: string
+  /** 微信 / QQ 等平台的二维码图，有值时前台悬浮展示二维码而不是跳转 */
+  qrcode?: string
 }
 
 export interface SiteConfig {
@@ -304,6 +306,8 @@ export interface SiteConfig {
   pageBannerPositions?: Record<string, number>
   /** 首页侧栏资料卡横幅（空字符串 = 回退 pageBanners.home） */
   profileBanner?: string
+  /** 站点图标（浏览器标签页 favicon），空 = 用 public/favicon.svg */
+  favicon?: string
 }
 
 export interface SiteStats {

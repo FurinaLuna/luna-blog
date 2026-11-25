@@ -23,6 +23,9 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   messageNeedReview: true,
   // 首页侧栏资料卡的横幅图（空字符串 = 回退到 pageBanners.home，再回退内置渐变）
   profileBanner: '',
+  // 站点图标（favicon）与后台登录页背景图（空 = 用内置图）
+  favicon: '',
+  adminLoginBg: '',
   // 每个页面的横幅图（空字符串 = 使用内置天空渐变默认横幅）
   pageBanners: {
     home: '',
@@ -49,6 +52,8 @@ const socialLinkSchema = z.object({
   name: z.string().trim().max(30),
   url: z.string().trim().max(300),
   icon: z.string().trim().max(300).default(''),
+  /** 微信 / QQ 这类平台可以只放二维码图（悬浮展示），留空则照常跳链接 */
+  qrcode: z.string().trim().max(500).default(''),
 })
 
 export const siteConfigSchema = z.object({
@@ -70,6 +75,8 @@ export const siteConfigSchema = z.object({
   commentNeedReview: z.boolean().optional(),
   messageNeedReview: z.boolean().optional(),
   profileBanner: z.string().trim().max(500).optional(),
+  favicon: z.string().trim().max(500).optional(),
+  adminLoginBg: z.string().trim().max(500).optional(),
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
   pageBannerPositions: z.record(z.string(), z.number().int().min(0).max(100)).optional(),
 })

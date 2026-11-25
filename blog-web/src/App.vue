@@ -19,9 +19,23 @@ function syncDocumentMeta(): void {
   if (description) description.content = site.siteDescription
 }
 
+function syncFavicon(): void {
+  const href = (site.config?.favicon ?? '').trim() || '/favicon.svg'
+  let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  if (!link) {
+    link = document.createElement('link')
+    link.rel = 'icon'
+    document.head.appendChild(link)
+  }
+  if (link.getAttribute('href') !== href) link.href = href
+}
+
 watch(
   () => [route.fullPath, site.config] as const,
-  () => syncDocumentMeta(),
+  () => {
+    syncDocumentMeta()
+    syncFavicon()
+  },
   { immediate: true },
 )
 
