@@ -26,7 +26,27 @@ export const useSiteStore = defineStore('site', () => {
   const commentNeedReview = computed(() => config.value?.commentNeedReview ?? true)
 
   /** 友链页介绍区文案：后台留空时用站点名称/邮箱兜底 */
-  const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 ${siteName.value}`)
+  /** 进站欢迎通知：标题、称呼、8 个时段问候文案（缺省用原站文案） */
+const DEFAULT_WELCOME_GREETINGS = [
+  '夜深了：{name}，请注意休息！',
+  '早上好：{name}，今天又是活力满满的一天！',
+  '上午好：{name}，请合理安排时间摸鱼！',
+  '中午好：{name}，现在正适合睡一觉',
+  '下午好：{name}',
+  '傍晚好：{name}，记得按时吃饭',
+  '晚上好：{name}',
+  '晚上好：{name}，记得按时碎觉哦',
+]
+
+const welcomeTitle = computed(() => config.value?.welcomeTitle || '欢迎～')
+const welcomeName = computed(() => config.value?.welcomeName || '我的朋友')
+const welcomeGreetings = computed(() => {
+  const list = config.value?.welcomeGreetings
+  if (!Array.isArray(list) || list.length !== 8) return DEFAULT_WELCOME_GREETINGS
+  return list.map((item, i) => (item || '').trim() || DEFAULT_WELCOME_GREETINGS[i])
+})
+
+const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 ${siteName.value}`)
   const friendsLink = computed(() => config.value?.friendsLink || '')
   const friendsContactLabel = computed(() => config.value?.friendsContactLabel || 'QQ')
   const friendsContact = computed(() => config.value?.friendsContact || '')
@@ -100,6 +120,9 @@ export const useSiteStore = defineStore('site', () => {
     resolvedSocialLinks,
     commentNeedReview,
     friendsTitle,
+  welcomeTitle,
+  welcomeName,
+  welcomeGreetings,
     friendsLink,
     friendsContactLabel,
     friendsContact,

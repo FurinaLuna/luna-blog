@@ -58,32 +58,32 @@ function syncFavicon(): void {
   if (link.getAttribute('href') !== href) link.href = href
 }
 
-/** 每个标签页只弹一次：window.name 在刷新后仍保留，新开标签页才重新问候 */
-const WELCOME_FLAG = 'luna-welcomed'
+/** 每次页面加载都重新问候（刷新也会弹），但要避免一次加载重复弹 / SPA 内多次触发 */
+let welcomeShown = false
+let welcomeTimer = 0
 
-/** 按当前时间段生成问候语，模仿原站欢迎通知 */
-function greetingOf(name: string): string {
-  if (!name) return `欢迎来到 ${site.siteName}`
+/** 按当前时段取后台配置的问候文案，{name} 替换成后台配置的称呼 */
+function greetingOf(): string {
   const hour = new Date().getHours()
-  if (hour < 5) return `夜深了：${name}，请注意休息！`
-  if (hour < 9) return `早上好：${name}，今天又是活力满满的一天！`
-  if (hour < 12) return `上午好：${name}，请合理安排时间摸鱼！`
-  if (hour < 14) return `中午好：${name}，现在正适合睡一觉`
-  if (hour < 18) return `下午好：${name}`
-  if (hour < 20) return `傍晚好：${name}，记得按时吃饭`
-  if (hour < 22) return `晚上好：${name}`
-  return `晚上好：${name}，记得按时碎觉哦`
+  const index =
+    hour < 5 ? 0 : hour < 9 ? 1 : hour < 12 ? 2 : hour < 14 ? 3 : hour < 18 ? 4 : hour < 20 ? 5 : hour < 22 ? 6 : 7
+  const template = site.welcomeGreetings[index] || ''
+  const name = site.welcomeName.trim()
+  const text = template.replace(/\{name\}/g, name).trim()
+  return text || `欢迎来到 ${site.siteName}`
 }
 
 function showWelcomeNotice(): void {
-  if (window.name === WELCOME_FLAG) return
-  window.name = WELCOME_FLAG
-  window.setTimeout(() => {
+  // 节流：同一次页面加载只弹一条；600ms 防抖，避开首屏渲染与站点配置加载的两次触发
+  if (welcomeShown) return
+  welcomeShown = true
+  window.clearTimeout(welcomeTimer)
+  welcomeTimer = window.setTimeout(() => {
     ElNotification({
-      title: '欢迎～',
-      message: h('div', { style: 'font-weight: 600' }, greetingOf(site.author)),
+      title: site.welcomeTitle,
+      message: h('div', { style: 'font-weight: 600' }, greetingOf()),
       offset: 60,
-      duration: 4500,
+      duration: 6000,
     })
   }, 600)
 }

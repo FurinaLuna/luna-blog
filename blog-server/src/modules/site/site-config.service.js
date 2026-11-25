@@ -75,6 +75,19 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   friendsContactLabel: 'QQ',
   friendsContact: '',
   friendsTip: '申请前请先添加本站友链，审核通过后会尽快上线。',
+  /** 进站欢迎通知（后台「欢迎通知」页签可改）：标题、称呼、8 个时段的问候文案（{name} 会被替换成称呼） */
+  welcomeTitle: '欢迎～',
+  welcomeName: '我的朋友',
+  welcomeGreetings: [
+    '夜深了：{name}，请注意休息！',
+    '早上好：{name}，今天又是活力满满的一天！',
+    '上午好：{name}，请合理安排时间摸鱼！',
+    '中午好：{name}，现在正适合睡一觉',
+    '下午好：{name}',
+    '傍晚好：{name}，记得按时吃饭',
+    '晚上好：{name}',
+    '晚上好：{name}，记得按时碎觉哦',
+  ],
 })
 
 const socialLinkSchema = z.object({
@@ -116,6 +129,9 @@ export const siteConfigSchema = z.object({
   friendsContactLabel: z.string().trim().max(20).optional(),
   friendsContact: z.string().trim().max(100).optional(),
   friendsTip: z.string().trim().max(200).optional(),
+  welcomeTitle: z.string().trim().max(40).optional(),
+  welcomeName: z.string().trim().max(20).optional(),
+  welcomeGreetings: z.array(z.string().trim().max(120)).length(8).optional(),
 })
 
 /** 解析单行配置值（JSON 优先，失败回退字符串） */

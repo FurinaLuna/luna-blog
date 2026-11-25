@@ -314,6 +314,10 @@ export interface SiteConfig {
   friendsContactLabel?: string
   friendsContact?: string
   friendsTip?: string
+  /** 进站欢迎通知：标题 / 称呼 / 8 个时段的问候文案（{name} 占位） */
+  welcomeTitle?: string
+  welcomeName?: string
+  welcomeGreetings?: string[]
   /** 首页侧栏资料卡横幅（空字符串 = 回退 pageBanners.home） */
   profileBanner?: string
   /** 站点图标（浏览器标签页 favicon），空 = 用 public/favicon.svg */

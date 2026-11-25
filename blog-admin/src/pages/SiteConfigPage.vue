@@ -54,6 +54,30 @@ const EMPTY_PAGE_BANNERS: PageBanners = {
   search: '',
 }
 
+/** 欢迎通知的 8 个时段标签（0-5 / 5-9 / 9-12 / 12-14 / 14-18 / 18-20 / 20-22 / 22-24） */
+const timeSlotLabels = [
+  '00:00 - 05:00 · 深夜',
+  '05:00 - 09:00 · 早上',
+  '09:00 - 12:00 · 上午',
+  '12:00 - 14:00 · 中午',
+  '14:00 - 18:00 · 下午',
+  '18:00 - 20:00 · 傍晚',
+  '20:00 - 22:00 · 晚上',
+  '22:00 - 24:00 · 深夜',
+]
+
+/** 8 个时段的默认问候文案（{name} 会被替换成「称呼」） */
+const welcomePlaceholders = [
+  '夜深了：{name}，请注意休息！',
+  '早上好：{name}，今天又是活力满满的一天！',
+  '上午好：{name}，请合理安排时间摸鱼！',
+  '中午好：{name}，现在正适合睡一觉',
+  '下午好：{name}',
+  '傍晚好：{name}，记得按时吃饭',
+  '晚上好：{name}',
+  '晚上好：{name}，记得按时碎觉哦',
+]
+
 /** 横幅默认取景位置（30% 偏上，兼顾上沿留白与画面中部） */
 const DEFAULT_BANNER_FOCUS = 30
 
@@ -95,6 +119,18 @@ const form = reactive<SiteConfig>({
   friendsContactLabel: 'QQ',
   friendsContact: '',
   friendsTip: '',
+  welcomeTitle: '欢迎～',
+  welcomeName: '我的朋友',
+  welcomeGreetings: [
+    '夜深了：{name}，请注意休息！',
+    '早上好：{name}，今天又是活力满满的一天！',
+    '上午好：{name}，请合理安排时间摸鱼！',
+    '中午好：{name}，现在正适合睡一觉',
+    '下午好：{name}',
+    '傍晚好：{name}，记得按时吃饭',
+    '晚上好：{name}',
+    '晚上好：{name}，记得按时碎觉哦',
+  ],
   profileBanner: '',
   favicon: '',
   adminLoginBg: '',
@@ -130,6 +166,23 @@ function fillForm(data: SiteConfig): void {
   form.friendsContactLabel = data.friendsContactLabel ?? 'QQ'
   form.friendsContact = data.friendsContact ?? ''
   form.friendsTip = data.friendsTip ?? ''
+  form.welcomeTitle = data.welcomeTitle ?? '欢迎～'
+  form.welcomeName = data.welcomeName ?? '我的朋友'
+  form.welcomeGreetings = (() => {
+    const list = data.welcomeGreetings
+    const fallback = [
+      '夜深了：{name}，请注意休息！',
+      '早上好：{name}，今天又是活力满满的一天！',
+      '上午好：{name}，请合理安排时间摸鱼！',
+      '中午好：{name}，现在正适合睡一觉',
+      '下午好：{name}',
+      '傍晚好：{name}，记得按时吃饭',
+      '晚上好：{name}',
+      '晚上好：{name}，记得按时碎觉哦',
+    ]
+    if (!Array.isArray(list) || list.length !== 8) return fallback
+    return fallback.map((item, i) => (typeof list[i] === 'string' ? list[i] : item))
+  })()
 
   form.socialLinks = Array.isArray(data.socialLinks)
     ? data.socialLinks.map((link) => ({
@@ -310,6 +363,9 @@ async function save(): Promise<void> {
       friendsContactLabel: form.friendsContactLabel.trim(),
       friendsContact: form.friendsContact.trim(),
       friendsTip: form.friendsTip.trim(),
+    welcomeTitle: form.welcomeTitle.trim(),
+    welcomeName: form.welcomeName.trim(),
+    welcomeGreetings: form.welcomeGreetings.map((item: string) => item.trim()),
       pageBanners: collectBanners(),
     pageBannerPositions: collectPositions(),
     pageCardOffsets: collectCardOffsets(),
@@ -454,6 +510,38 @@ onMounted(load)
                   maxlength="200"
                   show-word-limit
                   placeholder="留空则显示默认提示：申请前请先添加本站友链，审核通过后会尽快上线。"
+                />
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="欢迎通知" name="welcome">
+          <div class="max-w-[720px] pt-2">
+            <el-alert
+              type="info"
+              :closable="false"
+              show-icon
+              title="进入站点时右上角弹出的一条欢迎通知：标题 + 按时段的问候语。{name} 会被替换成下面的称呼。"
+              class="mb-4"
+            />
+            <el-form label-position="top">
+              <div class="grid grid-cols-1 gap-x-5 md:grid-cols-2">
+                <el-form-item label="通知标题">
+                  <el-input v-model="form.welcomeTitle" maxlength="40" placeholder="欢迎～" />
+                </el-form-item>
+                <el-form-item label="称呼">
+                  <el-input v-model="form.welcomeName" maxlength="20" placeholder="我的朋友" />
+                </el-form-item>
+              </div>
+              <el-form-item
+                v-for="(item, index) in timeSlotLabels"
+                :key="index"
+                :label="item"
+              >
+                <el-input
+                  v-model="form.welcomeGreetings[index]"
+                  maxlength="120"
+                  :placeholder="welcomePlaceholders[index]"
                 />
               </el-form-item>
             </el-form>

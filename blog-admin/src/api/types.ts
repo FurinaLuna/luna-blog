@@ -369,6 +369,10 @@ export interface SiteConfig {
   friendsContactLabel: string
   friendsContact: string
   friendsTip: string
+  /** 进站欢迎通知：标题 / 称呼 / 8 个时段问候文案（{name} 占位） */
+  welcomeTitle: string
+  welcomeName: string
+  welcomeGreetings: string[]
   /** 站点图标（favicon），空 = 用内置 favicon.svg */
   favicon: string
   /** 后台登录页背景图，空 = 用内置蓝色波浪底图 */
