@@ -2103,18 +2103,18 @@ html.dark .md-content .md-editor-code {
   order: 1;
 }
 
+/* 语言标签靠右：dots …… [lang] [复制代码] [折叠箭头] */
 .md-content .md-editor-code-lang {
-  order: 2;
-  margin-left: 0.3rem;
-}
-
-.md-content .md-editor-copy-button {
   order: 3;
   margin-left: auto;
 }
 
-.md-content .md-editor-collapse-tips {
+.md-content .md-editor-copy-button {
   order: 4;
+}
+
+.md-content .md-editor-collapse-tips {
+  order: 5;
 }
 
 .md-content .md-editor-code-head::-webkit-details-marker {
@@ -2187,6 +2187,140 @@ html.dark .md-content .md-editor-code {
 .md-content .md-editor-collapse-tips svg {
   width: 1rem;
   height: 1rem;
+}
+
+/* ---- 代码高亮：VS Code 配色（浅色 Light+ / 深色 Dark+） ---- */
+.md-content .hljs-comment,
+.md-content .hljs-quote {
+  color: #008000 !important;
+  font-style: italic;
+}
+
+.md-content .hljs-keyword,
+.md-content .hljs-selector-tag,
+.md-content .hljs-literal,
+.md-content .hljs-doctag,
+.md-content .hljs-section,
+.md-content .hljs-link {
+  color: #0033b3 !important;
+}
+
+.md-content .hljs-string,
+.md-content .hljs-regexp,
+.md-content .hljs-addition,
+.md-content .hljs-template-variable {
+  color: #a31515 !important;
+}
+
+.md-content .hljs-number,
+.md-content .hljs-meta .hljs-number {
+  color: #098658 !important;
+}
+
+.md-content .hljs-title,
+.md-content .hljs-title.function_,
+.md-content .hljs-function .hljs-title,
+.md-content .hljs-selector-id {
+  color: #795e26 !important;
+}
+
+.md-content .hljs-type,
+.md-content .hljs-built_in,
+.md-content .hljs-class .hljs-title,
+.md-content .hljs-selector-class {
+  color: #267f99 !important;
+}
+
+.md-content .hljs-variable,
+.md-content .hljs-template-tag,
+.md-content .hljs-params,
+.md-content .hljs-attr,
+.md-content .hljs-property,
+.md-content .hljs-attribute {
+  color: #001080 !important;
+}
+
+.md-content .hljs-meta,
+.md-content .hljs-symbol,
+.md-content .hljs-bullet {
+  color: #af00db !important;
+}
+
+.md-content .hljs-tag,
+.md-content .hljs-name,
+.md-content .hljs-selector-pseudo,
+.md-content .hljs-deletion {
+  color: #800000 !important;
+}
+
+.md-content .hljs-emphasis {
+  font-style: italic;
+}
+
+.md-content .hljs-strong {
+  font-weight: 600;
+}
+
+html.dark .md-content .hljs-comment,
+html.dark .md-content .hljs-quote {
+  color: #6a9955 !important;
+}
+
+html.dark .md-content .hljs-keyword,
+html.dark .md-content .hljs-selector-tag,
+html.dark .md-content .hljs-literal,
+html.dark .md-content .hljs-doctag,
+html.dark .md-content .hljs-section,
+html.dark .md-content .hljs-link {
+  color: #569cd6 !important;
+}
+
+html.dark .md-content .hljs-string,
+html.dark .md-content .hljs-regexp,
+html.dark .md-content .hljs-addition,
+html.dark .md-content .hljs-template-variable {
+  color: #ce9178 !important;
+}
+
+html.dark .md-content .hljs-number,
+html.dark .md-content .hljs-meta .hljs-number {
+  color: #b5cea8 !important;
+}
+
+html.dark .md-content .hljs-title,
+html.dark .md-content .hljs-title.function_,
+html.dark .md-content .hljs-function .hljs-title,
+html.dark .md-content .hljs-selector-id {
+  color: #dcdcaa !important;
+}
+
+html.dark .md-content .hljs-type,
+html.dark .md-content .hljs-built_in,
+html.dark .md-content .hljs-class .hljs-title,
+html.dark .md-content .hljs-selector-class {
+  color: #4ec9b0 !important;
+}
+
+html.dark .md-content .hljs-variable,
+html.dark .md-content .hljs-template-tag,
+html.dark .md-content .hljs-params,
+html.dark .md-content .hljs-attr,
+html.dark .md-content .hljs-property,
+html.dark .md-content .hljs-attribute {
+  color: #9cdcfe !important;
+}
+
+html.dark .md-content .hljs-meta,
+html.dark .md-content .hljs-symbol,
+html.dark .md-content .hljs-bullet {
+  color: #c586c0 !important;
+}
+
+html.dark .md-content .hljs-tag,
+html.dark .md-content .hljs-name,
+html.dark .md-content .hljs-selector-pseudo,
+html.dark .md-content .hljs-deletion {
+  color: #d7ba7d !important;
 }
 
 .md-content .md-editor-code pre {
