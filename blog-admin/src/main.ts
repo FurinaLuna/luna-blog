@@ -5,6 +5,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 // md-editor-v3 的样式表带 @charset，放进 CSS 层会被构建器判为非法 at-rule，故保持顶层导入；
 // styles/index.css 里的编辑器覆盖写在所有层之外，仍然生效。
+import 'cropperjs/dist/cropper.css'
 import 'md-editor-v3/lib/style.css'
 import './styles/index.css'
 import App from './App.vue'

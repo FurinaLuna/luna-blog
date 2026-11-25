@@ -1398,8 +1398,13 @@ html .md-editor .md-editor-preview .md-editor-code > summary.md-editor-code-head
   border-radius: 4px;
 }
 
-.md-editor-dark {
-  --md-bk-color: var(--card);
+/* md-editor-v3 深色主题把 --md-bk-color / --md-color 以行内样式写在 .md-editor 上，
+   默认值是纯黑 #000 与灰字 #999，与后台的深色卡片不协调，用 !important 覆盖成站点色阶 */
+html.dark .md-editor {
+  --md-bk-color: var(--card) !important;
+  --md-bk-color-outstand: var(--surface, #1f2732) !important;
+  --md-color: var(--text, #dbe4ef) !important;
+  --md-quote-bg: rgba(255, 255, 255, 0.04) !important;
 }
 
 .md-editor .cm-editor {
@@ -1408,6 +1413,17 @@ html .md-editor .md-editor-preview .md-editor-code > summary.md-editor-code-head
 
 .md-editor-toolbar-wrapper {
   border-bottom-color: var(--el-border-color-lighter);
+  /* 默认工具栏 45 个按钮单行放不下（883px > 834px），最后两个「仅预览 / HTML 预览」
+     会被卡片 overflow-hidden 裁掉且无法点到；改成自动换行、高度自适应 */
+  height: auto;
+  min-height: 40px;
+  padding: 2px 0;
+}
+
+.md-editor-toolbar {
+  height: auto;
+  flex-wrap: wrap;
+  row-gap: 2px;
 }
 
 /* 路由过渡：fade-transform，0.5s ±30px */

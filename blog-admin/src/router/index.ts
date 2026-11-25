@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import { useAuthStore } from '@/stores/auth'
+import { setupEditorExtensions } from '@/utils/editor-extensions'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -36,13 +37,19 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'articles/create',
         name: 'ArticleCreate',
-        component: () => import('@/pages/ArticleEditPage.vue'),
+        component: async () => {
+      await setupEditorExtensions()
+      return import('@/pages/ArticleEditPage.vue')
+    },
         meta: { title: '写文章', group: '内容', activeMenu: 'Articles' },
       },
       {
         path: 'articles/:id/edit',
         name: 'ArticleEdit',
-        component: () => import('@/pages/ArticleEditPage.vue'),
+        component: async () => {
+      await setupEditorExtensions()
+      return import('@/pages/ArticleEditPage.vue')
+    },
         meta: { title: '编辑文章', group: '内容', activeMenu: 'Articles' },
       },
       {
@@ -102,7 +109,10 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'site-config',
         name: 'SiteConfig',
-        component: () => import('@/pages/SiteConfigPage.vue'),
+        component: async () => {
+      await setupEditorExtensions()
+      return import('@/pages/SiteConfigPage.vue')
+    },
         meta: { title: '站点配置', group: '站点' },
       },
       {
