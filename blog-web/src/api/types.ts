@@ -306,6 +306,8 @@ export interface SiteConfig {
   pageBannerPositions?: Record<string, number>
   /** 每个页面内容卡片的上移量（px，0 = 默认位置） */
   pageCardOffsets?: Record<string, number>
+  danmakuSpeed?: number
+  meteorCount?: number
   /** 首页侧栏资料卡横幅（空字符串 = 回退 pageBanners.home） */
   profileBanner?: string
   /** 站点图标（浏览器标签页 favicon），空 = 用 public/favicon.svg */

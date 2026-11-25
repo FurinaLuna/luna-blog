@@ -48,6 +48,10 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   pageBannerPositions: {},
   // 每个页面内容卡片的上移量（px，0 = 保持默认位置）
   pageCardOffsets: {},
+  /** 留言板弹幕速度（vue3-danmaku 的 speeds，越大越快） */
+  danmakuSpeed: 180,
+  /** 留言板弹幕背景的流星数量 */
+  meteorCount: 34,
 })
 
 const socialLinkSchema = z.object({
@@ -82,6 +86,8 @@ export const siteConfigSchema = z.object({
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
   pageBannerPositions: z.record(z.string(), z.number().int().min(0).max(100)).optional(),
   pageCardOffsets: z.record(z.string(), z.number().int().min(0).max(400)).optional(),
+  danmakuSpeed: z.number().int().min(60).max(600).optional(),
+  meteorCount: z.number().int().min(0).max(80).optional(),
 })
 
 /** 解析单行配置值（JSON 优先，失败回退字符串） */

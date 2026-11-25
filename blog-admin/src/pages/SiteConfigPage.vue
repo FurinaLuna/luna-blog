@@ -85,6 +85,8 @@ const form = reactive<SiteConfig>({
   socialLinks: [],
   commentNeedReview: true,
   messageNeedReview: true,
+  danmakuSpeed: 180,
+  meteorCount: 34,
   profileBanner: '',
   favicon: '',
   adminLoginBg: '',
@@ -126,6 +128,8 @@ function fillForm(data: SiteConfig): void {
     : []
   form.commentNeedReview = data.commentNeedReview !== false
   form.messageNeedReview = data.messageNeedReview !== false
+  form.danmakuSpeed = typeof data.danmakuSpeed === 'number' ? data.danmakuSpeed : 180
+  form.meteorCount = typeof data.meteorCount === 'number' ? data.meteorCount : 34
   form.pageBanners = normalizeBanners(data.pageBanners)
   form.pageBannerPositions = normalizePositions(data.pageBannerPositions)
   form.pageCardOffsets = normalizeCardOffsets(data.pageCardOffsets)
@@ -274,6 +278,8 @@ async function save(): Promise<void> {
       socialLinks: normalizeLinks(),
       commentNeedReview: form.commentNeedReview,
       messageNeedReview: form.messageNeedReview,
+    danmakuSpeed: form.danmakuSpeed,
+    meteorCount: form.meteorCount,
       profileBanner: form.profileBanner.trim(),
       favicon: form.favicon.trim(),
       adminLoginBg: form.adminLoginBg.trim(),
@@ -365,6 +371,25 @@ onMounted(load)
               <el-form-item label="留言需要审核">
                 <el-switch v-model="form.messageNeedReview" />
                 <span class="ml-3 text-[12px] text-[var(--text-3)]">开启后新留言进入待审核列表，关闭则提交后直接公开</span>
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="留言板" name="message">
+          <div class="max-w-[640px] pt-2">
+            <el-form label-position="top">
+              <el-form-item label="弹幕速度">
+                <el-slider v-model="form.danmakuSpeed" :min="60" :max="600" :step="10" show-input />
+                <div class="mt-1 text-[12px] text-[var(--text-3)]">
+                  数值越大飘得越快：60 约 8 秒穿过一屏，100 约 5 秒（范围 20–160）
+                </div>
+              </el-form-item>
+              <el-form-item label="背景流星数量">
+                <el-slider v-model="form.meteorCount" :min="0" :max="80" :step="2" show-input />
+                <div class="mt-1 text-[12px] text-[var(--text-3)]">
+                  弹幕背景的流星颗数，0 表示不显示（范围 0–80，默认 34）
+                </div>
               </el-form-item>
             </el-form>
           </div>

@@ -6,6 +6,7 @@ import Danmaku from 'vue3-danmaku'
 import 'vue3-danmaku/dist/vue3-danmaku.css'
 import { createMessage } from '@/api/message'
 import type { Message } from '@/api/types'
+import { useSiteStore } from '@/stores/site'
 import { loadVisitor } from '@/utils/visitor'
 import { MESSAGE_COLORS, resolveMessageColor } from './colors'
 
@@ -83,13 +84,29 @@ interface StarStyle {
   duration: string
 }
 
-/** 20 颗流星：随机的 top/left/延迟/时长（只在挂载时算一次） */
-const stars: StarStyle[] = Array.from({ length: 34 }, () => ({
-  top: `${(26 + Math.random() * 48).toFixed(2)}%`,
-  left: `${(22 + Math.random() * 56).toFixed(2)}%`,
-  delay: `${(Math.random() * 5).toFixed(2)}s`,
-  duration: `${(4 + Math.random() * 4).toFixed(2)}s`,
-}))
+const site = useSiteStore()
+
+/** 弹幕速度：vue3-danmaku 的 speeds（像素/秒，越大越快），后台「留言板」可调；缺省 180 */
+const danmakuSpeed = computed(() => {
+  const value = site.config?.danmakuSpeed
+  return typeof value === 'number' && value >= 60 && value <= 600 ? value : 180
+})
+
+/** 流星数量：后台可调，缺省 34；上限 80 避免糊屏 */
+function starCount(): number {
+  const value = site.config?.meteorCount
+  return typeof value === 'number' && value >= 0 && value <= 80 ? value : 34
+}
+
+/** 流星：随机的 top/left/延迟/时长；随站点配置（流星数量）重算 */
+const stars = computed<StarStyle[]>(() =>
+  Array.from({ length: starCount() }, () => ({
+    top: `${(26 + Math.random() * 48).toFixed(2)}%`,
+    left: `${(22 + Math.random() * 56).toFixed(2)}%`,
+    delay: `${(Math.random() * 5).toFixed(2)}s`,
+    duration: `${(4 + Math.random() * 4).toFixed(2)}s`,
+  })),
+)
 
 function expand(): void {
   if (expanded.value) return
@@ -157,10 +174,10 @@ async function send(): Promise<void> {
     <div class="danmaku-stage__layer">
       <Danmaku
         v-if="hasDanmaku"
-        :key="playKey"
+        :key="`${playKey}-${danmakuSpeed}`"
         class="danmaku-stage__danmaku"
         :danmus="danmakuItems"
-        :speeds="60"
+        :speeds="danmakuSpeed"
         :font-size="20"
         :loop="loopDanmaku"
         extra-style="color: #fff"
