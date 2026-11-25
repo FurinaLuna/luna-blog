@@ -2337,10 +2337,10 @@ html.dark .md-content .hljs-deletion {
   background: transparent;
   color: var(--code-fg);
   font-family: var(--font-mono);
-  font-size: 1rem;
-  /* 代码正文加一点字重，中文注释和高亮 token 都更清楚 */
-  font-weight: 600;
-  line-height: 1.78;
+  font-size: 1.02rem;
+  /* 靠字号而不是字重提升可读性：常规字重，等宽字形本身已足够清晰 */
+  font-weight: 400;
+  line-height: 1.8;
   tab-size: 4;
   -webkit-font-smoothing: antialiased;
 }
