@@ -3428,7 +3428,7 @@ html.dark {
 .music-ball {
   position: fixed;
   bottom: 78px;
-  left: 20px;
+  left: 0;
   z-index: 2001;
 }
 
@@ -3476,7 +3476,7 @@ html.is-danmaku-wall .music-ball {
   /* 靠紧左边缘：把桌面 left:20px 抵消掉，让球左沿正好贴住视口 0 */
   .announce-ball,
   .music-ball {
-    transform: translateX(-20px);
+    transform: translateX(-50%);
   }
 
   .announce-ball:hover,
@@ -4084,7 +4084,7 @@ html.is-danmaku-wall body {
 .announce-ball {
   position: fixed;
   bottom: 138px;
-  left: 20px;
+  left: 0;
   z-index: 1200;
 }
 
