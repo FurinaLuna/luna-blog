@@ -317,7 +317,9 @@ export interface SocialLink {
 export type PageBannerKey =
   | 'home'
   | 'archives'
+  | 'categories'
   | 'category'
+  | 'tags'
   | 'tag'
   | 'article'
   | 'talks'

@@ -839,6 +839,11 @@ html.dark #home.home--custom-hero::after {
 }
 
 /* 自定义横幅（后台传图）时遮罩轻一些，别把照片糊死 */
+.page-header--custom {
+  /* 用 cover 缩放时纵向会被裁：贴顶对齐，保证上传图的上半部分（主体）不被切掉 */
+  background-position: center top;
+}
+
 .page-header--custom::before {
   background-color: rgba(4, 16, 28, 0.46);
 }
@@ -2079,12 +2084,20 @@ html.dark .home-tag--5 {
 
 /* ---- Markdown 代码块：头部与代码区合成一张卡片 ---- */
 .md-content .md-editor-code {
-  margin: 1.4em 0;
+  margin: 1.5em 0;
   overflow: hidden;
   border: 1px solid var(--code-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--code-bg);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 5%),
+    0 8px 20px -16px rgb(15 23 42 / 35%);
+}
+
+html.dark .md-content .md-editor-code {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 45%),
+    0 10px 24px -18px rgb(0 0 0 / 70%);
 }
 
 .md-content .md-editor-code-head {
@@ -2151,10 +2164,13 @@ html.dark .home-tag--5 {
 }
 
 .md-content .md-editor-code-lang {
-  color: var(--code-ln) !important;
+  padding: 0.12rem 0.45rem !important;
+  border-radius: 4px;
+  background: var(--code-chip-bg);
+  color: var(--text-2) !important;
   font-family: var(--font-mono);
-  font-size: 0.72rem !important;
-  letter-spacing: 0.08em;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.06em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -2204,12 +2220,13 @@ html.dark .home-tag--5 {
 
 .md-content .md-editor-code pre code {
   display: block;
-  padding: 0.95rem 1.05rem;
+  padding: 1rem 1.2rem;
   background: transparent;
   color: var(--code-fg);
   font-family: var(--font-mono);
-  font-size: 0.86rem;
-  line-height: 1.72;
+  font-size: 1rem;
+  line-height: 1.78;
+  tab-size: 4;
 }
 
 /* 行号：右侧留白 + 等宽数字，与代码之间不画分割线 */
@@ -2220,15 +2237,22 @@ html.dark .home-tag--5 {
 
 .md-content .md-editor-code-line {
   align-items: baseline;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.md-content .md-editor-code-line:hover {
+  background: var(--code-chip-bg);
 }
 
 .md-content [rn-wrapper] {
-  padding-right: 1rem;
+  padding-right: 1.1rem;
   color: var(--code-ln) !important;
+  font-size: 0.82em;
   font-variant-numeric: tabular-nums;
   text-align: right;
   user-select: none;
-  opacity: 0.85;
+  opacity: 0.8;
 }
 
 .md-content .md-editor-code-line-content {

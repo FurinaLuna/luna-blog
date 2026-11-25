@@ -27,7 +27,9 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   pageBanners: {
     home: '',
     archives: '',
+    categories: '',
     category: '',
+    tags: '',
     tag: '',
     article: '',
     talks: '',

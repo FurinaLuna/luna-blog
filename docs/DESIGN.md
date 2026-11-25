@@ -84,7 +84,7 @@ BackToTop（右下角，非首页显示）
 ### 1.4 其余页面
 
 统一「暗色天空 banner + 白色波浪 + 浅灰内容区 + 白卡」骨架，页面头部左侧是大标题与描述。
-banner 默认是 CSS 天空 + 云层；后台「站点配置 → 页面横幅」可给下列 13 个页面之一单独上传横幅图
+banner 默认是 CSS 天空 + 云层；后台「站点配置 → 页面横幅」可给下列 15 个页面之一单独上传横幅图（分类总览 / 标签总览未单独上传时回退到分类详情 / 标签详情的图）
 （键：`home, archives, category, tag, article, talks, albums, album, resources, friends, message, about, search`），
 有图时 `PageHeader` 自动按路由首段取图并切换为图片背景 + 轻遮罩，未配置则回退内置渐变。
 内页 banner 高 30rem（关于页 34rem、手机 22rem）；底部白浪高 6rem（手机 4.6rem），

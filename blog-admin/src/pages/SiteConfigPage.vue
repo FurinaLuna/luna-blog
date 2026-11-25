@@ -20,8 +20,10 @@ const loadFailed = ref(false)
 const PAGE_BANNER_ITEMS: ReadonlyArray<{ key: PageBannerKey; label: string }> = [
   { key: 'home', label: '首页 Hero' },
   { key: 'archives', label: '时间轴' },
-  { key: 'category', label: '分类页' },
-  { key: 'tag', label: '标签页' },
+  { key: 'categories', label: '分类总览' },
+  { key: 'category', label: '分类详情' },
+  { key: 'tags', label: '标签总览' },
+  { key: 'tag', label: '标签详情' },
   { key: 'article', label: '文章详情' },
   { key: 'talks', label: '说说' },
   { key: 'albums', label: '相册列表' },
@@ -33,11 +35,13 @@ const PAGE_BANNER_ITEMS: ReadonlyArray<{ key: PageBannerKey; label: string }> = 
   { key: 'search', label: '搜索' },
 ]
 
-/** 页面横幅的空值（13 个键全量，避免表单里出现 undefined） */
+/** 页面横幅的空值（15 个键全量，避免表单里出现 undefined） */
 const EMPTY_PAGE_BANNERS: PageBanners = {
   home: '',
   archives: '',
+  categories: '',
   category: '',
+  tags: '',
   tag: '',
   article: '',
   talks: '',

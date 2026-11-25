@@ -28,7 +28,9 @@ const site = useSiteStore()
 const BANNER_KEYS = new Set([
   'home',
   'archives',
+  'categories',
   'category',
+  'tags',
   'tag',
   'article',
   'talks',
@@ -48,12 +50,21 @@ function deriveBannerKey(path: string): string {
   return BANNER_KEYS.has(first) ? first : ''
 }
 
+/** 总览页可回退到同名的详情页横幅（分类总览 → 分类详情、标签总览 → 标签详情） */
+const BANNER_FALLBACK: Record<string, string> = {
+  categories: 'category',
+  tags: 'tag',
+}
+
 const bannerKey = computed(() => props.bannerKey || deriveBannerKey(route.path))
 
 const bannerUrl = computed(() => {
   const banners = site.config?.pageBanners
   if (!banners || !bannerKey.value) return ''
-  return (banners[bannerKey.value] ?? '').trim()
+  const own = (banners[bannerKey.value] ?? '').trim()
+  if (own) return own
+  const fallbackKey = BANNER_FALLBACK[bannerKey.value]
+  return fallbackKey ? (banners[fallbackKey] ?? '').trim() : ''
 })
 
 const bannerStyle = computed(() =>
