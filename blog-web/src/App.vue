@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { h, onMounted, watch } from 'vue'
+import { ElNotification } from 'element-plus'
 import { useRoute } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
@@ -57,6 +58,36 @@ function syncFavicon(): void {
   if (link.getAttribute('href') !== href) link.href = href
 }
 
+/** 每个标签页只弹一次：window.name 在刷新后仍保留，新开标签页才重新问候 */
+const WELCOME_FLAG = 'luna-welcomed'
+
+/** 按当前时间段生成问候语，模仿原站欢迎通知 */
+function greetingOf(name: string): string {
+  if (!name) return `欢迎来到 ${site.siteName}`
+  const hour = new Date().getHours()
+  if (hour < 5) return `夜深了：${name}，请注意休息！`
+  if (hour < 9) return `早上好：${name}，今天又是活力满满的一天！`
+  if (hour < 12) return `上午好：${name}，请合理安排时间摸鱼！`
+  if (hour < 14) return `中午好：${name}，现在正适合睡一觉`
+  if (hour < 18) return `下午好：${name}`
+  if (hour < 20) return `傍晚好：${name}，记得按时吃饭`
+  if (hour < 22) return `晚上好：${name}`
+  return `晚上好：${name}，记得按时碎觉哦`
+}
+
+function showWelcomeNotice(): void {
+  if (window.name === WELCOME_FLAG) return
+  window.name = WELCOME_FLAG
+  window.setTimeout(() => {
+    ElNotification({
+      title: '欢迎～',
+      message: h('div', { style: 'font-weight: 600' }, greetingOf(site.author)),
+      offset: 60,
+      duration: 4500,
+    })
+  }, 600)
+}
+
 watch(
   () => [route.fullPath, site.config] as const,
   () => {
@@ -68,7 +99,7 @@ watch(
 )
 
 onMounted(() => {
-  void site.ensureLoaded()
+  void site.ensureLoaded().then(showWelcomeNotice)
 })
 </script>
 
