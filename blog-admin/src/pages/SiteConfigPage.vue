@@ -57,6 +57,11 @@ const EMPTY_PAGE_BANNERS: PageBanners = {
 /** 横幅默认取景位置（30% 偏上，兼顾上沿留白与画面中部） */
 const DEFAULT_BANNER_FOCUS = 30
 
+/** 15 个页面内容卡片默认上移 0px（不改变原有位置） */
+const EMPTY_PAGE_CARD_OFFSETS: Record<string, number> = Object.fromEntries(
+  PAGE_BANNER_ITEMS.map((item) => [item.key, 0]),
+)
+
 /** 15 个页面横幅的默认取景位置 */
 const EMPTY_PAGE_POSITIONS: Record<string, number> = Object.fromEntries(
   PAGE_BANNER_ITEMS.map((item) => [item.key, DEFAULT_BANNER_FOCUS]),
@@ -85,6 +90,7 @@ const form = reactive<SiteConfig>({
   adminLoginBg: '',
   pageBanners: { ...EMPTY_PAGE_BANNERS },
   pageBannerPositions: { ...EMPTY_PAGE_POSITIONS },
+  pageCardOffsets: { ...EMPTY_PAGE_CARD_OFFSETS },
 })
 
 const editorTheme = computed<'light' | 'dark'>(() => (theme.isDark ? 'dark' : 'light'))
@@ -122,6 +128,7 @@ function fillForm(data: SiteConfig): void {
   form.messageNeedReview = data.messageNeedReview !== false
   form.pageBanners = normalizeBanners(data.pageBanners)
   form.pageBannerPositions = normalizePositions(data.pageBannerPositions)
+  form.pageCardOffsets = normalizeCardOffsets(data.pageCardOffsets)
 }
 
 /** 用后端返回值补齐 13 个横幅键，缺的键补空串 */
@@ -150,6 +157,28 @@ function normalizePositions(
         : DEFAULT_BANNER_FOCUS
   }
   return next
+}
+
+/** 补齐 15 个卡片上移量，缺省 0 */
+function normalizeCardOffsets(raw: Record<string, number> | undefined): Record<string, number> {
+  const next: Record<string, number> = { ...EMPTY_PAGE_CARD_OFFSETS }
+  for (const item of PAGE_BANNER_ITEMS) {
+    const value = raw?.[item.key]
+    next[item.key] =
+      typeof value === 'number' && Number.isFinite(value)
+        ? Math.min(400, Math.max(0, Math.round(value)))
+        : 0
+  }
+  return next
+}
+
+function collectCardOffsets(): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const item of PAGE_BANNER_ITEMS) {
+    const value = form.pageCardOffsets[item.key]
+    out[item.key] = typeof value === 'number' ? Math.min(400, Math.max(0, Math.round(value))) : 0
+  }
+  return out
 }
 
 function collectPositions(): Record<string, number> {
@@ -250,6 +279,7 @@ async function save(): Promise<void> {
       adminLoginBg: form.adminLoginBg.trim(),
       pageBanners: collectBanners(),
     pageBannerPositions: collectPositions(),
+    pageCardOffsets: collectCardOffsets(),
     })
     ElMessage.success('站点配置已保存')
     await load()
@@ -433,6 +463,22 @@ onMounted(load)
                           :step="1"
                           size="small"
                           :disabled="!form.pageBanners[item.key]"
+                          :show-tooltip="false"
+                        />
+                      </div>
+                      <div class="mt-2">
+                        <div class="mb-1 flex items-center justify-between gap-2">
+                          <span class="text-[12px] text-[var(--text-3)]">卡片上移</span>
+                          <span class="text-[12px] text-[var(--text-3)]">
+                            {{ form.pageCardOffsets[item.key] }}px（0 = 保持默认）
+                          </span>
+                        </div>
+                        <el-slider
+                          v-model="form.pageCardOffsets[item.key]"
+                          :min="0"
+                          :max="200"
+                          :step="4"
+                          size="small"
                           :show-tooltip="false"
                         />
                       </div>

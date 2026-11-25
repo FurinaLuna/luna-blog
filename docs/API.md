@@ -186,7 +186,7 @@
 | GET | `/api/site-stats` | — | `{article, category, tag, comment, talk, photo, message, views, words, visit:{pv,uv}}`；`views`=文章阅读数之和，`visit.pv`=页面浏览总数，`visit.uv`=去重访客数 |
 | POST | `/api/visit` | — | 前台每次路由切换上报 `{path, referer?}`；按 IP 哈希去重统计 UV，限频 60 次/分/IP；返回 `{recorded:true}` |
 
-配置 key：`siteName, siteDescription, siteKeywords(逗号分隔的 SEO 关键词，前台写入 meta[keywords]), author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon,qrcode}], favicon(站点图标 URL，空则用内置 /favicon.svg), adminLoginBg(后台登录页背景图 URL，空则用内置波浪底图), commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), profileBanner(首页侧栏资料卡横幅图 URL，空则回退 pageBanners.home), pageBanners(15 个页面键 → 横幅图 URL), pageBannerPositions(15 个页面键 → 0–100 取景位置)
+配置 key：`siteName, siteDescription, siteKeywords(逗号分隔的 SEO 关键词，前台写入 meta[keywords]), author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon,qrcode}], favicon(站点图标 URL，空则用内置 /favicon.svg), adminLoginBg(后台登录页背景图 URL，空则用内置波浪底图), commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), profileBanner(首页侧栏资料卡横幅图 URL，空则回退 pageBanners.home), pageBanners(15 个页面键 → 横幅图 URL), pageBannerPositions(15 个页面键 → 0–100 取景位置), pageCardOffsets(15 个页面键 → 0–400 内容卡片上移像素)
 
 `socialLinks` 每项为 `{name, url, icon, qrcode}`：`qrcode` 是可选的二维码图片 URL（最长 500）。填了二维码时前台把该图标渲染成 `<button>` 并在 hover 时用弹出层展示二维码（适合微信 / QQ，此时 `url` 可以留空）；不填则仍是普通外链 `<a>`。
 
@@ -196,6 +196,8 @@
 `{ home, archives, categories, category, tags, tag, article, talks, albums, album, resources, friends, message, about, search }`（15 个键）。分类总览 / 标签总览未单独上传时，回退到 category / tag 的图。
 
 `pageBannerPositions` 为同名的取景位置映射（值 0–100 的整数，即 CSS `background-position` 的纵向百分比：0 贴顶、100 贴底，缺省 30 偏上）。前端按 `pageBannerPositions[key]` →（总览页）回退键 → 30 的顺序取用，后台「站点配置 → 页面横幅」每张卡都有滑块可调。
+
+`pageCardOffsets` 为每个页面内容卡片的上移像素（0–400 整数，缺省 0＝保持默认位置）：前台按当前路由取键（总览页回退到分类/标签详情键），写入 `document.documentElement` 的 `--page-card-offset`（负值），由 `.center_box` / `.article-center` 的 `margin-top` 消费，用来把卡片压到 banner 与波浪上。
 
 后端读取时与缺省对象做浅合并，因此只 PUT 其中几个 key 不会把其它页面冲成空。
 

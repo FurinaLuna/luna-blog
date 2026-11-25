@@ -46,6 +46,8 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   },
   // 每个页面横幅的取景位置（0 = 贴顶，100 = 贴底，默认 30 偏上）
   pageBannerPositions: {},
+  // 每个页面内容卡片的上移量（px，0 = 保持默认位置）
+  pageCardOffsets: {},
 })
 
 const socialLinkSchema = z.object({
@@ -79,6 +81,7 @@ export const siteConfigSchema = z.object({
   adminLoginBg: z.string().trim().max(500).optional(),
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
   pageBannerPositions: z.record(z.string(), z.number().int().min(0).max(100)).optional(),
+  pageCardOffsets: z.record(z.string(), z.number().int().min(0).max(400)).optional(),
 })
 
 /** 解析单行配置值（JSON 优先，失败回退字符串） */
@@ -107,6 +110,8 @@ export async function getSiteConfig() {
       stored.pageBannerPositions && typeof stored.pageBannerPositions === 'object'
         ? stored.pageBannerPositions
         : {},
+    pageCardOffsets:
+      stored.pageCardOffsets && typeof stored.pageCardOffsets === 'object' ? stored.pageCardOffsets : {},
   }
 }
 

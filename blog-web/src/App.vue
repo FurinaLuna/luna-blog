@@ -7,6 +7,7 @@ import BackToTop from '@/components/common/BackToTop.vue'
 import AnnouncementBall from '@/components/layout/AnnouncementBall.vue'
 import MusicPlayer from '@/components/music/MusicPlayer.vue'
 import { useSiteStore } from '@/stores/site'
+import { derivePageKey, PAGE_KEY_FALLBACK } from '@/utils/page-key'
 
 const site = useSiteStore()
 const route = useRoute()
@@ -29,6 +30,22 @@ function syncDocumentMeta(): void {
   keywords.content = site.siteKeywords
 }
 
+/** 每个页面的内容卡片上移量：后台按页配置，前台把负 margin 写成 CSS 变量交给 .center_box */
+function syncCardOffset(): void {
+  const offsets = site.config?.pageCardOffsets
+  const key = derivePageKey(route.path)
+  let value = 0
+  if (offsets && key) {
+    const own = offsets[key]
+    const fallbackKey = PAGE_KEY_FALLBACK[key]
+    const inherited = fallbackKey ? offsets[fallbackKey] : undefined
+    value = typeof own === 'number' ? own : typeof inherited === 'number' ? inherited : 0
+  }
+  const style = document.documentElement.style
+  if (value > 0) style.setProperty('--page-card-offset', `-${value}px`)
+  else style.removeProperty('--page-card-offset')
+}
+
 function syncFavicon(): void {
   const href = (site.config?.favicon ?? '').trim() || '/favicon.svg'
   let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
@@ -45,6 +62,7 @@ watch(
   () => {
     syncDocumentMeta()
     syncFavicon()
+    syncCardOffset()
   },
   { immediate: true },
 )

@@ -359,6 +359,8 @@ export interface SiteConfig {
   pageBanners: PageBanners
   /** 每个页面横幅的取景位置（0 = 贴顶，100 = 贴底） */
   pageBannerPositions: Record<string, number>
+  /** 每个页面内容卡片的上移量（px，0 = 默认位置） */
+  pageCardOffsets: Record<string, number>
   /** 站点图标（favicon），空 = 用内置 favicon.svg */
   favicon: string
   /** 后台登录页背景图，空 = 用内置蓝色波浪底图 */

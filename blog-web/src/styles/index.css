@@ -268,7 +268,8 @@ html.dark {
 .center_box {
   width: 100%;
   max-width: 880px;
-  margin: 0 auto;
+  /* 后台「页面卡片位置」可逐页上移，未配置时保持 0 */
+  margin: var(--page-card-offset, 0px) auto 0;
   padding: 2.8rem 10px;
   min-height: calc(100vh - 30rem);
   animation: up-in 1s both;
@@ -277,7 +278,7 @@ html.dark {
 .article-center {
   width: 100%;
   max-width: 1280px;
-  margin: 0 auto;
+  margin: var(--page-card-offset, 0px) auto 0;
   padding: 2.8rem 10px;
 }
 
