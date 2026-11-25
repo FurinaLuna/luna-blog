@@ -246,6 +246,21 @@ onBeforeUnmount(() => {
       <span v-if="isPlaying" class="music-ball__ring" :style="{ '--progress': `${progress}%` }" />
     </button>
 
+    <div v-if="!open && current" class="music-ball__hint" aria-hidden="true">
+      <span class="music-ball__hint-cover">
+        <img v-if="current.cover" :src="current.cover" :alt="current.name" loading="lazy" />
+        <el-icon v-else :size="18"><Headset /></el-icon>
+      </span>
+      <span class="music-ball__hint-text">
+        <span class="music-ball__hint-name">{{ current.name }}</span>
+        <span class="music-ball__hint-artist">{{ current.artist }}</span>
+      </span>
+      <el-icon class="music-ball__hint-icon" :size="15">
+        <VideoPause v-if="isPlaying" />
+        <VideoPlay v-else />
+      </el-icon>
+    </div>
+
     <transition name="music-card">
       <div v-if="open" class="music-panel" role="dialog" aria-label="音乐播放器">
         <header class="music-panel__top">
@@ -363,6 +378,79 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* 悬停弹出的歌曲信息：圆形封面 + 歌名/歌手 + 播放状态图标 */
+.music-ball__hint {
+  position: absolute;
+  bottom: 0;
+  left: calc(100% + 10px);
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  max-width: 320px;
+  padding: 0.45rem 0.7rem 0.45rem 0.45rem;
+  border-radius: 12px;
+  background: var(--card-bg);
+  box-shadow: var(--card-box-shadow);
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.music-ball:hover .music-ball__hint,
+.music-ball:focus-within .music-ball__hint {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.music-ball__hint-cover {
+  display: grid;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+}
+
+.music-ball__hint-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.music-ball__hint-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.music-ball__hint-name {
+  overflow: hidden;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.music-ball__hint-artist {
+  overflow: hidden;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.music-ball__hint-icon {
+  flex: none;
+  margin-left: 0.2rem;
+  color: var(--text);
 }
 
 .music-ball__disc.is-spinning {
