@@ -21,7 +21,6 @@ const infoRows = computed(() => [
   { key: 'days', label: '运行天数', value: `${daysSince(site.config?.startDate)} 天` },
   { key: 'pv', label: '总访问量', value: formatCount(site.stats?.visit?.pv ?? 0) },
   { key: 'uv', label: '总访客数', value: formatCount(site.stats?.visit?.uv ?? 0) },
-  { key: 'comment', label: '评论数', value: formatCount(site.stats?.comment ?? 0) },
 ])
 </script>
 
