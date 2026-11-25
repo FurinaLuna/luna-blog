@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery } from '@pinia/colada'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
+import Pagination from '@/components/common/Pagination.vue'
 import SkeletonList from '@/components/common/SkeletonList.vue'
 import { getAlbum } from '@/api/album'
 import type { Photo } from '@/api/types'
@@ -26,14 +27,30 @@ const {
 const album = computed(() => data.value ?? null)
 
 const photos = computed<Photo[]>(() => album.value?.photos ?? [])
-const previewList = computed(() => photos.value.map((photo) => photo.url))
 
-function photoRatio(photo: Photo): string {
-  if (photo.width > 0 && photo.height > 0) {
-    return `${photo.width} / ${photo.height}`
-  }
-  return '4 / 3'
+/** 每页 16 张（4 × 4），前端分页即可，相册总量有限 */
+const PAGE_SIZE = 16
+const page = ref(1)
+
+const pagedPhotos = computed(() => {
+  const start = (page.value - 1) * PAGE_SIZE
+  return photos.value.slice(start, start + PAGE_SIZE)
+})
+
+const previewList = computed(() => pagedPhotos.value.map((photo) => photo.url))
+
+function handlePageChange(next: number): void {
+  page.value = next
+  document.querySelector('.album-detail-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
+
+watch(
+  () => albumId.value,
+  () => {
+    page.value = 1
+  },
+)
+
 </script>
 
 <template>
@@ -76,7 +93,7 @@ function photoRatio(photo: Photo): string {
 
         <div v-else class="photo-wall">
           <div class="photo-grid">
-            <figure v-for="(photo, index) in photos" :key="photo.id" class="photo-item">
+            <figure v-for="(photo, index) in pagedPhotos" :key="photo.id" class="photo-item">
               <el-image
                 :src="photo.url"
                 :alt="photo.title || `${album.name} 第 ${index + 1} 张照片`"
@@ -86,7 +103,6 @@ function photoRatio(photo: Photo): string {
                 :initial-index="index"
                 preview-teleported
                 class="photo-item__img"
-                :style="{ aspectRatio: photoRatio(photo) }"
               >
                 <template #error>
                   <div class="photo-item__error">图片加载失败</div>
@@ -97,6 +113,15 @@ function photoRatio(photo: Photo): string {
               </figcaption>
             </figure>
           </div>
+
+          <Pagination
+            v-if="photos.length > PAGE_SIZE"
+            class="album-detail-pagination"
+            :page="page"
+            :total="photos.length"
+            :page-size="PAGE_SIZE"
+            @update:page="handlePageChange"
+          />
         </div>
       </div>
     </div>
@@ -147,5 +172,9 @@ function photoRatio(photo: Photo): string {
 
 .photo-wall {
   margin-top: 0.2rem;
+}
+
+.album-detail-pagination {
+  margin-top: 1.1rem;
 }
 </style>

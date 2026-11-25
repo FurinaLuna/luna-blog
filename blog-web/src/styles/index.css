@@ -3046,40 +3046,52 @@ html.dark .md-content .hljs-deletion {
 }
 
 .photo-wall {
-  padding: 0.6rem;
-  border-radius: 8px;
+  padding: 0.7rem;
+  border-radius: 12px;
   background: var(--shadow-button-bg);
 }
 
+/* 相册网格：桌面 4 列正方形，逐级降到 3 / 2 列 */
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1100px) {
   .photo-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
   }
 }
 
 .photo-item {
-  height: 10rem;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: zoom-in;
   transition: transform 0.3s ease;
 }
 
-.photo-item img {
+/* el-image 内部是 <img>，这里连包裹层一起撑满正方形格子 */
+.photo-item .el-image,
+.photo-item .el-image__wrapper,
+.photo-item img,
+.photo-item .el-image__inner {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .photo-item:hover {
-  transform: translateY(-5px);
+  transform: translateY(-3px);
 }
 
 /* -------------------------------------------------------------------------- */
