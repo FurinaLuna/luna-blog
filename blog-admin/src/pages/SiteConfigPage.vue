@@ -191,11 +191,18 @@ function normalizeCardOffsets(raw: Record<string, number> | undefined): Record<s
   return next
 }
 
+/** 保存时首页固定 0（首页无内容卡片），其余页面照表单值 */
 function collectCardOffsets(): Record<string, number> {
   const out: Record<string, number> = {}
   for (const item of PAGE_BANNER_ITEMS) {
+    // 首页没有内容卡片，固定 0
+    if (item.key === 'home') {
+      out[item.key] = 0
+      continue
+    }
     const value = form.pageCardOffsets[item.key]
-    out[item.key] = typeof value === 'number' ? Math.min(400, Math.max(0, Math.round(value))) : 0
+    out[item.key] =
+      typeof value === 'number' ? Math.min(MAX_CARD_OFFSET, Math.max(0, Math.round(value))) : 0
   }
   return out
 }
@@ -548,11 +555,18 @@ onMounted(load)
                           :show-tooltip="false"
                         />
                       </div>
-                      <div class="mt-2">
+                      <!-- 首页是满屏 Hero，没有内容卡片，不需要「卡片上移」 -->
+                      <p
+                        v-if="item.key === 'home'"
+                        class="mt-2 text-[12px] leading-5 text-[var(--text-3)]"
+                      >
+                        首页是满屏 Hero，没有内容卡片，因此不需要「卡片上移」
+                      </p>
+                      <div v-else class="mt-2">
                         <div class="mb-1 flex items-center justify-between gap-2">
                           <span class="text-[12px] text-[var(--text-3)]">卡片上移</span>
                           <span class="text-[12px] text-[var(--text-3)]">
-                            {{ form.pageCardOffsets[item.key] }}px（{{ item.key === 'home' ? '0 = 保持默认' : '200 = 拉满贴合横幅' }}）
+                            {{ form.pageCardOffsets[item.key] }}px（{{ MAX_CARD_OFFSET }} = 拉满贴合横幅）
                           </span>
                         </div>
                         <el-slider
