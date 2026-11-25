@@ -33,7 +33,8 @@ const heroBannerStyle = computed(() =>
 )
 
 const phrases = computed<string[]>(() => {
-  const list = [site.config?.heroTitle, site.config?.heroSubtitle, site.announcement]
+  // 只在标题下轮播 hero 标题 / 副标题；站长公告由左下角铃铛球单独展示，不混进 hero
+  const list = [site.config?.heroTitle, site.config?.heroSubtitle]
     .map((item) => (item ?? '').trim())
     .filter((item) => item.length > 0)
   return list.length > 0 ? list : ['记录生活与代码的数字花园']
