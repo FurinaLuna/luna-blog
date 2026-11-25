@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormItemRule, type FormRules } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import CommentItem from '@/components/comment/CommentItem.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import SkeletonList from '@/components/common/SkeletonList.vue'
 import { createComment, getComments } from '@/api/comment'
 import type { Comment, TargetType } from '@/api/types'
+import { useSiteStore } from '@/stores/site'
 import { loadVisitor, saveVisitor } from '@/utils/visitor'
 
 interface CommentForm {
@@ -34,6 +34,11 @@ const loading = ref(false)
 const submitting = ref(false)
 const replyTarget = ref<Comment | null>(null)
 const formRef = ref<FormInstance>()
+/** 点进输入框才展开昵称/邮箱/网址，未展开时只有一个输入条 */
+const composerOpen = ref(false)
+
+const site = useSiteStore()
+void site.ensureLoaded()
 
 const visitor = loadVisitor()
 const form = reactive<CommentForm>({
@@ -44,6 +49,8 @@ const form = reactive<CommentForm>({
 })
 
 const urlPlaceholder = 'https://example.com'
+
+const avatarInitial = computed(() => (form.nickname.trim() || '访').slice(0, 1))
 
 const websiteRule: FormItemRule = {  validator: (_rule, value: string, callback) => {
     if (!value.trim()) {
@@ -126,12 +133,20 @@ function scrollToForm(): void {
 
 function startReply(comment: Comment): void {
   replyTarget.value = comment
+  composerOpen.value = true
   form.content = ''
   scrollToForm()
 }
 
 function cancelReply(): void {
   replyTarget.value = null
+}
+
+/** 「取消发布」：收起输入区并清空草稿 */
+function closeComposer(): void {
+  composerOpen.value = false
+  replyTarget.value = null
+  form.content = ''
 }
 
 async function submit(): Promise<void> {
@@ -160,6 +175,7 @@ async function submit(): Promise<void> {
     })
     form.content = ''
     replyTarget.value = null
+    composerOpen.value = false
     page.value = 1
     await loadComments()
   } finally {
@@ -176,41 +192,96 @@ watch(
   () => {
     page.value = 1
     replyTarget.value = null
+    composerOpen.value = false
     void loadComments()
   },
 )
 </script>
 
 <template>
-  <section class="comment-box" aria-label="评论区">
-    <div class="comment-box__header">
-      <h2 class="comment-box__title">
-        {{ title }}
-        <span class="comment-box__count">{{ total }}</span>
-      </h2>
-      <button
-        type="button"
-        class="comment-box__refresh"
-        aria-label="刷新评论"
-        @click="loadComments"
-      >
-        <el-icon :size="13"><Refresh /></el-icon>
-        刷新
-      </button>
+  <section id="comment-form" class="comment-area" aria-label="评论区">
+    <div class="comment-area__bar">
+      <span class="comment-area__count">评论 {{ total }}</span>
+      <div class="comment-area__bar-actions">
+        <button
+          v-if="composerOpen"
+          type="button"
+          class="comment-area__cancel"
+          @click="closeComposer"
+        >
+          取消发布
+        </button>
+        <button type="button" class="comment-area__refresh" aria-label="刷新评论" @click="loadComments">
+          <el-icon :size="13"><Refresh /></el-icon>
+        </button>
+      </div>
     </div>
 
-    <div v-if="loading" class="comment-box__loading">
+    <div class="comment-area__composer">
+      <div class="comment-area__avatar" aria-hidden="true">
+        <img v-if="site.avatar" :src="site.avatar" alt="" />
+        <span v-else>{{ avatarInitial }}</span>
+      </div>
+
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        class="comment-area__editor"
+        @submit.prevent="submit"
+      >
+        <p v-if="replyTarget" class="comment-area__reply">
+          回复 <span>@{{ replyTarget.nickname }}</span>
+          <button type="button" @click="cancelReply">取消</button>
+        </p>
+
+        <el-form-item prop="content" class="comment-area__content-item">
+          <el-input
+            v-model="form.content"
+            type="textarea"
+            :rows="composerOpen ? 3 : 1"
+            maxlength="500"
+            :show-word-limit="composerOpen"
+            :placeholder="composerOpen ? '友善交流，让想法流动起来…' : '期待能留下你的脚印~'"
+            resize="none"
+            @focus="composerOpen = true"
+          />
+        </el-form-item>
+
+        <div v-if="composerOpen" class="comment-area__fields">
+          <el-form-item prop="nickname">
+            <el-input v-model="form.nickname" maxlength="20" placeholder="昵称" autocomplete="nickname" />
+          </el-form-item>
+          <el-form-item prop="email">
+            <el-input
+              v-model="form.email"
+              maxlength="80"
+              placeholder="邮箱（不会公开）"
+              autocomplete="email"
+            />
+          </el-form-item>
+          <el-form-item prop="website">
+            <el-input
+              v-model="form.website"
+              maxlength="200"
+              :placeholder="`网址（可选）${urlPlaceholder}`"
+              autocomplete="url"
+            />
+          </el-form-item>
+          <button type="submit" class="apply-button comment-area__submit" :disabled="submitting">
+            {{ submitting ? '提交中…' : '发布' }}
+          </button>
+        </div>
+      </el-form>
+    </div>
+
+    <div v-if="loading" class="comment-area__loading">
       <SkeletonList variant="list" :count="2" />
     </div>
 
-    <EmptyState
-      v-else-if="comments.length === 0"
-      icon="comment"
-      title="还没有评论"
-      description="成为第一个留下想法的人吧。"
-    />
+    <p v-else-if="comments.length === 0" class="comment-area__empty">还没有评论，来留下第一条吧。</p>
 
-    <div v-else class="comment-box__list">
+    <div v-else class="comment-area__list">
       <CommentItem
         v-for="comment in comments"
         :key="comment.id"
@@ -221,69 +292,198 @@ watch(
 
     <Pagination
       v-if="!loading && total > pageSize"
-      class="comment-box__pagination"
+      class="comment-area__pagination"
       :page="page"
       :total="total"
       :page-size="pageSize"
       @update:page="handlePageChange"
     />
-
-    <div id="comment-form" class="comment-box__form-wrap">
-      <div class="comment-box__form-head">
-        <h3>发表评论</h3>
-        <p v-if="replyTarget" class="comment-box__reply-hint">
-          回复
-          <span>@{{ replyTarget.nickname }}</span>
-          <button type="button" @click="cancelReply">取消</button>
-        </p>
-      </div>
-
-      <p class="comment-box__form-hint">访客可直接评论，邮箱仅用于接收回复提醒，不会公开。</p>
-
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-position="top"
-        class="comment-box__form"
-        @submit.prevent="submit"
-      >
-        <div class="comment-box__form-row">
-          <el-form-item label="昵称" prop="nickname">
-            <el-input v-model="form.nickname" maxlength="20" placeholder="怎么称呼你" autocomplete="nickname" />
-          </el-form-item>
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="form.email" maxlength="80" placeholder="you@example.com" autocomplete="email" />
-          </el-form-item>
-          <el-form-item label="网址（可选）" prop="website">
-            <el-input v-model="form.website" maxlength="200" :placeholder="urlPlaceholder" autocomplete="url" />
-          </el-form-item>
-        </div>
-
-        <el-form-item label="评论内容" prop="content">
-          <el-input
-            v-model="form.content"
-            type="textarea"
-            :rows="4"
-            maxlength="500"
-            show-word-limit
-            placeholder="友善交流，让想法流动起来…"
-            resize="vertical"
-          />
-        </el-form-item>
-
-        <div class="comment-box__form-actions">
-          <button type="submit" class="apply-button" :disabled="submitting">
-            {{ submitting ? '提交中…' : '提交评论' }}
-          </button>
-        </div>
-      </el-form>
-    </div>
   </section>
 </template>
 
 <style scoped>
-.comment-box__form :deep(.el-form-item) {
-  margin-bottom: 1rem;
+.comment-area {
+  margin-top: 0.4rem;
+}
+
+.comment-area__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0.2rem 0.5rem;
+}
+
+.comment-area__count {
+  color: var(--text-2);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.comment-area__bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.comment-area__cancel {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--meta-color);
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.comment-area__cancel:hover {
+  color: var(--primary-ink);
+}
+
+.comment-area__refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--meta-color);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.comment-area__refresh:hover {
+  background: var(--card-2, rgba(127, 127, 127, 0.12));
+  color: var(--primary-ink);
+}
+
+.comment-area__composer {
+  display: flex;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.comment-area__composer:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.comment-area__avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--cover-grad-1);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.comment-area__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.comment-area__editor {
+  min-width: 0;
+  flex: 1;
+}
+
+.comment-area__reply {
+  margin-bottom: 0.5rem;
+  color: var(--meta-color);
+  font-size: 0.82rem;
+}
+
+.comment-area__reply span {
+  color: var(--primary-ink);
+}
+
+.comment-area__reply button {
+  margin-left: 0.4rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--meta-color);
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.comment-area__content-item {
+  margin-bottom: 0;
+}
+
+.comment-area__content-item :deep(.el-textarea__inner) {
+  min-height: 2.4rem !important;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--font-color);
+  font-size: 0.95rem;
+}
+
+.comment-area__content-item :deep(.el-textarea__inner:focus) {
+  box-shadow: none;
+}
+
+.comment-area__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.4fr) auto;
+  gap: 0.6rem;
+  align-items: start;
+  margin-top: 0.7rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border);
+}
+
+.comment-area__fields :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.comment-area__submit {
+  align-self: center;
+  white-space: nowrap;
+}
+
+.comment-area__loading,
+.comment-area__empty,
+.comment-area__pagination {
+  margin-top: 1rem;
+}
+
+.comment-area__empty {
+  padding: 0.6rem 0.2rem;
+  color: var(--meta-color);
+  font-size: 0.88rem;
+}
+
+.comment-area__list {
+  margin-top: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .comment-area__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .comment-area__submit {
+    width: 100%;
+  }
 }
 </style>

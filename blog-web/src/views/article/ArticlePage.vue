@@ -5,9 +5,8 @@ import { useQuery } from '@pinia/colada'
 import { useMediaQuery } from '@vueuse/core'
 import { MdPreview } from 'md-editor-v3'
 import ArticleToc from '@/components/article/ArticleToc.vue'
-import { ArrowLeft, ArrowRight, ChatDotRound, Clock, View } from '@element-plus/icons-vue'
+import { ChatDotRound, Clock, View } from '@element-plus/icons-vue'
 import CommentSection from '@/components/comment/CommentSection.vue'
-import CoverImage from '@/components/common/CoverImage.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LikeButton from '@/components/common/LikeButton.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -120,16 +119,9 @@ function closeCatalog(): void {
 
       <div class="article-center">
         <div class="article-layout">
-          <article class="card article-card">
-            <CoverImage
-              v-if="article.cover"
-              :src="article.cover"
-              :alt="article.title"
-              ratio="16 / 9"
-              rounded="rounded-none"
-            />
-
-            <div class="article-card__inner">
+          <div class="article-main">
+            <article class="card article-card">
+              <div class="article-card__inner">
               <div v-if="article.tags.length > 0" class="article-tags">
                 <TagChip v-for="tag in article.tags" :key="tag.id" :id="tag.id" :name="tag.name" />
               </div>
@@ -168,33 +160,11 @@ function closeCatalog(): void {
                   @toggle="toggle"
                 />
               </div>
+              </div>
+            </article>
 
-              <nav class="recommend-nav" aria-label="上一篇和下一篇">
-                <RouterLink
-                  v-if="article.prev"
-                  :to="`/article/${article.prev.id}`"
-                  class="recommend-item"
-                >
-                  <span class="recommend-item__label">
-                    <el-icon :size="12"><ArrowLeft /></el-icon>
-                    上一篇
-                  </span>
-                  <span class="recommend-item__title">{{ article.prev.title }}</span>
-                </RouterLink>
-                <RouterLink
-                  v-if="article.next"
-                  :to="`/article/${article.next.id}`"
-                  class="recommend-item recommend-item--next"
-                >
-                  <span class="recommend-item__label">
-                    下一篇
-                    <el-icon :size="12"><ArrowRight /></el-icon>
-                  </span>
-                  <span class="recommend-item__title">{{ article.next.title }}</span>
-                </RouterLink>
-              </nav>
-            </div>
-          </article>
+            <CommentSection target-type="article" :target-id="article.id" title="评论" />
+          </div>
 
           <aside v-if="isDesktop" class="article-aside">
             <div class="card toc-card">
@@ -215,8 +185,6 @@ function closeCatalog(): void {
             </div>
           </aside>
         </div>
-
-        <CommentSection target-type="article" :target-id="article.id" title="评论" />
       </div>
 
       <el-drawer v-model="catalogOpen" direction="rtl" size="78%" title="文章目录">
@@ -245,6 +213,13 @@ function closeCatalog(): void {
   position: sticky;
   top: calc(var(--header-h) + 1rem);
   display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.article-main {
+  display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 1.2rem;
 }
