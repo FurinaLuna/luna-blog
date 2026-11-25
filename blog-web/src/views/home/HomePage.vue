@@ -131,11 +131,6 @@ onBeforeUnmount(() => {
     </section>
 
     <div id="home-content" class="home_center_box">
-      <div v-if="site.announcement" class="announce-bar">
-        <span class="announce-bar__dot" aria-hidden="true"></span>
-        <span>{{ site.announcement }}</span>
-      </div>
-
       <el-row :gutter="20" class="home-row">
         <el-col :xs="24" :sm="18" class="home-main-col">
           <HomeArticleSkeleton v-if="loading" :count="PAGE_SIZE" />

@@ -38,9 +38,9 @@ const classes = computed(() => ['waves', props.variant === 'header' ? 'waves--he
     </defs>
     <g class="parallax">
       <use :href="`#${uid}`" x="48" y="0" />
-      <use :href="`#${uid}`" x="48" y="3" />
-      <use :href="`#${uid}`" x="48" y="5" />
+      <use :href="`#${uid}`" x="48" y="4" />
       <use :href="`#${uid}`" x="48" y="7" />
+      <use :href="`#${uid}`" x="48" y="10" />
     </g>
   </svg>
 </template>

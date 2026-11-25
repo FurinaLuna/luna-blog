@@ -84,7 +84,7 @@ interface StarStyle {
 }
 
 /** 20 颗流星：随机的 top/left/延迟/时长（只在挂载时算一次） */
-const stars: StarStyle[] = Array.from({ length: 20 }, () => ({
+const stars: StarStyle[] = Array.from({ length: 34 }, () => ({
   top: `${(26 + Math.random() * 48).toFixed(2)}%`,
   left: `${(22 + Math.random() * 56).toFixed(2)}%`,
   delay: `${(Math.random() * 5).toFixed(2)}s`,
@@ -160,7 +160,7 @@ async function send(): Promise<void> {
         :key="playKey"
         class="danmaku-stage__danmaku"
         :danmus="danmakuItems"
-        :speeds="40"
+        :speeds="60"
         :font-size="20"
         :loop="loopDanmaku"
         extra-style="color: #fff"

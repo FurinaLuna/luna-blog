@@ -59,7 +59,6 @@ onMounted(() => {
           </div>
 
           <h1 class="about-name">{{ displayName }}</h1>
-          <p v-if="site.siteDescription" class="about-intro">{{ site.siteDescription }}</p>
 
           <div v-if="site.resolvedSocialLinks.length > 0" class="about-icons">
             <SocialLinks :links="site.resolvedSocialLinks" />
@@ -102,7 +101,7 @@ onMounted(() => {
 
 .about-card {
   max-width: 860px;
-  margin: -4.5rem auto 0;
+  margin: -6.2rem auto 0;
   padding: 0 2rem 2rem;
   /* 不要 overflow:hidden——头像要靠负 margin 挂在卡片上边、并探进 banner */
 }
@@ -144,13 +143,6 @@ onMounted(() => {
   letter-spacing: 0.02em;
 }
 
-.about-intro {
-  margin-top: 0.4rem;
-  color: var(--meta-color);
-  font-size: 0.92rem;
-  line-height: 1.7;
-}
-
 .about-icons {
   display: flex;
   justify-content: center;
@@ -190,7 +182,7 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .about-card {
-    margin-top: -3rem;
+    margin-top: -4.2rem;
     padding: 0 1.1rem 1.4rem;
   }
 

@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import BackToTop from '@/components/common/BackToTop.vue'
+import AnnouncementBall from '@/components/layout/AnnouncementBall.vue'
 import MusicPlayer from '@/components/music/MusicPlayer.vue'
 import { useSiteStore } from '@/stores/site'
 
@@ -67,7 +68,8 @@ onMounted(() => {
 
     <AppFooter />
 
-    <!-- 常驻组件：音乐在无 /wapi 数据时自身不渲染；返回顶部随滚动出现 -->
+    <!-- 常驻组件：公告悬浮球固定在左侧；音乐在无 /wapi 数据时自身不渲染；返回顶部随滚动出现 -->
+    <AnnouncementBall />
     <MusicPlayer />
     <BackToTop />
   </div>
