@@ -3471,11 +3471,12 @@ html.is-danmaku-wall .music-ball {
   transition: opacity 0.24s ease, transform 0.24s ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (hover: hover) and (pointer: fine) and (min-width: 769px) {
   /* 参考原站：唱片半靠着左边缘，一半露在外面，不透明 */
+  /* 靠紧左边缘：把桌面 left:20px 抵消掉，让球左沿正好贴住视口 0 */
   .announce-ball,
   .music-ball {
-    transform: translateX(-70%);
+    transform: translateX(-20px);
   }
 
   .announce-ball:hover,
@@ -3509,7 +3510,7 @@ html.is-danmaku-wall .music-ball {
 .back-top {
   position: fixed;
   bottom: 24px;
-  left: 20px;
+  left: 0;
   z-index: 2000;
   display: grid;
   place-items: center;
