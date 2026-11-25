@@ -3472,19 +3472,21 @@ html.is-danmaku-wall .music-ball {
 }
 
 @media (hover: hover) and (pointer: fine) {
+  /* 参考原站：唱片半靠着左边缘，一半露在外面，不透明 */
   .announce-ball,
   .music-ball {
-    opacity: 0.5;
-    transform: translateX(-55%);
+    transform: translateX(-70%);
   }
 
   .announce-ball:hover,
   .announce-ball:focus-within,
-  .announce-ball.is-open,
+  .announce-ball.is-open {
+    transform: translateX(0);
+  }
+
   .music-ball:hover,
   .music-ball:focus-within,
   .music-ball.is-open {
-    opacity: 1;
     transform: translateX(0);
   }
 }
