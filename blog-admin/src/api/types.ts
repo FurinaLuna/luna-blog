@@ -363,6 +363,12 @@ export interface SiteConfig {
   pageCardOffsets: Record<string, number>
   danmakuSpeed: number
   meteorCount: number
+  /** 友链页介绍文案（留空时前台用站点信息兜底） */
+  friendsTitle: string
+  friendsLink: string
+  friendsContactLabel: string
+  friendsContact: string
+  friendsTip: string
   /** 站点图标（favicon），空 = 用内置 favicon.svg */
   favicon: string
   /** 后台登录页背景图，空 = 用内置蓝色波浪底图 */

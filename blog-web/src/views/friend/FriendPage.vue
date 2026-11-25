@@ -3,7 +3,6 @@ import { computed, reactive, ref } from 'vue'
 import { useQuery } from '@pinia/colada'
 import { ElMessage, type FormInstance, type FormItemRule, type FormRules } from 'element-plus'
 import CoverImage from '@/components/common/CoverImage.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import SkeletonList from '@/components/common/SkeletonList.vue'
 import { applyFriendLink, getFriendLinks } from '@/api/friend'
@@ -67,8 +66,13 @@ const {
 const friends = computed(() => data.value ?? [])
 
 const site = useSiteStore()
-const siteName = computed(() => site.siteName)
-const siteDescription = computed(() => site.siteDescription)
+
+/** 介绍区文案（后台「站点配置 → 友链页」可改，留空时兜底） */
+const introTitle = computed(() => site.friendsTitle)
+const introContactLabel = computed(() => site.friendsContactLabel)
+const introContact = computed(() => site.friendsContact)
+const introTip = computed(() => site.friendsTip)
+const introLink = computed(() => site.friendsLink || (typeof window === 'undefined' ? '' : window.location.origin))
 
 function openDialog(): void {
   dialogOpen.value = true
@@ -106,62 +110,62 @@ async function submit(): Promise<void> {
 
     <div class="center_box">
       <div class="card friend-intro">
-        <h2 class="friend-intro__title">欢迎交换友链</h2>
-        <div class="friend-intro__meta">
-          <p class="friend-intro__row"><span class="friend-intro__label">本站名称</span><span>{{ siteName }}</span></p>
-          <p class="friend-intro__row"><span class="friend-intro__label">本站简介</span><span>{{ siteDescription }}</span></p>
+        <h2 class="friend-intro__title">{{ introTitle }}</h2>
+
+        <div class="friend-intro__rows">
+          <p v-if="introLink" class="friend-intro__row">
+            <span class="friend-intro__label">博客链接</span>
+            <a class="friend-intro__link" :href="introLink" target="_blank" rel="noopener noreferrer">
+              {{ introLink }}
+            </a>
+          </p>
+          <p v-if="introContact" class="friend-intro__row">
+            <span class="friend-intro__label">{{ introContactLabel }}</span>
+            <span class="friend-intro__value">{{ introContact }}</span>
+          </p>
         </div>
-        <p class="friend-intro__hint">申请前请先添加本站友链，审核通过后会尽快上线。</p>
-        <button type="button" class="apply-button friend-intro__btn" @click="openDialog">
-          申请友链
-        </button>
+
+        <p class="friend-intro__tip">{{ introTip }}</p>
+
+        <div class="friend-intro__actions">
+          <button type="button" class="apply-button" @click="openDialog">友链申请</button>
+        </div>
       </div>
 
       <SkeletonList v-if="isLoading" variant="card" :count="6" />
 
-      <EmptyState
-        v-else-if="error && friends.length === 0"
-        icon="error"
-        title="友链加载失败"
-        description="请稍后重试。"
-        action-text="重新加载"
-        @action="refetch"
-      />
-
-      <EmptyState
-        v-else-if="friends.length === 0"
-        icon="inbox"
-        title="还没有友链"
-        description="成为第一个交换链接的人吧。"
-        action-text="申请友链"
-        @action="openDialog"
-      />
-
-      <div v-else class="friend-grid">
-        <a
-          v-for="friend in friends"
-          :key="friend.id"
-          :href="friend.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="friend-card"
-        >
-          <div class="friend-card__inner">
-            <CoverImage
-              class="friend-card__avatar"
-              :src="friend.avatar"
-              :alt="`${friend.name} 头像`"
-              :seed="friend.name"
-              ratio="1 / 1"
-              rounded="rounded-full"
-            />
-            <div class="friend-card__text">
-              <p class="friend-card__name">{{ friend.name }}</p>
-              <p class="friend-card__desc">{{ friend.description || '这个站点还没有写简介。' }}</p>
+      <template v-else-if="friends.length > 0">
+        <div class="friend-grid">
+          <a
+            v-for="friend in friends"
+            :key="friend.id"
+            :href="friend.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="friend-card"
+          >
+            <div class="friend-card__inner">
+              <CoverImage
+                class="friend-card__avatar"
+                :src="friend.avatar"
+                :alt="`${friend.name} 头像`"
+                :seed="friend.name"
+                ratio="1 / 1"
+                rounded="rounded-full"
+              />
+              <div class="friend-card__text">
+                <p class="friend-card__name">{{ friend.name }}</p>
+                <p class="friend-card__desc">{{ friend.description || '这个站点还没有写简介。' }}</p>
+              </div>
             </div>
-          </div>
-        </a>
-      </div>
+          </a>
+        </div>
+      </template>
+
+      <p v-else-if="error" class="friend-relink">
+        友链加载失败
+        <button type="button" class="friend-relink__btn" @click="refetch()">重新加载</button>
+      </p>
     </div>
 
     <el-dialog v-model="dialogOpen" title="申请友链" width="min(92vw, 480px)" align-center>
@@ -199,48 +203,100 @@ async function submit(): Promise<void> {
 }
 
 .friend-intro {
-  padding: 2rem clamp(1.2rem, 4vw, 2.6rem);
-  text-align: center;
+  padding: clamp(1.4rem, 3.2vw, 2.2rem) clamp(1.4rem, 4vw, 2.8rem);
 }
 
 .friend-intro__title {
   color: var(--font-color);
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.4;
 }
 
-.friend-intro__meta {
-  margin: 1rem auto 0;
-  max-width: 32rem;
+.friend-intro__rows {
+  margin-top: 1.1rem;
 }
 
 .friend-intro__row {
   display: flex;
-  gap: 0.8rem;
-  padding: 0.2rem 0;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.32rem 0;
+  font-size: 0.95rem;
+}
+
+.friend-intro__label {
+  flex: 0 0 auto;
+  min-width: 4.5rem;
+  color: var(--meta-color);
+}
+
+.friend-intro__value,
+.friend-intro__link {
+  color: var(--second-font-color);
+  word-break: break-all;
+}
+
+.friend-intro__link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.25s ease;
+}
+
+.friend-intro__link:hover {
+  color: var(--primary-ink);
+}
+
+.friend-intro__tip {
+  margin-top: 1rem;
   color: var(--second-font-color);
   font-size: 0.92rem;
 }
 
-.friend-intro__label {
-  flex: 0 0 5.5rem;
-  color: var(--meta-color);
-  text-align: right;
+.friend-intro__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.4rem;
 }
 
-.friend-intro__hint {
-  margin-top: 0.8rem;
-  color: var(--meta-color);
-  font-size: 0.85rem;
-}
-
-.friend-intro__btn {
+.friend-relink {
   margin-top: 1.2rem;
+  color: var(--meta-color);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.friend-relink__btn {
+  margin-left: 0.4rem;
+  color: var(--primary-ink);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
 
 .friend-dialog__actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.6rem;
+}
+
+@media (max-width: 560px) {
+  .friend-intro__row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .friend-intro__label {
+    min-width: 0;
+  }
+
+  .friend-intro__actions {
+    justify-content: stretch;
+  }
+
+  .friend-intro__actions .apply-button {
+    width: 100%;
+  }
 }
 </style>

@@ -25,6 +25,15 @@ export const useSiteStore = defineStore('site', () => {
   const socialLinks = computed(() => config.value?.socialLinks ?? [])
   const commentNeedReview = computed(() => config.value?.commentNeedReview ?? true)
 
+  /** 友链页介绍区文案：后台留空时用站点名称/邮箱兜底 */
+  const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 ${siteName.value}`)
+  const friendsLink = computed(() => config.value?.friendsLink || '')
+  const friendsContactLabel = computed(() => config.value?.friendsContactLabel || 'QQ')
+  const friendsContact = computed(() => config.value?.friendsContact || '')
+  const friendsTip = computed(
+    () => config.value?.friendsTip || '申请前请先添加本站友链，审核通过后会尽快上线。',
+  )
+
   /** 未配置 socialLinks 时用 github / email 兜底 */
   const resolvedSocialLinks = computed<SocialLink[]>(() => {
     if (socialLinks.value.length > 0) return socialLinks.value
@@ -90,6 +99,11 @@ export const useSiteStore = defineStore('site', () => {
     socialLinks,
     resolvedSocialLinks,
     commentNeedReview,
+    friendsTitle,
+    friendsLink,
+    friendsContactLabel,
+    friendsContact,
+    friendsTip,
     ensureLoaded,
     refresh,
     setVisitStats,

@@ -87,6 +87,11 @@ const form = reactive<SiteConfig>({
   messageNeedReview: true,
   danmakuSpeed: 180,
   meteorCount: 34,
+  friendsTitle: '',
+  friendsLink: '',
+  friendsContactLabel: 'QQ',
+  friendsContact: '',
+  friendsTip: '',
   profileBanner: '',
   favicon: '',
   adminLoginBg: '',
@@ -117,6 +122,11 @@ function fillForm(data: SiteConfig): void {
   form.profileBanner = data.profileBanner ?? ''
   form.favicon = data.favicon ?? ''
   form.adminLoginBg = data.adminLoginBg ?? ''
+  form.friendsTitle = data.friendsTitle ?? ''
+  form.friendsLink = data.friendsLink ?? ''
+  form.friendsContactLabel = data.friendsContactLabel ?? 'QQ'
+  form.friendsContact = data.friendsContact ?? ''
+  form.friendsTip = data.friendsTip ?? ''
 
   form.socialLinks = Array.isArray(data.socialLinks)
     ? data.socialLinks.map((link) => ({
@@ -283,6 +293,11 @@ async function save(): Promise<void> {
       profileBanner: form.profileBanner.trim(),
       favicon: form.favicon.trim(),
       adminLoginBg: form.adminLoginBg.trim(),
+      friendsTitle: form.friendsTitle.trim(),
+      friendsLink: form.friendsLink.trim(),
+      friendsContactLabel: form.friendsContactLabel.trim(),
+      friendsContact: form.friendsContact.trim(),
+      friendsTip: form.friendsTip.trim(),
       pageBanners: collectBanners(),
     pageBannerPositions: collectPositions(),
     pageCardOffsets: collectCardOffsets(),
@@ -395,6 +410,43 @@ onMounted(load)
           </div>
         </el-tab-pane>
 
+        <el-tab-pane label="友链页" name="friends">
+          <div class="max-w-[640px] pt-2">
+            <el-alert
+              type="info"
+              :closable="false"
+              show-icon
+              title="这些文案显示在友链页顶部的介绍卡片里，留空则自动使用站点名称 / 本站地址。"
+              class="mb-4"
+            />
+            <el-form label-position="top">
+              <el-form-item label="欢迎标题">
+                <el-input v-model="form.friendsTitle" maxlength="120" placeholder="留空则显示「欢迎来到 站点名称」" />
+              </el-form-item>
+              <el-form-item label="本站链接">
+                <el-input v-model="form.friendsLink" maxlength="300" placeholder="留空则显示当前站点地址，例如 https://furinaluna.top" />
+              </el-form-item>
+              <div class="grid grid-cols-1 gap-x-5 md:grid-cols-2">
+                <el-form-item label="联系方式名称">
+                  <el-input v-model="form.friendsContactLabel" maxlength="20" placeholder="例如 QQ、微信、邮箱" />
+                </el-form-item>
+                <el-form-item label="联系方式">
+                  <el-input v-model="form.friendsContact" maxlength="100" placeholder="留空则不显示这一行" />
+                </el-form-item>
+              </div>
+              <el-form-item label="申请提示">
+                <el-input
+                  v-model="form.friendsTip"
+                  type="textarea"
+                  :rows="2"
+                  maxlength="200"
+                  show-word-limit
+                  placeholder="留空则显示默认提示：申请前请先添加本站友链，审核通过后会尽快上线。"
+                />
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-tab-pane>
         <el-tab-pane label="首页 Hero" name="hero">
           <div class="max-w-[640px] pt-2">
             <el-form label-position="top">

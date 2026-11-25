@@ -52,6 +52,12 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   danmakuSpeed: 180,
   /** 留言板弹幕背景的流星数量 */
   meteorCount: 34,
+  /** 友链页介绍文案（后台「友链页」页签可改；留空时前台用站点信息兜底） */
+  friendsTitle: '',
+  friendsLink: '',
+  friendsContactLabel: 'QQ',
+  friendsContact: '',
+  friendsTip: '申请前请先添加本站友链，审核通过后会尽快上线。',
 })
 
 const socialLinkSchema = z.object({
@@ -88,6 +94,11 @@ export const siteConfigSchema = z.object({
   pageCardOffsets: z.record(z.string(), z.number().int().min(0).max(400)).optional(),
   danmakuSpeed: z.number().int().min(60).max(600).optional(),
   meteorCount: z.number().int().min(0).max(80).optional(),
+  friendsTitle: z.string().trim().max(120).optional(),
+  friendsLink: z.string().trim().max(300).optional(),
+  friendsContactLabel: z.string().trim().max(20).optional(),
+  friendsContact: z.string().trim().max(100).optional(),
+  friendsTip: z.string().trim().max(200).optional(),
 })
 
 /** 解析单行配置值（JSON 优先，失败回退字符串） */

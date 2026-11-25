@@ -308,6 +308,12 @@ export interface SiteConfig {
   pageCardOffsets?: Record<string, number>
   danmakuSpeed?: number
   meteorCount?: number
+  /** 友链页介绍文案（留空时用站点信息兜底） */
+  friendsTitle?: string
+  friendsLink?: string
+  friendsContactLabel?: string
+  friendsContact?: string
+  friendsTip?: string
   /** 首页侧栏资料卡横幅（空字符串 = 回退 pageBanners.home） */
   profileBanner?: string
   /** 站点图标（浏览器标签页 favicon），空 = 用 public/favicon.svg */
