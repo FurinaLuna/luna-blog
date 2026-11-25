@@ -43,13 +43,11 @@ const stored = readStored()
 const tracks = ref<Track[]>([])
 const loaded = ref(false)
 const open = ref(false)
-const listOpen = ref(false)
 const volume = ref(stored.volume)
 const currentKey = ref(stored.key)
 const isPlaying = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
-const hovered = ref(false)
 
 const urlCache = new Map<string, string>()
 let audio: HTMLAudioElement | null = null
@@ -184,13 +182,12 @@ function handleEnded(): void {
 
 function toggleCard(): void {
   open.value = !open.value
-  if (open.value) listOpen.value = false
 }
 
 function handleDocumentClick(event: MouseEvent): void {
   if (!open.value) return
   const target = event.target as HTMLElement | null
-  if (target?.closest('.music-ball') || target?.closest('.el-drawer')) return
+  if (target?.closest('.music-ball')) return
   open.value = false
 }
 
@@ -234,8 +231,6 @@ onBeforeUnmount(() => {
     v-if="site.musicEnabled"
     class="music-ball"
     :class="{ 'is-open': open, 'is-empty': empty }"
-    @mouseenter="hovered = true"
-    @mouseleave="hovered = false"
   >
     <button
       type="button"
@@ -251,18 +246,10 @@ onBeforeUnmount(() => {
       <span v-if="isPlaying" class="music-ball__ring" :style="{ '--progress': `${progress}%` }" />
     </button>
 
-    <span v-if="hovered && current && !open" class="music-ball__tip">
-      {{ current.name }}<template v-if="current.artist"> - {{ current.artist }}</template>
-    </span>
-
     <transition name="music-card">
-      <div v-if="open" class="music-card">
-        <button type="button" class="music-card__close" aria-label="收起" @click="open = false">
-          <el-icon :size="14"><Close /></el-icon>
-        </button>
-
-        <div class="music-card__head">
-          <div class="music-card__cover" :class="{ 'is-spinning': isPlaying }">
+      <div v-if="open" class="music-panel" role="dialog" aria-label="音乐播放器">
+        <header class="music-panel__top">
+          <div class="music-panel__cover" :class="{ 'is-spinning': isPlaying }">
             <CoverImage
               :src="current?.cover || ''"
               :alt="current?.name || '音乐'"
@@ -271,111 +258,97 @@ onBeforeUnmount(() => {
               rounded="rounded-full"
             />
           </div>
-          <div class="music-card__meta">
-            <p class="music-card__name">{{ empty ? '暂无可用音源' : (current?.name ?? '音乐') }}</p>
-            <p class="music-card__artist">
+          <div class="music-panel__meta">
+            <p class="music-panel__name">{{ empty ? '暂无可用音源' : (current?.name ?? '音乐') }}</p>
+            <p class="music-panel__artist">
               {{ empty ? `来源：${sourceLabel}` : current?.artist || '未知歌手' }}
             </p>
           </div>
-        </div>
+          <button type="button" class="music-panel__close" aria-label="收起" @click="open = false">
+            <el-icon :size="14"><Close /></el-icon>
+          </button>
+        </header>
 
         <template v-if="!empty">
-          <input
-            class="music-card__range"
-            type="range"
-            min="0"
-            max="100"
-            step="0.1"
-            :value="progress"
-            aria-label="播放进度"
-            @input="seek"
-          />
-          <div class="music-card__times">
-            <span>{{ formatTime(currentTime) }}</span>
-            <span>{{ formatTime(duration) }}</span>
-          </div>
+          <ul class="music-panel__list">
+            <li v-for="(track, index) in tracks" :key="track.key">
+              <button
+                type="button"
+                class="music-panel__item"
+                :class="{ 'is-active': track.key === currentKey }"
+                @click="playAt(index)"
+              >
+                <span class="music-panel__thumb">
+                  <CoverImage
+                    :src="track.cover || ''"
+                    :alt="track.name"
+                    :seed="track.name"
+                    ratio="1 / 1"
+                    rounded="rounded-lg"
+                  />
+                </span>
+                <span class="music-panel__text">
+                  <span class="music-panel__item-name">{{ track.name }}</span>
+                  <span class="music-panel__item-artist">{{ track.artist || '未知歌手' }}</span>
+                </span>
+                <span v-if="track.key === currentKey && isPlaying" class="music-panel__eq" aria-hidden="true">
+                  <i /><i /><i />
+                </span>
+              </button>
+            </li>
+          </ul>
 
-          <div class="music-card__controls">
-            <button type="button" class="music-card__ctrl" aria-label="上一首" @click="prev">
-              <el-icon :size="16"><ArrowLeft /></el-icon>
-            </button>
-            <button
-              type="button"
-              class="music-card__ctrl music-card__ctrl--main"
-              :aria-label="isPlaying ? '暂停' : '播放'"
-              @click="togglePlay"
-            >
-              <el-icon :size="18">
-                <component :is="isPlaying ? VideoPause : VideoPlay" />
-              </el-icon>
-            </button>
-            <button type="button" class="music-card__ctrl" aria-label="下一首" @click="next">
-              <el-icon :size="16"><ArrowRight /></el-icon>
-            </button>
-            <button
-              type="button"
-              class="music-card__ctrl music-card__ctrl--list"
-              aria-label="播放列表"
-              @click="listOpen = true"
-            >
-              <el-icon :size="16"><Headset /></el-icon>
-            </button>
-          </div>
+          <footer class="music-panel__bar">
+            <input
+              class="music-panel__range"
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              :value="progress"
+              aria-label="播放进度"
+              @input="seek"
+            />
+            <div class="music-panel__times">
+              <span>{{ formatTime(currentTime) }}</span>
+              <span>{{ formatTime(duration) }}</span>
+            </div>
 
-          <div class="music-card__volume">
-            <span>音量</span>
-            <el-slider v-model="volume" :min="0" :max="1" :step="0.02" :show-tooltip="false" />
-          </div>
+            <div class="music-panel__controls">
+              <button type="button" class="music-panel__ctrl" aria-label="上一首" @click="prev">
+                <el-icon :size="16"><ArrowLeft /></el-icon>
+              </button>
+              <button
+                type="button"
+                class="music-panel__ctrl music-panel__ctrl--main"
+                :aria-label="isPlaying ? '暂停' : '播放'"
+                @click="togglePlay"
+              >
+                <el-icon :size="18">
+                  <component :is="isPlaying ? VideoPause : VideoPlay" />
+                </el-icon>
+              </button>
+              <button type="button" class="music-panel__ctrl" aria-label="下一首" @click="next">
+                <el-icon :size="16"><ArrowRight /></el-icon>
+              </button>
+              <div class="music-panel__volume">
+                <el-slider v-model="volume" :min="0" :max="1" :step="0.02" :show-tooltip="false" />
+              </div>
+            </div>
 
-          <p class="music-card__source">来源：{{ sourceLabel }} · 共 {{ tracks.length }} 首</p>
+            <p class="music-panel__source">来源：{{ sourceLabel }} · 共 {{ tracks.length }} 首</p>
+          </footer>
         </template>
 
-        <p v-else class="music-card__hint">
+        <p v-else class="music-panel__hint">
           后台还没配置歌曲，或音源暂时不可用。
         </p>
       </div>
     </transition>
-
-    <el-drawer v-model="listOpen" direction="btt" size="52%" title="播放列表">
-      <p class="music-playlist__hint">共 {{ tracks.length }} 首 · 来源：{{ sourceLabel }}</p>
-      <ul class="music-playlist">
-        <li v-for="(track, index) in tracks" :key="track.key">
-          <button
-            type="button"
-            class="music-playlist__item"
-            :class="{ 'is-active': track.key === currentKey }"
-            :aria-label="`播放 ${track.name}`"
-            @click="playAt(index)"
-          >
-            <span class="music-playlist__index">{{ index + 1 }}</span>
-            <span class="music-playlist__text">
-              <span class="music-playlist__name">{{ track.name }}</span>
-              <span class="music-playlist__artist">{{ track.artist }}</span>
-            </span>
-          </button>
-        </li>
-      </ul>
-    </el-drawer>
   </div>
 </template>
 
 <style scoped>
-.music-ball__tip {
-  position: absolute;
-  bottom: 50%;
-  left: calc(100% + 10px);
-  max-width: 220px;
-  padding: 0.3rem 0.55rem;
-  border-radius: 8px;
-  background: rgb(15 23 42 / 88%);
-  color: #fff;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  white-space: nowrap;
-  transform: translateY(50%);
-  pointer-events: none;
-}
-
 .music-ball__disc {
   display: grid;
   width: 100%;
@@ -414,25 +387,68 @@ onBeforeUnmount(() => {
   }
 }
 
-.music-card {
+.music-panel {
   position: absolute;
   bottom: 0;
   left: calc(100% + 12px);
-  width: 268px;
-  padding: 0.9rem 0.95rem 0.8rem;
+  display: flex;
+  width: 300px;
+  max-height: min(70vh, 520px);
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--card-bg);
   box-shadow: var(--card-box-shadow);
 }
 
-.music-card__close {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+.music-panel__top {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 0.9rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.music-panel__cover {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.music-panel__cover.is-spinning {
+  animation: music-disc-rotate 16s linear infinite;
+}
+
+.music-panel__meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.music-panel__name {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-panel__artist {
+  overflow: hidden;
+  color: var(--meta-color);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-panel__close {
   display: grid;
   width: 22px;
   height: 22px;
+  flex-shrink: 0;
   place-items: center;
   border: 0;
   border-radius: 50%;
@@ -441,77 +457,151 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.music-card__close:hover {
+.music-panel__close:hover {
   background: var(--bg-soft);
   color: var(--text);
 }
 
-.music-card__head {
+.music-panel__list {
   display: flex;
-  align-items: center;
-  gap: 0.7rem;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.4rem 0.45rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
-.music-card__cover {
-  width: 52px;
-  height: 52px;
+.music-panel__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.45rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.music-panel__item:hover {
+  background: var(--bg-soft);
+}
+
+.music-panel__item.is-active {
+  background: var(--primary-soft);
+}
+
+.music-panel__thumb {
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: 50%;
+  border-radius: 8px;
 }
 
-.music-card__cover.is-spinning {
-  animation: music-disc-rotate 16s linear infinite;
-}
-
-.music-card__meta {
+.music-panel__text {
+  display: flex;
   min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
 }
 
-.music-card__name {
+.music-panel__item-name {
   overflow: hidden;
   color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 0.84rem;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.music-card__artist {
+.music-panel__item.is-active .music-panel__item-name {
+  color: var(--primary-ink);
+}
+
+.music-panel__item-artist {
   overflow: hidden;
   color: var(--meta-color);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.music-card__range {
+.music-panel__eq {
+  display: flex;
+  height: 14px;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.music-panel__eq i {
+  width: 2px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--primary);
+  animation: music-eq 0.9s ease-in-out infinite alternate;
+}
+
+.music-panel__eq i:nth-child(2) {
+  height: 12px;
+  animation-delay: 0.2s;
+}
+
+.music-panel__eq i:nth-child(3) {
+  height: 9px;
+  animation-delay: 0.4s;
+}
+
+@keyframes music-eq {
+  from {
+    transform: scaleY(0.4);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.music-panel__bar {
+  flex-shrink: 0;
+  padding: 0.6rem 0.9rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.music-panel__range {
   width: 100%;
-  margin: 0.7rem 0 0.15rem;
+  height: 4px;
   accent-color: var(--primary);
   cursor: pointer;
 }
 
-.music-card__times {
+.music-panel__times {
   display: flex;
   justify-content: space-between;
+  margin-top: 0.1rem;
   color: var(--meta-color);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
 }
 
-.music-card__controls {
+.music-panel__controls {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  margin: 0.35rem 0 0.5rem;
+  gap: 0.55rem;
+  margin-top: 0.45rem;
 }
 
-.music-card__ctrl {
+.music-panel__ctrl {
   display: grid;
   width: 30px;
   height: 30px;
+  flex-shrink: 0;
   place-items: center;
   border: 0;
   border-radius: 50%;
@@ -521,43 +611,42 @@ onBeforeUnmount(() => {
   transition: all 0.2s ease;
 }
 
-.music-card__ctrl:hover {
+.music-panel__ctrl:hover {
   color: var(--primary-ink);
 }
 
-.music-card__ctrl--main {
-  width: 38px;
-  height: 38px;
+.music-panel__ctrl--main {
+  width: 40px;
+  height: 40px;
   background: var(--primary);
   color: var(--on-primary);
 }
 
-.music-card__ctrl--main:hover {
+.music-panel__ctrl--main:hover {
   color: var(--on-primary);
   opacity: 0.9;
 }
 
-.music-card__ctrl--list {
-  margin-left: 0.1rem;
-}
-
-.music-card__volume {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--meta-color);
-  font-size: 0.72rem;
-}
-
-.music-card__volume :deep(.el-slider) {
+.music-panel__volume {
+  min-width: 0;
   flex: 1;
 }
 
-.music-card__source,
-.music-card__hint {
-  margin-top: 0.55rem;
+.music-panel__volume :deep(.el-slider) {
+  height: 22px;
+}
+
+.music-panel__source {
+  margin-top: 0.35rem;
   color: var(--meta-color);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+}
+
+.music-panel__hint {
+  padding: 0.4rem 0.9rem 0.9rem;
+  color: var(--meta-color);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .music-card-enter-active,
@@ -573,84 +662,11 @@ onBeforeUnmount(() => {
   transform: translateX(-6px) scale(0.98);
 }
 
-.music-playlist__hint {
-  margin: -0.6rem 0 0.8rem;
-  color: var(--meta-color);
-  font-size: 0.8rem;
-}
-
-.music-playlist {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-bottom: 1rem;
-}
-
-.music-playlist__item {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.45rem 0.5rem;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-}
-
-.music-playlist__item:hover {
-  background: var(--bg-soft);
-}
-
-.music-playlist__item.is-active {
-  background: var(--primary-soft);
-}
-
-.music-playlist__index {
-  width: 18px;
-  flex-shrink: 0;
-  color: var(--meta-color);
-  font-size: 0.78rem;
-  text-align: center;
-}
-
-.music-playlist__text {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-}
-
-.music-playlist__name {
-  overflow: hidden;
-  color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.music-playlist__item.is-active .music-playlist__name {
-  color: var(--primary-ink);
-}
-
-.music-playlist__artist {
-  overflow: hidden;
-  color: var(--meta-color);
-  font-size: 0.75rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 @media (max-width: 768px) {
-  .music-card {
+  .music-panel {
     left: calc(100% + 10px);
-    width: min(258px, calc(100vw - 88px));
-  }
-
-  .music-ball__tip {
-    display: none;
+    width: min(280px, calc(100vw - 88px));
+    max-height: min(62vh, 460px);
   }
 }
 </style>
