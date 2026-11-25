@@ -1377,6 +1377,13 @@ html.dark .el-select-dropdown__item.is-hovering {
   padding-right: 2px;
 }
 
+/* md-editor-v3 预览里的代码块头部是 sticky + z-index:10000，
+   会盖在 ElMessageBox（z-index 2000）上面，压到 z-index 只需高于代码正文即可 */
+html .md-editor .md-editor-preview .md-editor-code .md-editor-code-head,
+html .md-editor .md-editor-preview .md-editor-code > summary.md-editor-code-head {
+  z-index: 3 !important;
+}
+
 /* md-editor-v3 高度与主题跟随站点 */
 .article-editor .md-editor {
   height: calc(100vh - 260px);

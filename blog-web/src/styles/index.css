@@ -2073,6 +2073,12 @@ html.dark .home-tag--5 {
 }
 
 /* ---- Markdown 代码块：头部与代码区合成一张卡片 ---- */
+/* 代码块头部 sticky，默认 z-index:10000 会盖住弹窗/大图预览，压到 3 即可 */
+html .md-content .md-editor-code-head,
+html .md-content .md-editor-code > summary.md-editor-code-head {
+  z-index: 3 !important;
+}
+
 .md-content .md-editor-code {
   margin: 1.5em 0;
   overflow: hidden;
