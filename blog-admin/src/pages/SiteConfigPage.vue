@@ -119,6 +119,10 @@ const form = reactive<SiteConfig>({
   friendsContactLabel: 'QQ',
   friendsContact: '',
   friendsTip: '',
+  musicEnabled: true,
+  musicSource: 'local' as 'local' | 'netease',
+  musicVolume: 0.7,
+  neteasePlaylistId: '',
   welcomeTitle: '欢迎～',
   welcomeName: '我的朋友',
   welcomeGreetings: [
@@ -166,6 +170,10 @@ function fillForm(data: SiteConfig): void {
   form.friendsContactLabel = data.friendsContactLabel ?? 'QQ'
   form.friendsContact = data.friendsContact ?? ''
   form.friendsTip = data.friendsTip ?? ''
+  form.musicEnabled = data.musicEnabled ?? true
+  form.musicSource = (data.musicSource === 'netease' ? 'netease' : 'local')
+  form.musicVolume = typeof data.musicVolume === 'number' ? data.musicVolume : 0.7
+  form.neteasePlaylistId = data.neteasePlaylistId ?? ''
   form.welcomeTitle = data.welcomeTitle ?? '欢迎～'
   form.welcomeName = data.welcomeName ?? '我的朋友'
   form.welcomeGreetings = (() => {
@@ -363,7 +371,11 @@ async function save(): Promise<void> {
       friendsContactLabel: form.friendsContactLabel.trim(),
       friendsContact: form.friendsContact.trim(),
       friendsTip: form.friendsTip.trim(),
-    welcomeTitle: form.welcomeTitle.trim(),
+    musicEnabled: form.musicEnabled,
+  musicSource: form.musicSource,
+  musicVolume: form.musicVolume,
+  neteasePlaylistId: form.neteasePlaylistId.trim(),
+  welcomeTitle: form.welcomeTitle.trim(),
     welcomeName: form.welcomeName.trim(),
     welcomeGreetings: form.welcomeGreetings.map((item: string) => item.trim()),
       pageBanners: collectBanners(),
@@ -543,6 +555,35 @@ onMounted(load)
                   maxlength="120"
                   :placeholder="welcomePlaceholders[index]"
                 />
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="音乐" name="music">
+          <div class="max-w-[720px] pt-2">
+            <el-alert
+              type="info"
+              :closable="false"
+              show-icon
+              title="前台左下角的唱片球：本地歌单在「音乐管理」里维护，网易云歌单需要本机运行 NeteaseCloudMusicApi（默认 3001 端口）并填入歌单 id。"
+              class="mb-4"
+            />
+            <el-form label-position="top">
+              <el-form-item label="显示音乐播放器">
+                <el-switch v-model="form.musicEnabled" />
+                <span class="ml-3 text-[12px] text-[var(--text-3)]">关闭后前台不渲染唱片球</span>
+              </el-form-item>
+              <el-form-item label="音源">
+                <el-radio-group v-model="form.musicSource">
+                  <el-radio-button value="local">站内歌单</el-radio-button>
+                  <el-radio-button value="netease">网易云歌单</el-radio-button>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item v-if="form.musicSource === 'netease'" label="网易云歌单 id">
+                <el-input v-model="form.neteasePlaylistId" maxlength="40" placeholder="例如 24381616，取歌单链接里的数字" />
+              </el-form-item>
+              <el-form-item label="默认音量">
+                <el-slider v-model="form.musicVolume" :min="0" :max="1" :step="0.05" :format-tooltip="(v: number) => `${Math.round(v * 100)}%`" class="max-w-[420px]" />
               </el-form-item>
             </el-form>
           </div>

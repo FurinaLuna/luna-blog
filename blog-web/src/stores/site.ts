@@ -25,7 +25,6 @@ export const useSiteStore = defineStore('site', () => {
   const socialLinks = computed(() => config.value?.socialLinks ?? [])
   const commentNeedReview = computed(() => config.value?.commentNeedReview ?? true)
 
-  /** 友链页介绍区文案：后台留空时用站点名称/邮箱兜底 */
   /** 进站欢迎通知：标题、称呼、8 个时段问候文案（缺省用原站文案） */
 const DEFAULT_WELCOME_GREETINGS = [
   '夜深了：{name}，请注意休息！',
@@ -53,6 +52,17 @@ const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 
   const friendsTip = computed(
     () => config.value?.friendsTip || '申请前请先添加本站友链，审核通过后会尽快上线。',
   )
+
+  /** 音乐悬浮球：总开关 / 音源 / 默认音量 / 网易云歌单 id */
+  const musicEnabled = computed(() => config.value?.musicEnabled ?? true)
+  const musicSource = computed<'local' | 'netease'>(() =>
+    config.value?.musicSource === 'netease' ? 'netease' : 'local',
+  )
+  const musicVolume = computed(() => {
+    const value = config.value?.musicVolume
+    return typeof value === 'number' && value >= 0 && value <= 1 ? value : 0.7
+  })
+  const neteasePlaylistId = computed(() => config.value?.neteasePlaylistId || '')
 
   /** 未配置 socialLinks 时用 github / email 兜底 */
   const resolvedSocialLinks = computed<SocialLink[]>(() => {
@@ -127,6 +137,10 @@ const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 
     friendsContactLabel,
     friendsContact,
     friendsTip,
+    musicEnabled,
+    musicSource,
+    musicVolume,
+    neteasePlaylistId,
     ensureLoaded,
     refresh,
     setVisitStats,
