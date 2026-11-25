@@ -41,6 +41,8 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
     about: '',
     search: '',
   },
+  // 每个页面横幅的取景位置（0 = 贴顶，100 = 贴底，默认 30 偏上）
+  pageBannerPositions: {},
 })
 
 const socialLinkSchema = z.object({
@@ -69,6 +71,7 @@ export const siteConfigSchema = z.object({
   messageNeedReview: z.boolean().optional(),
   profileBanner: z.string().trim().max(500).optional(),
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
+  pageBannerPositions: z.record(z.string(), z.number().int().min(0).max(100)).optional(),
 })
 
 /** 解析单行配置值（JSON 优先，失败回退字符串） */
@@ -93,6 +96,10 @@ export async function getSiteConfig() {
       ...SITE_CONFIG_DEFAULTS.pageBanners,
       ...(stored.pageBanners && typeof stored.pageBanners === 'object' ? stored.pageBanners : {}),
     },
+    pageBannerPositions:
+      stored.pageBannerPositions && typeof stored.pageBannerPositions === 'object'
+        ? stored.pageBannerPositions
+        : {},
   }
 }
 

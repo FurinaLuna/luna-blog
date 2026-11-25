@@ -67,8 +67,26 @@ const bannerUrl = computed(() => {
   return fallbackKey ? (banners[fallbackKey] ?? '').trim() : ''
 })
 
+/** 横幅取景位置（0 = 贴顶，100 = 贴底），后台可逐页调整，缺省 30 偏上 */
+const BANNER_DEFAULT_FOCUS = 30
+
+const bannerFocus = computed(() => {
+  const positions = site.config?.pageBannerPositions
+  if (!positions || !bannerKey.value) return BANNER_DEFAULT_FOCUS
+  const own = positions[bannerKey.value]
+  if (typeof own === 'number') return own
+  const fallbackKey = BANNER_FALLBACK[bannerKey.value]
+  const inherited = fallbackKey ? positions[fallbackKey] : undefined
+  return typeof inherited === 'number' ? inherited : BANNER_DEFAULT_FOCUS
+})
+
 const bannerStyle = computed(() =>
-  bannerUrl.value ? { backgroundImage: `url("${bannerUrl.value}")` } : undefined,
+  bannerUrl.value
+    ? {
+        backgroundImage: `url("${bannerUrl.value}")`,
+        backgroundPosition: `center ${bannerFocus.value}%`,
+      }
+    : undefined,
 )
 </script>
 

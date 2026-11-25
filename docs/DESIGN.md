@@ -87,7 +87,7 @@ BackToTop（右下角，非首页显示）
 banner 默认是 CSS 天空 + 云层；后台「站点配置 → 页面横幅」可给下列 15 个页面之一单独上传横幅图（分类总览 / 标签总览未单独上传时回退到分类详情 / 标签详情的图）
 （键：`home, archives, categories, category, tags, tag, article, talks, albums, album, resources, friends, message, about, search`），
 有图时 `PageHeader` 自动按路由首段取图，未配置则回退内置渐变。自定义横幅用 `background-size: cover` 铺满整条横幅、
-`background-position: center top` 纵向贴顶（保证画面主体的上半部分不被切掉），再叠一层 rgba(4,16,28,.38) 暗色遮罩保证白色标题可读。
+纵向取景位置默认 `center 30%`（0 贴顶 / 100 贴底），后台「站点配置 → 页面横幅」每张卡片都有滑块可逐页调整，再叠一层 rgba(4,16,28,.38) 暗色遮罩保证白色标题可读。
 内页 banner 高 36rem（关于页 41rem、手机 25rem）；底部白浪高 6rem（手机 4.6rem），
 与首页 hero 同高（原为 4rem），图片横幅下波浪起伏更明显。
 

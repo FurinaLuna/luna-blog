@@ -54,6 +54,14 @@ const EMPTY_PAGE_BANNERS: PageBanners = {
   search: '',
 }
 
+/** 横幅默认取景位置（30% 偏上，兼顾上沿留白与画面中部） */
+const DEFAULT_BANNER_FOCUS = 30
+
+/** 15 个页面横幅的默认取景位置 */
+const EMPTY_PAGE_POSITIONS: Record<string, number> = Object.fromEntries(
+  PAGE_BANNER_ITEMS.map((item) => [item.key, DEFAULT_BANNER_FOCUS]),
+)
+
 const form = reactive<SiteConfig>({
   siteName: '',
   siteDescription: '',
@@ -74,6 +82,7 @@ const form = reactive<SiteConfig>({
   messageNeedReview: true,
   profileBanner: '',
   pageBanners: { ...EMPTY_PAGE_BANNERS },
+  pageBannerPositions: { ...EMPTY_PAGE_POSITIONS },
 })
 
 const editorTheme = computed<'light' | 'dark'>(() => (theme.isDark ? 'dark' : 'light'))
@@ -103,6 +112,7 @@ function fillForm(data: SiteConfig): void {
   form.commentNeedReview = data.commentNeedReview !== false
   form.messageNeedReview = data.messageNeedReview !== false
   form.pageBanners = normalizeBanners(data.pageBanners)
+  form.pageBannerPositions = normalizePositions(data.pageBannerPositions)
 }
 
 /** 用后端返回值补齐 13 个横幅键，缺的键补空串 */
@@ -118,6 +128,33 @@ function normalizeBanners(
 }
 
 /** 保存时只提交这 13 个键，过滤未知键并去掉首尾空白 */
+/** 补齐 15 个取景位置，缺省用 30% */
+function normalizePositions(
+  source: Record<string, number> | null | undefined,
+): Record<string, number> {
+  const next: Record<string, number> = { ...EMPTY_PAGE_POSITIONS }
+  for (const item of PAGE_BANNER_ITEMS) {
+    const value = source?.[item.key]
+    next[item.key] =
+      typeof value === 'number' && Number.isFinite(value)
+        ? Math.min(100, Math.max(0, Math.round(value)))
+        : DEFAULT_BANNER_FOCUS
+  }
+  return next
+}
+
+function collectPositions(): Record<string, number> {
+  const next: Record<string, number> = {}
+  for (const item of PAGE_BANNER_ITEMS) {
+    const value = form.pageBannerPositions[item.key]
+    next[item.key] =
+      typeof value === 'number' && Number.isFinite(value)
+        ? Math.min(100, Math.max(0, Math.round(value)))
+        : DEFAULT_BANNER_FOCUS
+  }
+  return next
+}
+
 function collectBanners(): PageBanners {
   const next: PageBanners = { ...EMPTY_PAGE_BANNERS }
   for (const item of PAGE_BANNER_ITEMS) {
@@ -136,6 +173,7 @@ function bannerStatusType(key: PageBannerKey): 'success' | 'info' {
 
 function clearBanner(key: PageBannerKey): void {
   form.pageBanners[key] = ''
+  form.pageBannerPositions[key] = DEFAULT_BANNER_FOCUS
 }
 
 async function load(): Promise<void> {
@@ -194,6 +232,7 @@ async function save(): Promise<void> {
       messageNeedReview: form.messageNeedReview,
       profileBanner: form.profileBanner.trim(),
       pageBanners: collectBanners(),
+    pageBannerPositions: collectPositions(),
     })
     ElMessage.success('站点配置已保存')
     await load()
@@ -347,6 +386,23 @@ onMounted(load)
                       >
                         清除
                       </el-button>
+                      <div class="mt-3">
+                        <div class="mb-1 flex items-center justify-between gap-2">
+                          <span class="text-[12px] text-[var(--text-3)]">取景位置</span>
+                          <span class="text-[12px] text-[var(--text-3)]">
+                            {{ form.pageBannerPositions[item.key] }}%（0 贴顶 · 100 贴底）
+                          </span>
+                        </div>
+                        <el-slider
+                          v-model="form.pageBannerPositions[item.key]"
+                          :min="0"
+                          :max="100"
+                          :step="5"
+                          size="small"
+                          :disabled="!form.pageBanners[item.key]"
+                          :show-tooltip="false"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

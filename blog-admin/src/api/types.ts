@@ -355,6 +355,8 @@ export interface SiteConfig {
   /** 首页侧栏资料卡横幅（空字符串 = 回退 pageBanners.home） */
   profileBanner: string
   pageBanners: PageBanners
+  /** 每个页面横幅的取景位置（0 = 贴顶，100 = 贴底） */
+  pageBannerPositions: Record<string, number>
 }
 
 /* ------------------------------- 通知 ------------------------------- */
