@@ -76,8 +76,14 @@ const bannerStyle = computed(() =>
   <header
     class="page-header"
     :class="{ 'page-header--custom': !!bannerUrl, 'page-header--tall': tall }"
-    :style="bannerStyle"
   >
+    <template v-if="bannerUrl">
+      <!-- 自定义横幅：底下一层高斯模糊铺满，上面一层按原图比例完整显示，避免 cover 裁掉画面 -->
+      <div class="page-header__banner" aria-hidden="true">
+        <div class="page-header__banner-blur" :style="bannerStyle"></div>
+        <div class="page-header__banner-full" :style="bannerStyle"></div>
+      </div>
+    </template>
     <div v-if="!bannerUrl" class="page-header__sky" aria-hidden="true"></div>
     <div v-if="!bannerUrl" class="page-header__clouds" aria-hidden="true"></div>
 
@@ -94,7 +100,41 @@ const bannerStyle = computed(() =>
 </template>
 
 <style scoped>
-/* 关于页：banner 再高一档、标题整体上移，避免被压在卡片上的头像盖住 */
+/* 自定义横幅：模糊底 + 完整原图（contain），任何比例都看得到整张图 */
+.page-header__banner {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.page-header__banner-blur {
+  position: absolute;
+  inset: -8%;
+  background-position: center;
+  background-size: cover;
+  filter: blur(30px) saturate(1.25) brightness(0.9);
+  transform: scale(1.08);
+}
+
+.page-header__banner-full {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  /* 左右边缘淡出，和后面的模糊底无缝衔接，避免出现硬边框 */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 7%,
+    #000 93%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%);
+}
+
+/* 关于页：banner 再高一档、标题上移，给压在卡片上的圆形头像留位置 */
 .page-header--tall {
   height: 34rem;
 }

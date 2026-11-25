@@ -838,14 +838,13 @@ html.dark #home.home--custom-hero::after {
   background-color: rgba(0, 0, 0, 0.6);
 }
 
-/* 自定义横幅（后台传图）时遮罩轻一些，别把照片糊死 */
+/* 自定义横幅（后台传图）：图片由组件内的两层 div 绘制，遮罩轻一些，别把照片糊死 */
 .page-header--custom {
-  /* 用 cover 缩放时纵向会被裁：贴顶对齐，保证上传图的上半部分（主体）不被切掉 */
-  background-position: center top;
+  background-image: none;
 }
 
 .page-header--custom::before {
-  background-color: rgba(4, 16, 28, 0.46);
+  background-color: rgba(4, 16, 28, 0.38);
 }
 
 html.dark .page-header--custom::before {
