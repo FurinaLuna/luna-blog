@@ -88,7 +88,7 @@ banner 默认是 CSS 天空 + 云层；后台「站点配置 → 页面横幅」
 （键：`home, archives, categories, category, tags, tag, article, talks, albums, album, resources, friends, message, about, search`），
 有图时 `PageHeader` 自动按路由首段取图，未配置则回退内置渐变。自定义横幅用 `background-size: cover` 铺满整条横幅、
 `background-position: center top` 纵向贴顶（保证画面主体的上半部分不被切掉），再叠一层 rgba(4,16,28,.38) 暗色遮罩保证白色标题可读。
-内页 banner 高 30rem（关于页 34rem、手机 22rem）；底部白浪高 6rem（手机 4.6rem），
+内页 banner 高 36rem（关于页 41rem、手机 25rem）；底部白浪高 6rem（手机 4.6rem），
 与首页 hero 同高（原为 4rem），图片横幅下波浪起伏更明显。
 
 | 页面 | 关键结构 |
@@ -105,7 +105,7 @@ banner 默认是 CSS 天空 + 云层；后台「站点配置 → 页面横幅」
 | 友链 `/friends` | 卡片墙 + 「申请友链」弹窗（访客免登录） |
 | 资源 `/resources` | 按分组（前端/后端/工具…）的卡片列表 |
 | 关于 `/about` | 参考作者站：banner 下方白卡上浮、圆形头像压住卡片上边并悬出 banner，居中站名 / 一句话 / 社交图标 / 一行统计，其下 Markdown 正文 |
-Markdown 代码块（文章详情与关于页）统一为一张卡片：头部 2.5rem（mac 三圆点 + 语言标签 + 「复制代码」胶囊），代码区行号右对齐并弱化为灰色、等宽字体 0.86rem / 行高 1.72；`--code-bg` / `--code-head-bg` / `--code-border` /`--code-ln` 四组变量分别给明暗两套配色；预览关闭自动折叠（`:code-foldable="false"`），避免长代码块只剩一条头部栏。
+Markdown 代码块（文章详情与关于页）统一为一张卡片：头部 2.5rem（mac 三圆点 + 语言标签 + 「复制代码」胶囊），代码区行号右对齐并弱化为灰色、等宽字体 1rem / 字重 600 / 行高 1.78；`--code-bg` / `--code-head-bg` / `--code-border` /`--code-ln` 四组变量分别给明暗两套配色；预览关闭自动折叠（`:code-foldable="false"`），避免长代码块只剩一条头部栏。
 | 404 | 插画 + 「这一页走丢了」+ 3 秒自动回首页 |
 
 ### 1.5 交互与状态

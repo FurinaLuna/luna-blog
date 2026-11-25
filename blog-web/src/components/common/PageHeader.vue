@@ -76,11 +76,8 @@ const bannerStyle = computed(() =>
   <header
     class="page-header"
     :class="{ 'page-header--custom': !!bannerUrl, 'page-header--tall': tall }"
+    :style="bannerStyle"
   >
-    <template v-if="bannerUrl">
-      <!-- 自定义横幅：铺满整条横幅（cover），纵向贴顶，尽量不切掉画面上半部分的主体 -->
-      <div class="page-header__banner" :style="bannerStyle" aria-hidden="true"></div>
-    </template>
     <div v-if="!bannerUrl" class="page-header__sky" aria-hidden="true"></div>
     <div v-if="!bannerUrl" class="page-header__clouds" aria-hidden="true"></div>
 
@@ -97,19 +94,9 @@ const bannerStyle = computed(() =>
 </template>
 
 <style scoped>
-/* 自定义横幅：铺满整条横幅，纵向贴顶，主体不被切到下面去 */
-.page-header__banner {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
 /* 关于页：banner 再高一档、标题上移，给压在卡片上的圆形头像留位置 */
 .page-header--tall {
-  height: 34rem;
+  height: 41rem;
 }
 
 .page-header--tall .route-font {

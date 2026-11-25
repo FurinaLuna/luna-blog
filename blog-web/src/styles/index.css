@@ -785,7 +785,7 @@ html.dark #home.home--custom-hero::after {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 30rem;
+  height: 36rem;
   overflow: hidden;
   background-color: var(--header-bg);
   background-position: center center;
@@ -838,9 +838,10 @@ html.dark #home.home--custom-hero::after {
   background-color: rgba(0, 0, 0, 0.6);
 }
 
-/* 自定义横幅（后台传图）：图片由组件内的两层 div 绘制，遮罩轻一些，别把照片糊死 */
+/* 自定义横幅（后台传图）：图片直接铺在 header 上（第一版做法），遮罩轻一些别把照片糊死 */
 .page-header--custom {
-  background-image: none;
+  /* 纵向贴顶，保证画面主体的上半部分不被裁到下面去 */
+  background-position: center top;
 }
 
 .page-header--custom::before {
@@ -886,7 +887,7 @@ html.dark .page-header::before {
 
 @media (max-width: 768px) {
   .page-header {
-    height: 22rem;
+    height: 25rem;
   }
 
   .page-header .route-font {
