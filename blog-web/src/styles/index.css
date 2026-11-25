@@ -2224,8 +2224,11 @@ html.dark .md-content .md-editor-code {
   color: var(--code-fg);
   font-family: var(--font-mono);
   font-size: 1rem;
+  /* 代码正文加一点字重，中文注释和高亮 token 都更清楚 */
+  font-weight: 600;
   line-height: 1.78;
   tab-size: 4;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* 行号：右侧留白 + 等宽数字，与代码之间不画分割线 */
