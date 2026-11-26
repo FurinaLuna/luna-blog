@@ -584,13 +584,26 @@ onMounted(load)
                   <el-radio-button value="netease">网易云歌单</el-radio-button>
                 </el-radio-group>
               </el-form-item>
-              <el-form-item v-if="form.musicSource === 'netease'" label="网易云歌单 id">
-                <el-input v-model="form.neteasePlaylistId" maxlength="40" placeholder="例如 24381616，取歌单链接里的数字" />
-              </el-form-item>
-              <el-form-item v-if="form.musicSource === 'netease'" label="Meting 接口地址">
-                <el-input v-model="form.musicApiBase" maxlength="200" :placeholder="METING_API_PLACEHOLDER" />
+              <el-form-item label="网易云歌单 id">
+                <el-input
+                  v-model="form.neteasePlaylistId"
+                  maxlength="40"
+                  placeholder="例如 24381616，取歌单链接里的数字"
+                  :disabled="form.musicSource !== 'netease'"
+                />
                 <p class="mt-1 text-[12px] text-[var(--text-3)]">
-                  默认公益实例，可换成其它 Meting 兼容地址；返回空列表时前台会提示「暂无可用音源」。
+                  仅「网易云歌单」音源生效；可与站内歌单同时保留，切回来不用重填。
+                </p>
+              </el-form-item>
+              <el-form-item label="Meting 接口地址">
+                <el-input
+                  v-model="form.musicApiBase"
+                  maxlength="200"
+                  :placeholder="METING_API_PLACEHOLDER"
+                  :disabled="form.musicSource !== 'netease'"
+                />
+                <p class="mt-1 text-[12px] text-[var(--text-3)]">
+                  在线歌单的取数接口，默认公益实例，可换成其它 Meting 兼容地址；返回空列表时前台会提示「暂无可用音源」。
                 </p>
               </el-form-item>
               <el-form-item label="默认音量">
