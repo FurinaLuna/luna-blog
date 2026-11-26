@@ -8,6 +8,15 @@ export function escapeHtml(input) {
     .replace(/'/g, '&#39;')
 }
 
+/**
+ * 转义 LIKE 通配符：把用户输入里的 %、_、\ 变成字面量。
+ * MySQL 的 LIKE 默认以反斜杠为转义符，拼 `%keyword%` 前先过一遍即可，
+ * 否则搜索「%」会变成匹配任意内容。
+ */
+export function escapeLike(keyword) {
+  return String(keyword).replace(/[\\%_]/g, (char) => `\\${char}`)
+}
+
 /** 去掉所有 HTML 标签与不可见字符，用于摘要 */
 export function toPlainText(markdown) {
   return String(markdown)

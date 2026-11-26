@@ -2999,12 +2999,35 @@ html.dark .md-content .hljs-deletion {
   color: var(--top);
 }
 
+/* 发布时间：颜色/字号继承 .talk-foot，只固定不换行 */
+.talk-time {
+  white-space: nowrap;
+}
+
+/* el-image 加载失败时的占位：和缩略图同尺寸，避免裸露一行文字 */
+.talk-grid__error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 4px;
+  background: var(--bg-soft);
+  color: var(--meta-color);
+  font-size: 0.78rem;
+}
+
 @media (max-width: 768px) {
   .talk-grid {
     grid-template-columns: repeat(3, 100px);
   }
 
   .talk-grid img {
+    width: 100px;
+    height: 100px;
+  }
+
+  .talk-grid__error {
     width: 100px;
     height: 100px;
   }

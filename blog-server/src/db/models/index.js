@@ -6,7 +6,6 @@ import { FriendLink, Message, Notification, Talk } from './social.js'
 import { Album, Photo } from './media.js'
 import { Resource, SiteConfig } from './site.js'
 import { Visit } from './visit.js'
-import { Music } from './music.js'
 
 /* ---------------- 关联关系 ---------------- */
 Category.hasMany(Article, { as: 'articles', foreignKey: 'categoryId' })
@@ -49,10 +48,4 @@ export {
   Resource,
   SiteConfig,
   Visit,
-  Music,
-}
-
-/** 建表（初始化脚本与测试使用；生产改用迁移时也复用同一组模型） */
-export async function syncModels(options = {}) {
-  await sequelize.sync(options)
 }

@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { type FormInstance, type FormRules } from 'element-plus'
 import { createMessage } from '@/api/message'
+import { useSiteStore } from '@/stores/site'
 import { loadVisitor, saveVisitor } from '@/utils/visitor'
 import { MESSAGE_COLORS } from './colors'
 
@@ -23,6 +24,8 @@ const visible = computed<boolean>({
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
+const site = useSiteStore()
+void site.ensureLoaded()
 const visitor = loadVisitor()
 
 const form = reactive<MessageForm>({
@@ -64,7 +67,13 @@ async function submit(): Promise<void> {
       content: form.content.trim(),
       color: form.color,
     })
-    saveVisitor({ nickname: form.nickname.trim(), email: '', website: '' })
+    /** 只清空留言内容；昵称与评论区保存的邮箱/网址是访客联系方式，要保留 */
+    const storedVisitor = loadVisitor()
+    saveVisitor({
+      nickname: form.nickname.trim(),
+      email: storedVisitor.email,
+      website: storedVisitor.website,
+    })
     form.content = ''
     instance.clearValidate()
     visible.value = false
@@ -83,7 +92,10 @@ async function submit(): Promise<void> {
     title="发布留言"
     class="message-publish-dialog"
   >
-    <p class="message-publish__hint">访客免登录 · 提交后需要站长审核通过，才会出现在留言墙上。</p>
+    <p class="message-publish__hint">
+      访客免登录 ·
+      {{ site.messageNeedReview ? '提交后需要站长审核通过，才会出现在留言墙上。' : '提交后会立即出现在留言墙上。' }}
+    </p>
 
     <el-form
       ref="formRef"

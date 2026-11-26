@@ -48,8 +48,3 @@ export function assertRateLimit(key, options) {
     throw tooManyRequests(options.message ?? `操作太频繁，请 ${retryAfterSeconds} 秒后再试`)
   }
 }
-
-/** 仅供测试/初始化使用 */
-export function resetRateLimit() {
-  buckets.clear()
-}

@@ -167,7 +167,7 @@ async function submit(): Promise<void> {
       ...(props.targetType === 'article' ? { articleId: props.targetId } : { talkId: props.targetId }),
     }
     await createComment(payload)
-    ElMessage.success('评论已提交，审核通过后展示')
+    ElMessage.success(site.commentNeedReview ? '评论已提交，审核通过后展示' : '评论已发布')
     saveVisitor({
       nickname: form.nickname.trim(),
       email: form.email.trim(),

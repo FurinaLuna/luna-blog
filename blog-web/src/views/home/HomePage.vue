@@ -69,19 +69,25 @@ async function runTypewriter(): Promise<void> {
   }
 }
 
+/** 请求序号：只采用最新一次请求的结果，避免慢请求覆盖新翻页的数据 */
+let articleRequestSeq = 0
+
 async function loadArticles(): Promise<void> {
+  const seq = ++articleRequestSeq
   loading.value = true
   failed.value = false
   try {
     const result = await getArticles({ page: page.value, pageSize: PAGE_SIZE })
+    if (seq !== articleRequestSeq) return
     articles.value = result.list
     total.value = result.total
   } catch {
+    if (seq !== articleRequestSeq) return
     articles.value = []
     total.value = 0
     failed.value = true
   } finally {
-    loading.value = false
+    if (seq === articleRequestSeq) loading.value = false
   }
 }
 

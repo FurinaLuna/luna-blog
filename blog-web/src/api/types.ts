@@ -306,6 +306,8 @@ export interface SiteConfig {
   socialLinks: SocialLink[]
   navLinks: NavLinkItem[]
   commentNeedReview: boolean
+  /** 留言是否需要在审核通过后展示（后台可关） */
+  messageNeedReview: boolean
   /** 每个页面的横幅图（空字符串 = 用内置天空渐变） */
   pageBanners?: Record<string, string>
   /** 每个页面横幅的取景位置（0 = 贴顶，100 = 贴底），缺省 30 */

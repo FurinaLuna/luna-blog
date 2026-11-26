@@ -131,7 +131,7 @@ async function send(): Promise<void> {
     const nickname = loadVisitor().nickname.trim() || '匿名访客'
     const color = MESSAGE_COLORS[Math.floor(Math.random() * MESSAGE_COLORS.length)]
     await createMessage({ nickname: nickname.slice(0, 20), content: content.slice(0, 200), color })
-    ElMessage.success('弹幕已提交，等待站长审核')
+    ElMessage.success(site.messageNeedReview ? '弹幕已提交，等待站长审核' : '弹幕已发布')
     value.value = ''
     expanded.value = false
     inputRef.value?.blur()
@@ -167,7 +167,10 @@ async function send(): Promise<void> {
       <span class="danmaku-stage__tip">切换成卡片模式</span>
     </el-popover>
 
-    <p class="danmaku-stage__hint">点击标题切回卡片模式 · 弹幕只显示已通过审核的留言</p>
+    <p class="danmaku-stage__hint">
+      点击标题切回卡片模式
+      <template v-if="site.messageNeedReview">· 弹幕只显示已通过审核的留言</template>
+    </p>
 
     <div class="danmaku-stage__layer">
       <Danmaku
@@ -187,7 +190,9 @@ async function send(): Promise<void> {
         弹幕加载中…
       </p>
 
-      <p v-else class="danmaku-stage__state">还没有通过审核的留言，来发第一条吧</p>
+      <p v-else class="danmaku-stage__state">
+        {{ site.messageNeedReview ? '还没有通过审核的留言，来发第一条吧' : '还没有留言，来发第一条吧' }}
+      </p>
     </div>
 
     <div

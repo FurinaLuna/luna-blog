@@ -1,5 +1,6 @@
 import { Op } from 'sequelize'
 import { Article, ArticleTag, Category, Tag } from '../../db/models/index.js'
+import { escapeLike } from '../../core/text.js'
 
 const LIST_ATTRIBUTES = [
   'id',
@@ -50,9 +51,10 @@ export async function findPublishedPage({
   const where = { status: 'published' }
   if (categoryId) where.categoryId = categoryId
   if (keyword) {
+    const pattern = `%${escapeLike(keyword)}%`
     where[Op.or] = [
-      { title: { [Op.like]: `%${keyword}%` } },
-      { summary: { [Op.like]: `%${keyword}%` } },
+      { title: { [Op.like]: pattern } },
+      { summary: { [Op.like]: pattern } },
     ]
   }
 
@@ -187,20 +189,16 @@ export async function findRelated(article, limit = 4) {
   })
 }
 
-/** 多标签交集查询（前台标签页可复用） */
-export function findIdsByTag(tagId) {
-  return ArticleTag.findAll({ where: { tagId }, attributes: ['articleId'], raw: true })
-}
-
 /** 管理端分页列表：先查 id 再取详情，避免标签连表吃掉 limit 配额 */
 export async function findAdminPage({ limit, offset, status, keyword, categoryId }) {
   const where = {}
   if (status) where.status = status
   if (categoryId) where.categoryId = categoryId
   if (keyword) {
+    const pattern = `%${escapeLike(keyword)}%`
     where[Op.or] = [
-      { title: { [Op.like]: `%${keyword}%` } },
-      { summary: { [Op.like]: `%${keyword}%` } },
+      { title: { [Op.like]: pattern } },
+      { summary: { [Op.like]: pattern } },
     ]
   }
 
@@ -218,22 +216,7 @@ export async function findAdminPage({ limit, offset, status, keyword, categoryId
   return { count, rows: await findArticlesByIds(pageRows.map((row) => row.id)) }
 }
 
-/** 同步文章标签关联 */
-export async function syncArticleTags(article, tagIds, transaction) {
-  await article.setTags(tagIds, { transaction })
-}
-
-/** 统计某分类下文章数 */
-export function countByCategory(categoryId) {
-  return Article.count({ where: { categoryId } })
-}
-
 /** 浏览数 +1 */
 export function incrementViews(id) {
   return Article.increment('views', { by: 1, where: { id } })
-}
-
-/** 评论数增量（delta 可正可负） */
-export function adjustCommentCount(id, delta) {
-  return Article.increment('commentCount', { by: delta, where: { id } })
 }

@@ -26,6 +26,8 @@ export const useSiteStore = defineStore('site', () => {
   /** 导航栏「关于」右侧的自定义外链，后台可增删 */
   const navLinks = computed(() => (config.value?.navLinks ?? []).filter((link) => link.label && link.url))
   const commentNeedReview = computed(() => config.value?.commentNeedReview ?? true)
+  /** 留言是否需要审核通过后展示（缺省开启） */
+  const messageNeedReview = computed(() => config.value?.messageNeedReview ?? true)
 
   /** 进站欢迎通知：标题、称呼、8 个时段问候文案（缺省用原站文案） */
 const DEFAULT_WELCOME_GREETINGS = [
@@ -132,6 +134,7 @@ const musicApiBase = computed(() => config.value?.musicApiBase || 'https://api.i
     navLinks,
     resolvedSocialLinks,
     commentNeedReview,
+    messageNeedReview,
     friendsTitle,
   welcomeTitle,
   welcomeName,

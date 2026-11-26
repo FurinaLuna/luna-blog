@@ -68,9 +68,3 @@ export function findById(id) {
 export function findReplyIds(parentId) {
   return Comment.findAll({ where: { parentId }, attributes: ['id'], raw: true })
 }
-
-/** 统计某目标下已通过的评论数 */
-export function countApproved(targetType, targetId) {
-  const targetWhere = targetType === 'talk' ? { talkId: targetId } : { articleId: targetId }
-  return Comment.count({ where: { ...targetWhere, status: 'approved' } })
-}

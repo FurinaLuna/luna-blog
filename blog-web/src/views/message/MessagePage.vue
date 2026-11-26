@@ -9,12 +9,16 @@ import MessageCard from '@/components/message/MessageCard.vue'
 import MessagePublishDialog from '@/components/message/MessagePublishDialog.vue'
 import { getMessages } from '@/api/message'
 import type { Message } from '@/api/types'
+import { useSiteStore } from '@/stores/site'
 
 type MessageMode = 'card' | 'danmaku'
 
 const CARD_PAGE_SIZE = 10
 const DANMAKU_PAGE_SIZE = 50
 const MODE_STORAGE_KEY = 'luna-message-mode'
+
+const site = useSiteStore()
+void site.ensureLoaded()
 
 function initialMode(): MessageMode {
   try {
@@ -113,7 +117,7 @@ async function loadDanmaku(): Promise<void> {
 }
 
 function handlePublished(): void {
-  ElMessage.success('留言已提交，等待站长审核')
+  ElMessage.success(site.messageNeedReview ? '留言已提交，等待站长审核' : '留言已发布')
   void loadFirstPage()
   if (mode.value === 'danmaku') void loadDanmaku()
 }
@@ -185,7 +189,11 @@ onBeforeUnmount(() => {
           v-else-if="messages.length === 0"
           icon="comment"
           title="还没有留言"
-          description="这里是一面留言墙，写下想说的话，站长审核通过后就会贴上来。"
+          :description="
+            site.messageNeedReview
+              ? '这里是一面留言墙，写下想说的话，站长审核通过后就会贴上来。'
+              : '这里是一面留言墙，写下想说的话就会立刻贴上来。'
+          "
           action-text="写一条留言"
           @action="openPublish"
         />

@@ -197,10 +197,25 @@ watch(volume, (value) => {
   persist()
 })
 
+/** 真正停止播放：只隐藏播放器 DOM 不会暂停 <audio>，后台关掉音乐开关时会继续响 */
+function stopPlayback(): void {
+  if (!audio) return
+  audio.pause()
+  audio.removeAttribute('src')
+  audio.load()
+  isPlaying.value = false
+  currentTime.value = 0
+  duration.value = 0
+}
+
 watch(
   () =>
     [site.musicEnabled, site.musicServer, site.neteasePlaylistId, site.qqPlaylistId, site.musicApiBase] as const,
-  () => {
+  ([enabled]) => {
+    if (!enabled) {
+      stopPlayback()
+      return
+    }
     void loadTracks()
   },
 )
@@ -224,9 +239,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
-  if (!audio) return
-  audio.pause()
-  audio.src = ''
+  stopPlayback()
   audio = null
 })
 </script>
