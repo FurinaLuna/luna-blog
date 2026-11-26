@@ -2604,6 +2604,11 @@ html.dark .md-content .hljs-deletion {
   border-bottom: none;
 }
 
+.comment-item--reply {
+  padding: 0.75rem 0;
+  border-bottom: none;
+}
+
 .comment-avatar {
   display: grid;
   flex-shrink: 0;
@@ -2655,12 +2660,38 @@ html.dark .md-content .hljs-deletion {
   font-size: 0.78rem;
 }
 
+.comment-site {
+  display: inline-flex;
+  align-items: center;
+  color: var(--meta-color);
+  transition: color 0.2s ease;
+}
+
+.comment-site:hover {
+  color: var(--primary-ink);
+}
+
 .comment-content {
   margin-top: 0.35rem;
   color: var(--text);
   font-size: 0.92rem;
   line-height: 1.85;
   word-break: break-word;
+}
+
+.comment-reply-to {
+  margin: 0 0 0.25rem;
+  color: var(--meta-color);
+  font-size: 0.82rem;
+}
+
+.comment-reply-to span {
+  color: var(--primary-ink);
+}
+
+.comment-text {
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 .comment-actions {

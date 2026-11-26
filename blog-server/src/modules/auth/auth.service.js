@@ -25,7 +25,11 @@ export async function login({ username, password, ip }) {
   await user.save()
 
   return {
-    token: signToken({ id: user.id, username: user.username }),
+    token: signToken({
+      id: user.id,
+      username: user.username,
+      tokenVersion: user.tokenVersion ?? 0,
+    }),
     user: user.toSafeJSON(),
   }
 }
@@ -43,7 +47,16 @@ export async function changePassword(user, { oldPassword, newPassword }) {
 
   user.password = await bcrypt.hash(newPassword, 10)
   user.needPasswordChange = false
+  // 改密后旧令牌全部失效
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1
   await user.save()
 
-  return user.toSafeJSON()
+  return {
+    user: user.toSafeJSON(),
+    token: signToken({
+      id: user.id,
+      username: user.username,
+      tokenVersion: user.tokenVersion,
+    }),
+  }
 }

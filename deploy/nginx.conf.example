@@ -1,75 +1,189 @@
-# Luna Blog 生产环境 Nginx 配置样例
-# 替换：your-domain.com、/var/www/luna-blog、上传目录、证书路径
+# Luna Blog 生产环境 Nginx 配置样例（形态 B：主域前台 + 后台子域）
+#
+# 默认按「前台 https://your-domain.com/、后台 https://admin.your-domain.com/」写，
+# 这样前后台都在各自域名根路径，后台 history 不需要 base，最省事。
+# 若要改成同域子路径（前台 /、后台 /admin/），见文末「附：同域子路径」。
+#
+# 替换：your-domain.com、admin.your-domain.com、/var/www/luna-blog、证书路径
 
 upstream luna_blog_api {
     server 127.0.0.1:3000;
     keepalive 32;
 }
 
+# ---------------------------------------------------------------- 公共片段
+# 注意：nginx 的 add_header 是「就近覆盖」——只要某个 location 里出现 add_header，
+# 上层的 add_header 就不再继承。所以所有安全头都放在 server 级，
+# 需要额外头的 location 必须把安全头一起再写一遍（下面已按此处理）。
+
+# ------------------------------------------------------------ 前台（主域）
 server {
     listen 80;
     server_name your-domain.com;
-    # 证书就绪后取消注释并改用 443
+    # 证书就绪后改为 listen 443 ssl http2; 并补 ssl_certificate / ssl_certificate_key
     # return 301 https://$host$request_uri;
 
-    client_max_body_size 10m;   # 与 UPLOAD_MAX_FILE_MB 保持一致
+    root /var/www/luna-blog/blog-web/dist;
+    index index.html;
 
     charset utf-8;
+    client_max_body_size 10m;   # 与后端 UPLOAD_MAX_FILE_MB 保持一致
     gzip on;
     gzip_comp_level 5;
     gzip_min_length 1024;
     gzip_types text/plain text/css application/javascript application/json image/svg+xml text/xml application/xml;
 
-    # ---------- 前台（history 路由，必须回退 index.html）----------
-    root /var/www/luna-blog/blog-web/dist;
-    index index.html;
+    # 安全头（server 级，全站继承）
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
 
+    # SPA 路由回退
     location / {
         try_files $uri $uri/ /index.html;
     }
 
-    # ---------- 后台（以 /admin/ 子路径部署时使用）----------
-    # 构建：pnpm -C blog-admin build --base=/admin/
-    location /admin/ {
-        alias /var/www/luna-blog/blog-admin/dist/;
-        try_files $uri $uri/ /admin/index.html;
-    }
-
-    # ---------- 静态资源缓存 ----------
-    location ~* ^/assets/.+\.(js|css|woff2?|png|jpe?g|svg|webp|avif)$ {
+    # 带 hash 的静态资源长缓存
+    location /assets/ {
         expires 30d;
         add_header Cache-Control "public, immutable";
+        # 上面写了 add_header 就会丢父级安全头，这里补回
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
         try_files $uri =404;
     }
 
-    # ---------- API ----------
+    # 搜索 robots（后端生成，带 Sitemap 行；后端未启动时也不要 404）
+    location = /robots.txt {
+        proxy_pass http://luna_blog_api;
+        proxy_set_header Host $host;
+        expires 1h;
+        add_header Cache-Control "public";
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+    }
+
+    # sitemap（后端按已发布文章生成）
+    location = /sitemap.xml {
+        proxy_pass http://luna_blog_api;
+        proxy_set_header Host $host;
+        expires 1h;
+        add_header Cache-Control "public";
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+    }
+
+    # RSS
+    location = /rss.xml {
+        proxy_pass http://luna_blog_api;
+        proxy_set_header Host $host;
+        expires 10m;
+        add_header Cache-Control "public, max-age=600";
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+    }
+
+    # API
     location /api/ {
         proxy_pass http://luna_blog_api;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # 关键：不要用 $proxy_add_x_forwarded_for，否则客户端可伪造 XFF 绕过限频
+        proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 30s;
     }
 
-    # ---------- 上传文件（生产建议指向持久化目录，或托管到对象存储）----------
+    # 上传文件（也可改成直接 alias 到 UPLOAD_DIR，省一层反代）
     location /uploads/ {
         proxy_pass http://luna_blog_api;
         proxy_set_header Host $host;
         expires 7d;
         add_header Cache-Control "public";
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
     }
+}
 
-    # ---------- RSS ----------
-    location = /rss.xml {
-        proxy_pass http://luna_blog_api;
-        proxy_set_header Host $host;
-        add_header Cache-Control "public, max-age=600";
-    }
+# ------------------------------------------------------ 后台（admin 子域）
+server {
+    listen 80;
+    server_name admin.your-domain.com;
+    # 证书就绪后同样改 443
 
-    # ---------- 安全头 ----------
+    root /var/www/luna-blog/blog-admin/dist;
+    index index.html;
+
+    charset utf-8;
+    client_max_body_size 10m;
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/javascript application/json image/svg+xml text/xml application/xml;
+
+    # 后台建议禁止被搜索引擎收录
+    add_header X-Robots-Tag "noindex, nofollow" always;
     add_header X-Content-Type-Options nosniff always;
     add_header X-Frame-Options SAMEORIGIN always;
     add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /assets/ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        add_header X-Robots-Tag "noindex, nofollow" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+        try_files $uri =404;
+    }
+
+    # 后台页面本身也走前台同一个 API（同机反代）
+    location /api/ {
+        proxy_pass http://luna_blog_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    location /uploads/ {
+        proxy_pass http://luna_blog_api;
+        proxy_set_header Host $host;
+        expires 7d;
+        add_header Cache-Control "public";
+        add_header X-Robots-Tag "noindex, nofollow" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+    }
 }
+
+# =====================================================================
+# 附：同域子路径（前台 /、后台 /admin/）
+# 1) 后台构建必须带 base：pnpm -C blog-admin build --base=/admin/
+#    （前台默认 base=/，不用改）
+# 2) 在「前台 server」里追加：
+#
+#   location /admin/ {
+#       alias /var/www/luna-blog/blog-admin/dist/;
+#       try_files $uri $uri/ /admin/index.html;
+#       add_header X-Robots-Tag "noindex, nofollow" always;
+#       add_header X-Content-Type-Options nosniff always;
+#       add_header X-Frame-Options SAMEORIGIN always;
+#       add_header Referrer-Policy strict-origin-when-cross-origin always;
+#   }
+#
+# 3) 前台 /api/ 与 /uploads/ 已存在，后台直接复用，不用再配。
+# =====================================================================

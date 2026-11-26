@@ -40,3 +40,4 @@ for (const register of registrars) register(apiRouter)
 
 export { apiRouter }
 export { rssRouter } from '../modules/rss/rss.routes.js'
+export { seoRouter } from '../modules/seo/seo.routes.js'

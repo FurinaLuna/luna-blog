@@ -186,7 +186,7 @@
 | GET | `/api/site-stats` | — | `{article, category, tag, comment, talk, photo, message, views, words, visit:{pv,uv}}`；`views`=文章阅读数之和，`visit.pv`=页面浏览总数，`visit.uv`=去重访客数 |
 | POST | `/api/visit` | — | 前台每次路由切换上报 `{path, referer?}`；按 IP 哈希去重统计 UV，限频 60 次/分/IP；返回 `{recorded:true}` |
 
-配置 key：`siteName, siteDescription, siteKeywords(逗号分隔的 SEO 关键词，前台写入 meta[keywords]), author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon,qrcode}], favicon(站点图标 URL，空则用内置 /favicon.svg), adminLoginBg(后台登录页背景图 URL，空则用内置波浪底图), commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), profileBanner(首页侧栏资料卡横幅图 URL，空则回退 pageBanners.home), pageBanners(15 个页面键 → 横幅图 URL), pageBannerPositions(15 个页面键 → 0–100 取景位置), pageCardOffsets(15 个页面键 → 0–400 内容卡片上移像素), danmakuSpeed(留言板弹幕速度，像素/秒 60–600，缺省 180), meteorCount(留言板背景流星数量 0–80，缺省 34), friendsTitle(友链页欢迎标题，空则“欢迎来到 站点名称”), friendsLink(友链页展示的本站链接，空则用当前站点地址), friendsContactLabel(联系方式名称，缺省 QQ), friendsContact(联系方式，空则不显示该行), friendsTip(友链页申请提示文案)
+配置 key：`siteName, siteDescription, siteKeywords(逗号分隔的 SEO 关键词，前台写入 meta[keywords]), author, avatar, email, github, announcement, heroTitle, heroSubtitle, about(富文本 Markdown), footerText, icp, startDate, socialLinks[{name,url,icon,qrcode}], favicon(站点图标 URL，空则用内置 /favicon.svg), adminLoginBg(后台登录页背景图 URL，空则用内置波浪底图), commentNeedReview(true, 评论是否需要审核), messageNeedReview(true, 留言是否需要审核), profileBanner(首页侧栏资料卡横幅图 URL，空则回退 pageBanners.home), pageBanners(15 个页面键 → 横幅图 URL), pageBannerPositions(15 个页面键 → 0–100 取景位置), pageCardOffsets(15 个页面键 → 0–400 内容卡片上移像素), danmakuSpeed(留言板弹幕速度，像素/秒 60–600，缺省 180), meteorCount(留言板背景流星数量 0–80，缺省 34), friendsTitle(友链页欢迎标题，空则“欢迎来到 站点名称”), friendsLink(友链页展示的本站链接，空则用当前站点地址), friendsContactLabel(联系方式名称，缺省 QQ), friendsContact(联系方式，空则不显示该行), friendsTip(友链页申请提示文案), navLinks([{label,url}] 顶部导航「关于」右侧的自定义外链，最多 8 条), welcomeTitle(进入站点弹窗标题，缺省“欢迎～”), welcomeName(弹窗里的称呼，缺省“我的朋友”), welcomeGreetings(按 8 个时段的问候语，数组固定 8 条), musicEnabled(是否显示前台唱片球), musicServer(在线歌单平台 netease|tencent), neteasePlaylistId(网易云歌单 id), qqPlaylistId(QQ 音乐歌单 id), musicApiBase(Meting 接口地址), musicVolume(默认音量 0–1)
 
 `socialLinks` 每项为 `{name, url, icon, qrcode}`：`qrcode` 是可选的二维码图片 URL（最长 500）。填了二维码时前台把该图标渲染成 `<button>` 并在 hover 时用弹出层展示二维码（适合微信 / QQ，此时 `url` 可以留空）；不填则仍是普通外链 `<a>`。
 
@@ -223,11 +223,15 @@
 
 | 方法 | 路径 | 权限 | 说明 |
 | --- | --- | --- | --- |
-| POST | `/api/admin/upload` | A! | `multipart/form-data`，字段名 `file`；图片 jpg/png/webp/gif/avif ≤ 5MB，其它文件 ≤ 10MB；返回 `{url, name, size, mime}`；URL 形如 `/uploads/2026/11/uuid.png`（相对路径，前端自动拼 origin） |
+| POST | `/api/admin/upload` | A! | `multipart/form-data`，字段名 `file`；图片 jpg/png/webp/gif/avif ≤ 5MB，音频 mp3/m4a/aac/wav/ogg ≤ 10MB，其它文件 ≤ 10MB；返回 `{url, name, size, mime}`；URL 形如 `/uploads/2026/11/uuid.png`（相对路径，前端自动拼 origin） |
 
 ### 5.14 RSS
 
 `GET /rss.xml`（不在 `/api` 下）：RSS 2.0，最新 20 篇 published，绝对链接由 `SITE_URL` 环境变量拼接。
+
+`GET /robots.txt`：`User-agent: *` + `Disallow: /admin/` + `Sitemap: ${SITE_URL}/sitemap.xml`。
+
+`GET /sitemap.xml`：`urlset` 收录首页、时间轴、分类、标签、相册、说说、资源、友链、留言、关于，以及全部已发布文章（`<lastmod>` 取更新时间）与文章详情页。
 
 ## 6. 限频汇总
 

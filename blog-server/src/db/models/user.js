@@ -26,6 +26,8 @@ User.init(
     avatar: { type: DataTypes.STRING(500), allowNull: false, defaultValue: '' },
     email: { type: DataTypes.STRING(100), allowNull: false, defaultValue: '' },
     needPasswordChange: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    /** 每次改密 +1，签进 JWT；校验时比对，旧令牌自动失效 */
+    tokenVersion: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, defaultValue: 0 },
     lastLoginAt: { type: DataTypes.DATE, allowNull: true },
   },
   { sequelize, modelName: 'User', tableName: 'user' },

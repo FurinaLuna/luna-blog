@@ -30,6 +30,8 @@ async function seed() {
   )
 
   await sequelize.sync()
+  const { ensureSchema } = await import('../src/db/migrate.js')
+  await ensureSchema()
   console.log('✓ 数据表已同步')
 
   /* ---------- 管理员 ---------- */

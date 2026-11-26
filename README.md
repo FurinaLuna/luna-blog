@@ -154,9 +154,12 @@ NODE_ENV=production node src/server.js
 
 参考 `deploy/nginx.conf.example`，要点：
 
+- **推荐形态：主域放前台、`admin.` 子域放后台**，两边各自在域名根路径，后台 history 不需要 base
+- 同域子路径（`/admin/`）也可行，但后台必须用 `vite build --base=/admin/` 构建（源码已按 `import.meta.env.BASE_URL` 取 base）
 - 前台静态目录指向 `blog-web/dist`，`try_files $uri $uri/ /index.html`（history 路由必须回退）
-- 后台挂在子路径（如 `/admin/`）时，用 `vite build --base=/admin/` 构建，并同样配置回退
-- `/api/`、`/uploads/`、`/rss.xml` 反代到 `127.0.0.1:3000`
+- `/api/`、`/uploads/`、`/rss.xml`、`/robots.txt`、`/sitemap.xml` 反代到 `127.0.0.1:3000`
+- **所有安全头写在 server 级**：nginx 的 `add_header` 就近覆盖，location 里只要写了 header 就要把安全头再写一遍
+- `/api/` 必须覆盖 `proxy_set_header X-Forwarded-For $remote_addr;`，否则客户端可伪造 XFF 绕过限频
 - 上传目录建议单独 `client_max_body_size 10m;`
 
 ### 4. 上线前检查
@@ -175,10 +178,12 @@ NODE_ENV=production node src/server.js
   审核通过才进入前台列表；删除 / 回复仅管理员
 - **限频**：评论（同 IP 60s/条、1 小时 10 条、同邮箱 1 小时 5 条）、留言、友链申请、点赞（10s 幂等）、
   登录（15 分钟 10 次）、全局 300 次/分钟，均返回 429 并提示剩余时间
-- **内容治理**：敏感词命中直接 400；评论 / 留言 / 说说内容统一 HTML 转义后输出，长度超限拒绝
+- **内容治理**：敏感词命中直接 400；评论 / 留言 / 说说**按原文入库、接口原样返回**（前端用文本插值渲染，
+  只有弹幕这类必须 innerHTML 的地方在写入前转义），长度超限拒绝
+- **改密即失效**：JWT 里带 `tokenVersion`，改密时 +1，旧令牌下次请求即 401（不是靠等过期）
 - **强制改密**：初始化管理员 `needPasswordChange = true`，改密前除读取类接口外全部返回
   `403` + `data.reason = 'PASSWORD_CHANGE_REQUIRED'`，前端据此跳转改密页
-- **上传**：图片仅 jpeg/png/webp/gif/avif，附件仅 pdf/zip/txt/md（不收 svg / 脚本），
+- **上传**：图片仅 jpeg/png/webp/gif/avif，音频仅 mp3/m4a/aac/wav/ogg，附件仅 pdf/zip/txt/md（不收 svg / 脚本），
   multer 限制大小并在超限时删除已落盘文件
 - **其他**：koa-helmet 安全头、CORS 白名单、`koa-compress`、错误响应统一为 `{ code, message, details? }`，
   生产环境不返回堆栈
@@ -196,8 +201,11 @@ NODE_ENV=production node src/server.js
 
 ## 已知限制与踩坑记录
 
-- **音乐播放器依赖外部网易云 API**：通过 `/wapi` 代理访问自建 netease-music-api（开发期 Vite 代理到
-  `127.0.0.1:3001`）。服务不可用时播放器**整体不渲染**（3 秒超时、无空壳、不报错），不影响其它功能。
+- **音乐播放器走 Meting API**：后台「站点配置 → 音乐」填平台（网易云 / QQ 音乐）+ 歌单 id，歌名/歌手/封面/
+  播放地址都由 `musicApiBase`（默认公益实例）实时取，不需要自建服务。QQ 音乐的直链要求后端解析在国内
+  （Meting-API 官方说明），公共海外实例只能列歌单、播放会提示换国内实例；实例失效时唱片球显示「暂无可用音源」，
+  不影响其它功能。
+- **导航外链**：后台「站点配置 → 导航外链」最多 8 条，前台渲染在顶部导航「关于」右侧，新标签页打开。
 - **TypeScript 7 与 vue-tsc 不兼容**：TS 7 的原生编译器不再提供 vue-tsc 依赖的 `typescript/lib/tsc`。
   项目主版本仍是 `typescript@7.0.2`（用于 `.ts` 检查），额外用官方兼容包 `typescript6`
   （`npm:@typescript/typescript6@6.0.2`）作为 vue-tsc 宿主，只负责 `.vue` 的 SFC 类型检查，

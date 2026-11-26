@@ -1,9 +1,9 @@
 ﻿import { DataTypes, Model } from 'sequelize'
 import { sequelize } from '../index.js'
-import { escapeHtml, maskEmail } from '../../core/text.js'
+import { maskEmail } from '../../core/text.js'
 
 export class Comment extends Model {
-  /** 鍓嶅彴灞曠ず鐢細闅愯棌閭涓?IP */
+  /** 前台展示用：隐藏邮箱与 IP */
   toPublicJSON() {
     return {
       id: this.id,
@@ -14,7 +14,7 @@ export class Comment extends Model {
       nickname: this.nickname,
       email: maskEmail(this.email),
       website: this.website,
-      content: escapeHtml(this.content),
+      content: this.content,
       isAdmin: this.isAdmin,
       likeCount: this.likeCount,
       createdAt: this.createdAt,
@@ -31,7 +31,7 @@ export class Comment extends Model {
       nickname: this.nickname,
       email: this.email,
       website: this.website,
-      content: escapeHtml(this.content),
+      content: this.content,
       isAdmin: this.isAdmin,
       status: this.status,
       ip: this.ip,

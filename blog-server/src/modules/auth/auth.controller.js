@@ -40,6 +40,6 @@ export async function handleProfile(ctx) {
 /** PUT /api/auth/password */
 export async function handleChangePassword(ctx) {
   const input = parseInput(passwordSchema, ctx.request.body)
-  const user = await changePassword(ctx.state.admin, input)
-  ok(ctx, user, '密码修改成功')
+  const result = await changePassword(ctx.state.admin, input)
+  ok(ctx, result, '密码修改成功')
 }

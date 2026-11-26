@@ -111,7 +111,7 @@ onMounted(() => {
 
     <main id="main-content" class="app-main">
       <RouterView v-slot="{ Component }">
-        <component :is="Component" />
+        <component :is="Component" :key="route.fullPath" />
       </RouterView>
     </main>
 

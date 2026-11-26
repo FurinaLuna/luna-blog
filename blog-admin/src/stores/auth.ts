@@ -66,8 +66,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   /** 强制改密或主动改密成功后同步本地状态 */
   async function updatePassword(payload: PasswordPayload): Promise<void> {
-    await changePassword(payload)
-    if (user.value) {
+    const result = await changePassword(payload)
+    // 服务端已递增令牌版本：换上新 token，否则下一次请求会被判定失效
+    if (result?.token) setToken(result.token)
+    if (result?.user) {
+      persistUser(result.user)
+    } else if (user.value) {
       persistUser({ ...user.value, needPasswordChange: false })
     }
   }

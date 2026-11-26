@@ -80,7 +80,8 @@ instance.interceptors.response.use(
     const body = error.response?.data
     const fallback = status === 0 ? '网络异常，请稍后重试' : '请求失败，请稍后重试'
     const message = body?.message || fallback
-    const reason = body?.reason ?? ''
+    const reason =
+      body?.reason ?? (body as { data?: { reason?: string } } | undefined)?.data?.reason ?? ''
 
     if (status === 401) {
       removeToken()

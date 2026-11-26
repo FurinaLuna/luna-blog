@@ -1,6 +1,10 @@
 # Luna Blog API 服务 systemd 单元样例
 # 使用：sudo cp deploy/luna-blog.service /etc/systemd/system/
 #       sudo systemctl daemon-reload && sudo systemctl enable --now luna-blog
+#
+# 注意：ReadWritePaths 必须与 blog-server/.env 里的 UPLOAD_DIR 指向同一个目录，
+# 否则 systemd 会以只读方式挂载工作目录，上传会报 EROFS / EACCES。
+# 默认 UPLOAD_DIR 未设置 = <工作目录>/uploads。
 
 [Unit]
 Description=Luna Blog API (Koa)
@@ -12,16 +16,28 @@ Type=simple
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/luna-blog/blog-server
+
 # .env 中不要放 shell 特性；需要额外变量时用 Environment=
 Environment=NODE_ENV=production
+# 若 .env 里把 UPLOAD_DIR 改到别处（如 /var/lib/luna-blog/uploads），这里也要同步
+Environment=UPLOAD_DIR=/var/www/luna-blog/blog-server/uploads
+
 ExecStart=/usr/bin/node src/server.js
 Restart=on-failure
 RestartSec=3
+
 # 日志走 journalctl -u luna-blog -f
 StandardOutput=journal
 StandardError=journal
-# 上传目录需要可写
+
+# 上传目录需要可写（与上面的 UPLOAD_DIR 保持一致；目录需 chown www-data）
 ReadWritePaths=/var/www/luna-blog/blog-server/uploads
+
+# 基础加固：只允许写上传目录，其余文件系统只读
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target

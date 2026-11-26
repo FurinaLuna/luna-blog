@@ -8,7 +8,7 @@ import serve from 'koa-static'
 import fs from 'node:fs'
 import { config } from './config/index.js'
 import { errorHandler } from './middleware/error-handler.js'
-import { apiRouter, rssRouter } from './routes/index.js'
+import { apiRouter, rssRouter, seoRouter } from './routes/index.js'
 import { hitRateLimit } from './core/rate-limit.js'
 import { clientIp } from './core/text.js'
 
@@ -86,6 +86,7 @@ export function createApp() {
   })
 
   app.use(rssRouter.routes()).use(rssRouter.allowedMethods())
+  app.use(seoRouter.routes()).use(seoRouter.allowedMethods())
   app.use(apiRouter.routes()).use(apiRouter.allowedMethods())
 
   app.on('error', (error) => {

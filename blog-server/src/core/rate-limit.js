@@ -4,12 +4,15 @@ import { tooManyRequests } from './errors.js'
 const buckets = new Map()
 let lastSweep = Date.now()
 
+/** 桶内时间戳最多保留 24h（必须覆盖最长的限频窗口，否则会被短窗口调用误删） */
+const MAX_KEEP_MS = 24 * 60 * 60 * 1000
+
 /** 每 5 分钟清理一次过期窗口，避免内存持续增长 */
-function sweep(now, maxWindowMs) {
+function sweep(now) {
   if (now - lastSweep < 5 * 60 * 1000) return
   lastSweep = now
   for (const [key, hits] of buckets) {
-    const alive = hits.filter((t) => now - t < maxWindowMs)
+    const alive = hits.filter((t) => now - t < MAX_KEEP_MS)
     if (alive.length === 0) buckets.delete(key)
     else buckets.set(key, alive)
   }
@@ -23,7 +26,7 @@ function sweep(now, maxWindowMs) {
  */
 export function hitRateLimit(key, { windowMs, max }) {
   const now = Date.now()
-  sweep(now, windowMs)
+  sweep(now)
   const hits = (buckets.get(key) ?? []).filter((t) => now - t < windowMs)
   if (hits.length >= max) {
     const oldest = hits[0] ?? now

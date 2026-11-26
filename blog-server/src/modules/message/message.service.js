@@ -1,7 +1,7 @@
 import { Message } from '../../db/models/index.js'
 import { badRequest, notFound } from '../../core/errors.js'
 import { assertRateLimit } from '../../core/rate-limit.js'
-import { escapeHtml, randomDanmakuColor } from '../../core/text.js'
+import { randomDanmakuColor } from '../../core/text.js'
 import { findSensitiveWord } from '../../config/sensitive-words.js'
 import { clearLikes, likeTarget } from '../like/like.service.js'
 import { createNotification } from '../notification/notification.service.js'
@@ -71,7 +71,7 @@ export async function createMessage(input, ip) {
     throw badRequest('内容包含敏感词，请修改后再提交')
   }
 
-  const content = escapeHtml(input.content)
+  const content = input.content.trim()
   if (content.length > 500) throw badRequest('留言内容过长，请精简后再提交')
 
   /** 站点配置里关掉「留言需要审核」后，新留言直接公开（仍会通知站长） */

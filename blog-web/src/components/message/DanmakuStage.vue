@@ -39,13 +39,11 @@ const inputRef = ref<HTMLInputElement | null>(null)
 
 const hasDanmaku = computed(() => !props.loading && props.messages.length > 0)
 
-/** 留言少时一轮播完再重挂，避免同几条同时刷屏 */
-const loopDanmaku = computed(() => props.messages.length > 100)
 const playKey = ref(0)
 let restartTimer = 0
 
+/** 一轮播完再重挂：留言数 ≤ 单页 50 条时避免同几条同时刷屏 */
 function handlePlayEnd(): void {
-  if (loopDanmaku.value) return
   window.clearTimeout(restartTimer)
   restartTimer = window.setTimeout(() => {
     playKey.value += 1
@@ -179,7 +177,6 @@ async function send(): Promise<void> {
         :danmus="danmakuItems"
         :speeds="danmakuSpeed"
         :font-size="20"
-        :loop="loopDanmaku"
         extra-style="color: #fff"
         is-suspend
         @play-end="handlePlayEnd"

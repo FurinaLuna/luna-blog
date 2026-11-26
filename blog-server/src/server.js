@@ -1,9 +1,11 @@
 import { createApp } from './app.js'
 import { config } from './config/index.js'
 import { assertDatabaseConnection, sequelize } from './db/index.js'
+import { ensureSchema } from './db/migrate.js'
 
 async function bootstrap() {
   await assertDatabaseConnection()
+  await ensureSchema()
 
   const app = createApp()
   const server = app.listen(config.port, () => {

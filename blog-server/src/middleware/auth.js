@@ -14,6 +14,10 @@ export async function adminAuthOnly(ctx, next) {
   const payload = verifyToken(token)
   const user = await User.findByPk(payload.id)
   if (!user) throw unauthorized('账号不存在，请重新登录')
+  // 改密后令牌版本会 +1，旧令牌立即失效
+  if ((payload.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+    throw unauthorized('登录已失效，请重新登录')
+  }
 
   ctx.state.admin = user
   await next()

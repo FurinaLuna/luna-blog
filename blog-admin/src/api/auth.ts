@@ -11,7 +11,7 @@ export function getProfile(): Promise<AdminUser> {
   return http.get<AdminUser>('/auth/profile')
 }
 
-/** 修改密码（首登强制改密也走这里） */
-export function changePassword(payload: PasswordPayload): Promise<void> {
-  return http.put<void>('/auth/password', payload)
+/** 修改密码（首登强制改密也走这里）：服务端会递增令牌版本并下发新 token */
+export function changePassword(payload: PasswordPayload): Promise<LoginResult> {
+  return http.put<LoginResult>('/auth/password', payload)
 }
