@@ -1,0 +1,21 @@
+# =============================================================================
+# luna-blog-backup.timer — 每天 03:30 备份
+#
+# 安装：sudo cp deploy/systemd/luna-blog-backup.* /etc/systemd/system/
+#       sudo systemctl daemon-reload
+#       sudo systemctl enable --now luna-blog-backup.timer
+# 查看：systemctl list-timers luna-blog-*
+#       journalctl -u luna-blog-backup.service -n 50 --no-pager
+# 手动跑一次：sudo systemctl start luna-blog-backup.service
+# =============================================================================
+[Unit]
+Description=Daily Luna Blog backup at 03:30
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+# 错过（关机/休眠）后开机补跑一次
+Persistent=true
+Unit=luna-blog-backup.service
+
+[Install]
+WantedBy=timers.target

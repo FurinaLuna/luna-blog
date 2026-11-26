@@ -1,0 +1,24 @@
+# =============================================================================
+# luna-blog-backup.service — 单次备份（MySQL + uploads，由 timer 每天 03:30 触发）
+#
+# 安装：sudo cp deploy/systemd/luna-blog-backup.* /etc/systemd/system/
+#       sudo systemctl daemon-reload
+#       sudo systemctl enable --now luna-blog-backup.timer
+#
+# 备份目录：/var/www/luna-blog/backups（root 700）
+# 保留策略：每日备份 7 天 + 每周备份 4 份（脚本内实现）
+# =============================================================================
+[Unit]
+Description=Luna Blog backup (MySQL + uploads)
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/var/www/luna-blog/src/deploy/ops/backup.sh
+User=root
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+# 大库备份可能耗时，给 30 分钟；超时视为失败并在 journal 中记录
+TimeoutStartSec=1800

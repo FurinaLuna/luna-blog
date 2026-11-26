@@ -1,0 +1,20 @@
+# =============================================================================
+# luna-blog-healthcheck.service — 单次健康检查（由 luna-blog-healthcheck.timer 触发）
+#
+# 安装：sudo cp deploy/systemd/luna-blog-healthcheck.* /etc/systemd/system/
+#       sudo systemctl daemon-reload
+#       sudo systemctl enable --now luna-blog-healthcheck.timer
+#
+# 脚本内逻辑：连续 3 次探测失败才重启 luna-blog；仍失败则 logger 记录并非 0 退出。
+# =============================================================================
+[Unit]
+Description=Luna Blog health check (once)
+After=network-online.target luna-blog.service
+
+[Service]
+Type=oneshot
+ExecStart=/var/www/luna-blog/src/deploy/ops/healthcheck.sh
+User=root
+Nice=10
+# 单次检查最多 3 次探测 + 30s 等待，给足 90s；超时视为失败
+TimeoutStartSec=90

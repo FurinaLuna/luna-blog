@@ -1,0 +1,20 @@
+# =============================================================================
+# luna-blog-healthcheck.timer — 每 60 秒做一次健康检查
+#
+# 安装：sudo cp deploy/systemd/luna-blog-healthcheck.* /etc/systemd/system/
+#       sudo systemctl daemon-reload
+#       sudo systemctl enable --now luna-blog-healthcheck.timer
+# 查看：systemctl list-timers luna-blog-*
+#       journalctl -t luna-healthcheck -n 50 --no-pager
+# =============================================================================
+[Unit]
+Description=Run Luna Blog health check every 60s
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=60s
+AccuracySec=1s
+Unit=luna-blog-healthcheck.service
+
+[Install]
+WantedBy=timers.target
