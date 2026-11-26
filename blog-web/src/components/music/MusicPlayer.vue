@@ -10,7 +10,7 @@ import {
   VideoPlay,
 } from '@element-plus/icons-vue'
 import CoverImage from '@/components/common/CoverImage.vue'
-import { getNeteaseTracks } from '@/api/music'
+import { getPlaylistTracks } from '@/api/music'
 import type { Track } from '@/api/music'
 import { useSiteStore } from '@/stores/site'
 
@@ -59,7 +59,11 @@ const currentIndex = computed(() => {
 const current = computed<Track | null>(() => tracks.value[currentIndex.value] ?? null)
 const progress = computed(() => (duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0))
 const empty = computed(() => loaded.value && tracks.value.length === 0)
-const sourceLabel = '在线歌单（网易云）'
+/** 加载到了曲目但实际取不到可播地址（多见于公益 Meting 实例解析不了 QQ 音乐） */
+const unplayable = ref(false)
+const sourceLabel = computed(() =>
+  site.musicServer === 'tencent' ? '在线歌单（QQ 音乐）' : '在线歌单（网易云）',
+)
 
 function persist(): void {
   try {
@@ -83,9 +87,11 @@ function resolveUrl(track: Track): string | null {
 
 async function loadTracks(): Promise<void> {
   if (!site.musicEnabled) return
-  const list = await getNeteaseTracks(site.neteasePlaylistId, site.musicApiBase)
+  const playlistId = site.musicServer === 'tencent' ? site.qqPlaylistId : site.neteasePlaylistId
+  const list = await getPlaylistTracks(site.musicServer, playlistId, site.musicApiBase)
   tracks.value = list
   loaded.value = true
+  unplayable.value = false
   if (list.length === 0) return
 
   const preferred = list.find((track) => track.key === currentKey.value)
@@ -105,7 +111,11 @@ async function playAt(index: number): Promise<void> {
     if (failStreak >= 3) {
       failStreak = 0
       isPlaying.value = false
-      ElMessage.warning('暂时没有可播放的音源')
+      ElMessage.warning(
+        site.musicServer === 'tencent'
+          ? '该 Meting 实例暂时取不到 QQ 音乐的播放地址，可到后台把接口地址换成国内实例'
+          : '暂时没有可播放的音源',
+      )
       return
     }
     await playAt((index + 1) % tracks.value.length)
@@ -120,6 +130,7 @@ async function playAt(index: number): Promise<void> {
   audio.volume = volume.value
   try {
     await audio.play()
+    unplayable.value = false
   } catch {
     isPlaying.value = false
   }
@@ -187,7 +198,8 @@ watch(volume, (value) => {
 })
 
 watch(
-  () => [site.musicEnabled, site.neteasePlaylistId, site.musicApiBase] as const,
+  () =>
+    [site.musicEnabled, site.musicServer, site.neteasePlaylistId, site.qqPlaylistId, site.musicApiBase] as const,
   () => {
     void loadTracks()
   },
@@ -202,7 +214,10 @@ onMounted(() => {
   audio.addEventListener('ended', handleEnded)
   audio.addEventListener('play', () => (isPlaying.value = true))
   audio.addEventListener('pause', () => (isPlaying.value = false))
-  audio.addEventListener('error', () => (isPlaying.value = false))
+  audio.addEventListener('error', () => {
+    isPlaying.value = false
+    unplayable.value = true
+  })
   document.addEventListener('click', handleDocumentClick)
   void site.ensureLoaded().then(() => loadTracks())
 })
@@ -342,6 +357,13 @@ onBeforeUnmount(() => {
             </div>
 
             <p class="music-panel__source">来源：{{ sourceLabel }} · 共 {{ tracks.length }} 首</p>
+            <p v-if="unplayable" class="music-panel__warn">
+              {{
+                site.musicServer === 'tencent'
+                  ? '当前 Meting 实例取不到 QQ 音乐的播放地址：可到后台把接口地址换成国内实例，或先切回网易云。'
+                  : '当前 Meting 实例暂时取不到播放地址，可稍后重试或更换接口地址。'
+              }}
+            </p>
           </footer>
         </template>
 
@@ -720,6 +742,12 @@ onBeforeUnmount(() => {
   font-size: 0.68rem;
 }
 
+.music-panel__warn {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: #f0a020;
+}
 .music-panel__hint {
   padding: 0.4rem 0.9rem 0.9rem;
   color: var(--meta-color);

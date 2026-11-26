@@ -76,11 +76,12 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   friendsContact: '',
   friendsTip: '申请前请先添加本站友链，审核通过后会尽快上线。',
   /** 进站欢迎通知（后台「欢迎通知」页签可改）：标题、称呼、8 个时段的问候文案（{name} 会被替换成称呼） */
-  /** 音乐悬浮球：总开关 / 音源（local = 站内歌单，netease = 网易云歌单）/ 默认音量 / 网易云歌单 id */
+  /** 音乐悬浮球：总开关 / 平台（netease = 网易云，tencent = QQ 音乐）/ 默认音量 / 歌单 id / Meting 接口地址 */
   musicEnabled: true,
-  musicSource: 'local',
+  musicServer: 'netease',
   musicVolume: 0.7,
   neteasePlaylistId: '',
+  qqPlaylistId: '',
   musicApiBase: 'https://api.injahow.cn/meting/',
   welcomeTitle: '欢迎～',
   welcomeName: '我的朋友',
@@ -136,9 +137,10 @@ export const siteConfigSchema = z.object({
   friendsContact: z.string().trim().max(100).optional(),
   friendsTip: z.string().trim().max(200).optional(),
   musicEnabled: z.boolean().optional(),
-  musicSource: z.enum(['local', 'netease']).optional(),
+  musicServer: z.enum(['netease', 'tencent']).optional(),
   musicVolume: z.number().min(0).max(1).optional(),
   neteasePlaylistId: z.string().trim().max(40).optional(),
+  qqPlaylistId: z.string().trim().max(40).optional(),
   musicApiBase: z.string().trim().max(200).optional(),
   welcomeTitle: z.string().trim().max(40).optional(),
   welcomeName: z.string().trim().max(20).optional(),

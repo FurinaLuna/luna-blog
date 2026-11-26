@@ -123,7 +123,9 @@ const form = reactive<SiteConfig>({
   friendsTip: '',
   musicEnabled: true,
   musicVolume: 0.7,
+  musicServer: 'netease',
   neteasePlaylistId: '',
+  qqPlaylistId: '',
   musicApiBase: 'https://api.injahow.cn/meting/',
   welcomeTitle: '欢迎～',
   welcomeName: '我的朋友',
@@ -174,7 +176,9 @@ function fillForm(data: SiteConfig): void {
   form.friendsTip = data.friendsTip ?? ''
   form.musicEnabled = data.musicEnabled ?? true
   form.musicVolume = typeof data.musicVolume === 'number' ? data.musicVolume : 0.7
+  form.musicServer = data.musicServer === 'tencent' ? 'tencent' : 'netease'
   form.neteasePlaylistId = data.neteasePlaylistId ?? ''
+  form.qqPlaylistId = data.qqPlaylistId ?? ''
   form.musicApiBase = data.musicApiBase ?? 'https://api.injahow.cn/meting/'
   form.welcomeTitle = data.welcomeTitle ?? '欢迎～'
   form.welcomeName = data.welcomeName ?? '我的朋友'
@@ -375,7 +379,9 @@ async function save(): Promise<void> {
       friendsTip: form.friendsTip.trim(),
     musicEnabled: form.musicEnabled,
   musicVolume: form.musicVolume,
+  musicServer: form.musicServer,
   neteasePlaylistId: form.neteasePlaylistId.trim(),
+  qqPlaylistId: form.qqPlaylistId.trim(),
   musicApiBase: form.musicApiBase.trim(),
   welcomeTitle: form.welcomeTitle.trim(),
     welcomeName: form.welcomeName.trim(),
@@ -567,13 +573,19 @@ onMounted(load)
               type="info"
               :closable="false"
               show-icon
-              title="前台左下角的唱片球：填一个网易云歌单 id 即可，歌名/歌手/封面/播放地址都通过 Meting API 实时取，不需要自建服务，也不用在这里上传音频。"
+              title="前台左下角的唱片球：选一个平台、填对应歌单 id 即可，歌名/歌手/封面/播放地址都通过 Meting API 实时取，不需要自建服务，也不用在这里上传音频。"
               class="mb-4"
             />
             <el-form label-position="top">
               <el-form-item label="显示音乐播放器">
                 <el-switch v-model="form.musicEnabled" />
                 <span class="ml-3 text-[12px] text-[var(--text-3)]">关闭后前台不渲染唱片球</span>
+              </el-form-item>
+              <el-form-item label="平台">
+                <el-radio-group v-model="form.musicServer">
+                  <el-radio-button value="netease">网易云音乐</el-radio-button>
+                  <el-radio-button value="tencent">QQ 音乐</el-radio-button>
+                </el-radio-group>
               </el-form-item>
               <el-form-item label="网易云歌单 id">
                 <el-input
@@ -583,6 +595,17 @@ onMounted(load)
                 />
                 <p class="mt-1 text-[12px] text-[var(--text-3)]">
                   网易云歌单链接里 /playlist?id= 后面那串数字；留空则前台提示「暂无可用音源」。
+                </p>
+              </el-form-item>
+              <el-form-item label="QQ 音乐歌单 id">
+                <el-input
+                  v-model="form.qqPlaylistId"
+                  maxlength="40"
+                  placeholder="例如 7011264345，取歌单链接里的数字"
+                />
+                <p class="mt-1 text-[12px] text-[var(--text-3)]">
+                  QQ 音乐歌单链接里 /playlist/ 或 ?id= 后面那串数字。注意：腾讯系播放地址需要国内网络解析，
+                  海外或部分公益 Meting 实例取不到可播直链，此时前台会提示「暂无可用音源」。
                 </p>
               </el-form-item>
               <el-form-item label="Meting 接口地址">

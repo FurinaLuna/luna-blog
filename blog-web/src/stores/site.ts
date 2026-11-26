@@ -59,7 +59,9 @@ const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 
     const value = config.value?.musicVolume
     return typeof value === 'number' && value >= 0 && value <= 1 ? value : 0.7
   })
-  const neteasePlaylistId = computed(() => config.value?.neteasePlaylistId || '')
+  const musicServer = computed<'netease' | 'tencent'>(() => (config.value?.musicServer === 'tencent' ? 'tencent' : 'netease'))
+const neteasePlaylistId = computed(() => config.value?.neteasePlaylistId || '')
+const qqPlaylistId = computed(() => config.value?.qqPlaylistId || '')
 const musicApiBase = computed(() => config.value?.musicApiBase || 'https://api.injahow.cn/meting/')
 
   /** 未配置 socialLinks 时用 github / email 兜底 */
@@ -137,7 +139,9 @@ const musicApiBase = computed(() => config.value?.musicApiBase || 'https://api.i
     friendsTip,
     musicEnabled,
     musicVolume,
-    neteasePlaylistId,
+    musicServer,
+  neteasePlaylistId,
+  qqPlaylistId,
     musicApiBase,
     ensureLoaded,
     refresh,

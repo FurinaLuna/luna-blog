@@ -376,7 +376,9 @@ export interface SiteConfig {
   /** 音乐悬浮球：总开关 / 音源（local = 站内歌单，netease = 网易云歌单）/ 默认音量 / 网易云歌单 id */
   musicEnabled: boolean
   musicVolume: number
+  musicServer: 'netease' | 'tencent'
   neteasePlaylistId: string
+  qqPlaylistId: string
   musicApiBase: string
   /** 站点图标（favicon），空 = 用内置 favicon.svg */
   favicon: string

@@ -325,7 +325,9 @@ export interface SiteConfig {
   /** 音乐悬浮球：总开关 / 默认音量 / 网易云歌单 id */
   musicEnabled?: boolean
   musicVolume?: number
+  musicServer?: 'netease' | 'tencent'
   neteasePlaylistId?: string
+  qqPlaylistId?: string
   musicApiBase?: string
 }
 
