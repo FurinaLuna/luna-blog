@@ -275,6 +275,11 @@ export interface FriendLinkPayload {
 /*                                站点配置 / 统计                              */
 /* -------------------------------------------------------------------------- */
 
+export interface NavLinkItem {
+  label: string
+  url: string
+}
+
 export interface SocialLink {
   name: string
   url: string
@@ -299,6 +304,7 @@ export interface SiteConfig {
   icp: string
   startDate: string
   socialLinks: SocialLink[]
+  navLinks: NavLinkItem[]
   commentNeedReview: boolean
   /** 每个页面的横幅图（空字符串 = 用内置天空渐变） */
   pageBanners?: Record<string, string>

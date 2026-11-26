@@ -18,6 +18,7 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   footerText: '',
   icp: '',
   startDate: '2024-01-01',
+  navLinks: [],
   socialLinks: [],
   commentNeedReview: true,
   messageNeedReview: true,
@@ -97,6 +98,11 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   ],
 })
 
+const navLinkSchema = z.object({
+  label: z.string().trim().min(1).max(20),
+  url: z.string().trim().min(4).max(300),
+})
+
 const socialLinkSchema = z.object({
   name: z.string().trim().max(30),
   url: z.string().trim().max(300),
@@ -120,6 +126,7 @@ export const siteConfigSchema = z.object({
   footerText: z.string().trim().max(200).optional(),
   icp: z.string().trim().max(100).optional(),
   startDate: z.string().trim().max(20).optional(),
+  navLinks: z.array(navLinkSchema).max(8).optional(),
   socialLinks: z.array(socialLinkSchema).max(16).optional(),
   commentNeedReview: z.boolean().optional(),
   messageNeedReview: z.boolean().optional(),

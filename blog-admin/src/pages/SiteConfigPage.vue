@@ -7,7 +7,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import ImageUpload from '@/components/ImageUpload.vue'
 import { getSiteConfig, updateSiteConfig } from '@/api/siteConfig'
 import { useThemeStore } from '@/stores/theme'
-import type { PageBannerKey, PageBanners, SiteConfig, SocialLink } from '@/api/types'
+import type { NavLinkItem, PageBannerKey, PageBanners, SiteConfig, SocialLink } from '@/api/types'
 
 const theme = useThemeStore()
 
@@ -95,6 +95,7 @@ const EMPTY_PAGE_POSITIONS: Record<string, number> = Object.fromEntries(
 )
 
 const METING_API_PLACEHOLDER = 'https://api.injahow.cn/meting/'
+const NAV_URL_PLACEHOLDER = 'https://example.com'
 
 const form = reactive<SiteConfig>({
   siteName: '',
@@ -112,6 +113,7 @@ const form = reactive<SiteConfig>({
   icp: '',
   startDate: '',
   socialLinks: [],
+  navLinks: [],
   commentNeedReview: true,
   messageNeedReview: true,
   danmakuSpeed: 180,
@@ -205,6 +207,9 @@ function fillForm(data: SiteConfig): void {
         icon: link.icon ?? '',
         qrcode: link.qrcode ?? '',
       }))
+    : []
+  form.navLinks = Array.isArray(data.navLinks)
+    ? data.navLinks.map((link) => ({ label: link.label ?? '', url: link.url ?? '' }))
     : []
   form.commentNeedReview = data.commentNeedReview !== false
   form.messageNeedReview = data.messageNeedReview !== false
@@ -327,6 +332,20 @@ function removeSocialLink(index: number): void {
   form.socialLinks.splice(index, 1)
 }
 
+function addNavLink(): void {
+  form.navLinks.push({ label: '', url: '' })
+}
+
+function removeNavLink(index: number): void {
+  form.navLinks.splice(index, 1)
+}
+
+function normalizeNavLinks(): NavLinkItem[] {
+  return form.navLinks
+    .map((link) => ({ label: link.label.trim(), url: link.url.trim() }))
+    .filter((link) => link.label && link.url)
+}
+
 function normalizeLinks(): SocialLink[] {
   return form.socialLinks
     .map((link) => ({
@@ -365,6 +384,7 @@ async function save(): Promise<void> {
       startDate: form.startDate.trim(),
 
       socialLinks: normalizeLinks(),
+      navLinks: normalizeNavLinks(),
       commentNeedReview: form.commentNeedReview,
       messageNeedReview: form.messageNeedReview,
     danmakuSpeed: form.danmakuSpeed,
@@ -819,6 +839,29 @@ onMounted(load)
             <el-button :icon="Plus" class="mt-2" @click="addSocialLink">添加社交链接</el-button>
             <div v-if="form.socialLinks.length === 0" class="mt-2 text-[12px] text-[var(--text-3)]">
               还没有社交链接，点击上方按钮添加。
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="导航外链" name="nav">
+          <div class="max-w-[760px] pt-2">
+            <p class="mb-3 text-[12px] text-[var(--text-3)]">
+              这里添加的链接会显示在前台顶部导航「关于」的右侧，点击在新标签页打开；最多 8 个。
+            </p>
+            <div
+              v-for="(link, index) in form.navLinks"
+              :key="index"
+              class="mb-3 flex items-end gap-2 rounded border p-3"
+              :style="{ borderColor: 'var(--border)' }"
+            >
+              <el-input v-model="link.label" class="w-[160px]!" placeholder="名称" maxlength="20" />
+              <el-input v-model="link.url" class="flex-1" :placeholder="NAV_URL_PLACEHOLDER" maxlength="300" />
+              <el-button :icon="Delete" @click="removeNavLink(index)" />
+            </div>
+            <el-button :icon="Plus" class="mt-2" :disabled="form.navLinks.length >= 8" @click="addNavLink">
+              添加导航外链
+            </el-button>
+            <div v-if="form.navLinks.length === 0" class="mt-2 text-[12px] text-[var(--text-3)]">
+              还没有自定义导航，点击上方按钮添加；不需要就留空，导航栏保持原样。
             </div>
           </div>
         </el-tab-pane>

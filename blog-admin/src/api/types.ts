@@ -307,6 +307,11 @@ export interface FriendLinkPayload {
 
 /* ----------------------------- 站点配置 ------------------------------ */
 
+export interface NavLinkItem {
+  label: string
+  url: string
+}
+
 export interface SocialLink {
   name: string
   url: string
@@ -352,6 +357,7 @@ export interface SiteConfig {
   icp: string
   startDate: string
   socialLinks: SocialLink[]
+  navLinks: NavLinkItem[]
   commentNeedReview: boolean
   messageNeedReview: boolean
   /** 首页侧栏资料卡横幅（空字符串 = 回退 pageBanners.home） */

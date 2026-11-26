@@ -198,6 +198,19 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
             <el-icon class="menu_icon"><component :is="item.icon" /></el-icon>
             <span>{{ item.label }}</span>
           </RouterLink>
+
+          <a
+            v-for="item in site.navLinks"
+            :key="item.url"
+            :href="item.url"
+            class="menu_item"
+            target="_blank"
+            rel="noopener noreferrer"
+            :title="item.label"
+          >
+            <el-icon class="menu_icon"><LinkIcon /></el-icon>
+            <span>{{ item.label }}</span>
+          </a>
         </nav>
       </div>
 
@@ -258,6 +271,17 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
             <el-icon><Search /></el-icon>
             <span>搜索</span>
           </RouterLink>
+          <a
+            v-for="item in site.navLinks"
+            :key="item.url"
+            class="drawer_link"
+            :href="item.url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <el-icon><LinkIcon /></el-icon>
+            <span>{{ item.label }}</span>
+          </a>
         </nav>
 
         <div v-if="site.categories.length > 0" class="drawer_sub">

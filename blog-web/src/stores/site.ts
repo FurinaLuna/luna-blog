@@ -23,6 +23,8 @@ export const useSiteStore = defineStore('site', () => {
   const avatar = computed(() => config.value?.avatar || '')
   const announcement = computed(() => config.value?.announcement || '')
   const socialLinks = computed(() => config.value?.socialLinks ?? [])
+  /** 导航栏「关于」右侧的自定义外链，后台可增删 */
+  const navLinks = computed(() => (config.value?.navLinks ?? []).filter((link) => link.label && link.url))
   const commentNeedReview = computed(() => config.value?.commentNeedReview ?? true)
 
   /** 进站欢迎通知：标题、称呼、8 个时段问候文案（缺省用原站文案） */
@@ -127,6 +129,7 @@ const musicApiBase = computed(() => config.value?.musicApiBase || 'https://api.i
     avatar,
     announcement,
     socialLinks,
+    navLinks,
     resolvedSocialLinks,
     commentNeedReview,
     friendsTitle,
