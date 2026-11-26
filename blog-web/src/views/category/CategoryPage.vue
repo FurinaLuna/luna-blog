@@ -9,6 +9,7 @@ import Pagination from '@/components/common/Pagination.vue'
 import SkeletonList from '@/components/common/SkeletonList.vue'
 import { getArticles } from '@/api/article'
 import { useSiteStore } from '@/stores/site'
+import { setPageMeta } from '@/utils/seo'
 
 const PAGE_SIZE = 4
 
@@ -19,6 +20,16 @@ const categoryId = computed(() => Number(route.params.id))
 const page = ref(1)
 
 const category = computed(() => site.categories.find((item) => item.id === categoryId.value) ?? null)
+
+/** 分类信息就绪后把真实分类名写进页面 meta（SEO） */
+watch(
+  category,
+  (current) => {
+    if (!current) return
+    setPageMeta({ title: current.name, description: current.description ?? undefined })
+  },
+  { immediate: true },
+)
 
 const { data, isLoading, error, refetch } = useQuery({
   key: () => ['articles-category', categoryId.value, page.value],

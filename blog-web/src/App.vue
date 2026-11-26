@@ -9,17 +9,15 @@ import AnnouncementBall from '@/components/layout/AnnouncementBall.vue'
 import MusicPlayer from '@/components/music/MusicPlayer.vue'
 import { useSiteStore } from '@/stores/site'
 import { derivePageKey, PAGE_KEY_FALLBACK } from '@/utils/page-key'
+import { refreshPageMeta } from '@/utils/seo'
 
 const site = useSiteStore()
 const route = useRoute()
 
 function syncDocumentMeta(): void {
-  const meta = route.meta as { title?: string }
-  const siteName = site.siteName
-  document.title = meta.title ? `${meta.title} · ${siteName}` : `${siteName} · ${site.siteDescription}`
-
-  const description = document.querySelector<HTMLMetaElement>('meta[name="description"]')
-  if (description) description.content = site.siteDescription
+  // 页面级 title / description / OG / canonical 统一由 utils/seo.ts 维护：
+  // 站点配置异步加载完成后重放一次，让标题里的站点名与描述用上后台配置
+  refreshPageMeta()
 
   // 站点关键词：后台「基础信息 → 站点关键词」配置的 SEO keywords
   let keywords = document.querySelector<HTMLMetaElement>('meta[name="keywords"]')

@@ -9,6 +9,7 @@ import Pagination from '@/components/common/Pagination.vue'
 import SkeletonList from '@/components/common/SkeletonList.vue'
 import { getArticles } from '@/api/article'
 import { useSiteStore } from '@/stores/site'
+import { setPageMeta } from '@/utils/seo'
 
 const PAGE_SIZE = 4
 
@@ -19,6 +20,16 @@ const tagId = computed(() => Number(route.params.id))
 const page = ref(1)
 
 const tag = computed(() => site.tags.find((item) => item.id === tagId.value) ?? null)
+
+/** 标签信息就绪后把真实标签名写进页面 meta（SEO） */
+watch(
+  tag,
+  (current) => {
+    if (!current) return
+    setPageMeta({ title: current.name, description: `共 ${current.articleCount} 篇文章` })
+  },
+  { immediate: true },
+)
 
 const { data, isLoading, error, refetch } = useQuery({
   key: () => ['articles-tag', tagId.value, page.value],

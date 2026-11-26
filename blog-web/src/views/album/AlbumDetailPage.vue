@@ -10,6 +10,7 @@ import SkeletonList from '@/components/common/SkeletonList.vue'
 import { getAlbum } from '@/api/album'
 import type { Photo } from '@/api/types'
 import { formatDate } from '@/utils/format'
+import { setPageMeta } from '@/utils/seo'
 
 const route = useRoute()
 const albumId = computed(() => Number(route.params.id))
@@ -25,6 +26,20 @@ const {
 })
 
 const album = computed(() => data.value ?? null)
+
+/** 相册数据就绪后把真实相册名 / 简介 / 封面写进页面 meta（SEO） */
+watch(
+  album,
+  (current) => {
+    if (!current) return
+    setPageMeta({
+      title: current.name,
+      description: current.description,
+      image: current.cover ?? undefined,
+    })
+  },
+  { immediate: true },
+)
 
 const photos = computed<Photo[]>(() => album.value?.photos ?? [])
 

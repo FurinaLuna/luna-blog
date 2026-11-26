@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuery } from '@pinia/colada'
 import { useMediaQuery } from '@vueuse/core'
@@ -17,6 +17,7 @@ import type { ArticleDetail } from '@/api/types'
 import { useThemeStore } from '@/stores/theme'
 import { formatCompact, formatDateTime } from '@/utils/format'
 import { useLikeTarget } from '@/utils/like'
+import { setPageMeta } from '@/utils/seo'
 
 const previewId = 'article-preview'
 
@@ -38,6 +39,23 @@ const {
 })
 
 const article = computed<ArticleDetail | null>(() => articleData.value ?? null)
+
+/** 文章数据就绪后把真实标题 / 摘要 / 封面写进页面 meta（SEO） */
+watch(
+  article,
+  (current) => {
+    if (!current) return
+    const plainText = (current.summary || current.content).replace(/\s+/g, ' ').trim()
+    setPageMeta({
+      title: current.title,
+      description: plainText.slice(0, 120),
+      image: current.cover ?? undefined,
+      type: 'article',
+      url: window.location.href,
+    })
+  },
+  { immediate: true },
+)
 
 const { liked, count, pending, toggle } = useLikeTarget({
   key: () => `article:${articleId.value}`,
