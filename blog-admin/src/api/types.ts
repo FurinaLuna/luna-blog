@@ -378,6 +378,7 @@ export interface SiteConfig {
   musicSource: 'local' | 'netease'
   musicVolume: number
   neteasePlaylistId: string
+  musicApiBase: string
   /** 站点图标（favicon），空 = 用内置 favicon.svg */
   favicon: string
   /** 后台登录页背景图，空 = 用内置蓝色波浪底图 */

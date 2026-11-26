@@ -10,7 +10,7 @@ import {
   VideoPlay,
 } from '@element-plus/icons-vue'
 import CoverImage from '@/components/common/CoverImage.vue'
-import { getLocalTracks, getNeteaseTracks, getSongUrl, neteaseIdOf } from '@/api/music'
+import { getLocalTracks, getNeteaseTracks } from '@/api/music'
 import type { Track } from '@/api/music'
 import { useSiteStore } from '@/stores/site'
 
@@ -49,7 +49,6 @@ const isPlaying = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
 
-const urlCache = new Map<string, string>()
 let audio: HTMLAudioElement | null = null
 let failStreak = 0
 
@@ -60,7 +59,7 @@ const currentIndex = computed(() => {
 const current = computed<Track | null>(() => tracks.value[currentIndex.value] ?? null)
 const progress = computed(() => (duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0))
 const empty = computed(() => loaded.value && tracks.value.length === 0)
-const sourceLabel = computed(() => (site.musicSource === 'netease' ? '网易云歌单' : '站内歌单'))
+const sourceLabel = computed(() => (site.musicSource === 'netease' ? '在线歌单（网易云）' : '站内歌单'))
 
 function persist(): void {
   try {
@@ -77,22 +76,16 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-async function resolveUrl(track: Track): Promise<string | null> {
-  if (track.url) return track.url
-  const cached = urlCache.get(track.key)
-  if (cached) return cached
-  const id = neteaseIdOf(track.key)
-  if (id === null) return null
-  const url = await getSongUrl(id)
-  if (url) urlCache.set(track.key, url)
-  return url
+/** 站内曲目与在线曲目都自带可播地址，直接返回即可 */
+function resolveUrl(track: Track): string | null {
+  return track.url || null
 }
 
 async function loadTracks(): Promise<void> {
   if (!site.musicEnabled) return
   const list =
     site.musicSource === 'netease'
-      ? await getNeteaseTracks(site.neteasePlaylistId)
+      ? await getNeteaseTracks(site.neteasePlaylistId, site.musicApiBase)
       : await getLocalTracks()
   tracks.value = list
   loaded.value = true
@@ -109,7 +102,7 @@ async function playAt(index: number): Promise<void> {
   const track = tracks.value[index]
   if (!track) return
 
-  const url = await resolveUrl(track)
+  const url = resolveUrl(track)
   if (!url) {
     failStreak += 1
     if (failStreak >= 3) {

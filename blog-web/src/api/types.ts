@@ -327,6 +327,7 @@ export interface SiteConfig {
   musicSource?: 'local' | 'netease'
   musicVolume?: number
   neteasePlaylistId?: string
+  musicApiBase?: string
 }
 
 export interface SiteStats {

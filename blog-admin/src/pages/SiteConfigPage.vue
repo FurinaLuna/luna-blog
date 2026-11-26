@@ -94,6 +94,8 @@ const EMPTY_PAGE_POSITIONS: Record<string, number> = Object.fromEntries(
   PAGE_BANNER_ITEMS.map((item) => [item.key, DEFAULT_BANNER_FOCUS]),
 )
 
+const METING_API_PLACEHOLDER = 'https://api.injahow.cn/meting/'
+
 const form = reactive<SiteConfig>({
   siteName: '',
   siteDescription: '',
@@ -123,6 +125,7 @@ const form = reactive<SiteConfig>({
   musicSource: 'local' as 'local' | 'netease',
   musicVolume: 0.7,
   neteasePlaylistId: '',
+  musicApiBase: 'https://api.injahow.cn/meting/',
   welcomeTitle: '欢迎～',
   welcomeName: '我的朋友',
   welcomeGreetings: [
@@ -174,6 +177,7 @@ function fillForm(data: SiteConfig): void {
   form.musicSource = (data.musicSource === 'netease' ? 'netease' : 'local')
   form.musicVolume = typeof data.musicVolume === 'number' ? data.musicVolume : 0.7
   form.neteasePlaylistId = data.neteasePlaylistId ?? ''
+  form.musicApiBase = data.musicApiBase ?? 'https://api.injahow.cn/meting/'
   form.welcomeTitle = data.welcomeTitle ?? '欢迎～'
   form.welcomeName = data.welcomeName ?? '我的朋友'
   form.welcomeGreetings = (() => {
@@ -375,6 +379,7 @@ async function save(): Promise<void> {
   musicSource: form.musicSource,
   musicVolume: form.musicVolume,
   neteasePlaylistId: form.neteasePlaylistId.trim(),
+  musicApiBase: form.musicApiBase.trim(),
   welcomeTitle: form.welcomeTitle.trim(),
     welcomeName: form.welcomeName.trim(),
     welcomeGreetings: form.welcomeGreetings.map((item: string) => item.trim()),
@@ -565,7 +570,7 @@ onMounted(load)
               type="info"
               :closable="false"
               show-icon
-              title="前台左下角的唱片球：本地歌单在「音乐管理」里维护，网易云歌单需要本机运行 NeteaseCloudMusicApi（默认 3001 端口）并填入歌单 id。"
+              title="前台左下角的唱片球：站内歌单在「音乐管理」里上传；在线歌单走 Meting API（公益实例，无需自建），填网易云歌单 id 即可。"
               class="mb-4"
             />
             <el-form label-position="top">
@@ -581,6 +586,12 @@ onMounted(load)
               </el-form-item>
               <el-form-item v-if="form.musicSource === 'netease'" label="网易云歌单 id">
                 <el-input v-model="form.neteasePlaylistId" maxlength="40" placeholder="例如 24381616，取歌单链接里的数字" />
+              </el-form-item>
+              <el-form-item v-if="form.musicSource === 'netease'" label="Meting 接口地址">
+                <el-input v-model="form.musicApiBase" maxlength="200" :placeholder="METING_API_PLACEHOLDER" />
+                <p class="mt-1 text-[12px] text-[var(--text-3)]">
+                  默认公益实例，可换成其它 Meting 兼容地址；返回空列表时前台会提示「暂无可用音源」。
+                </p>
               </el-form-item>
               <el-form-item label="默认音量">
                 <el-slider v-model="form.musicVolume" :min="0" :max="1" :step="0.05" :format-tooltip="(v: number) => `${Math.round(v * 100)}%`" class="max-w-[420px]" />

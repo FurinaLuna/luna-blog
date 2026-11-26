@@ -63,6 +63,7 @@ const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 
     return typeof value === 'number' && value >= 0 && value <= 1 ? value : 0.7
   })
   const neteasePlaylistId = computed(() => config.value?.neteasePlaylistId || '')
+const musicApiBase = computed(() => config.value?.musicApiBase || 'https://api.injahow.cn/meting/')
 
   /** 未配置 socialLinks 时用 github / email 兜底 */
   const resolvedSocialLinks = computed<SocialLink[]>(() => {
@@ -141,6 +142,7 @@ const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 
     musicSource,
     musicVolume,
     neteasePlaylistId,
+  musicApiBase,
     ensureLoaded,
     refresh,
     setVisitStats,

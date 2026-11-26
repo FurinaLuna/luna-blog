@@ -81,6 +81,7 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   musicSource: 'local',
   musicVolume: 0.7,
   neteasePlaylistId: '',
+  musicApiBase: 'https://api.injahow.cn/meting/',
   welcomeTitle: '欢迎～',
   welcomeName: '我的朋友',
   welcomeGreetings: [
@@ -138,6 +139,7 @@ export const siteConfigSchema = z.object({
   musicSource: z.enum(['local', 'netease']).optional(),
   musicVolume: z.number().min(0).max(1).optional(),
   neteasePlaylistId: z.string().trim().max(40).optional(),
+  musicApiBase: z.string().trim().max(200).optional(),
   welcomeTitle: z.string().trim().max(40).optional(),
   welcomeName: z.string().trim().max(20).optional(),
   welcomeGreetings: z.array(z.string().trim().max(120)).length(8).optional(),
