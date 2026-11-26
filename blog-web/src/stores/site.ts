@@ -53,11 +53,8 @@ const friendsTitle = computed(() => config.value?.friendsTitle || `欢迎来到 
     () => config.value?.friendsTip || '申请前请先添加本站友链，审核通过后会尽快上线。',
   )
 
-  /** 音乐悬浮球：总开关 / 音源 / 默认音量 / 网易云歌单 id */
+  /** 音乐悬浮球：总开关 / 默认音量 / 网易云歌单 id */
   const musicEnabled = computed(() => config.value?.musicEnabled ?? true)
-  const musicSource = computed<'local' | 'netease'>(() =>
-    config.value?.musicSource === 'netease' ? 'netease' : 'local',
-  )
   const musicVolume = computed(() => {
     const value = config.value?.musicVolume
     return typeof value === 'number' && value >= 0 && value <= 1 ? value : 0.7
@@ -139,10 +136,9 @@ const musicApiBase = computed(() => config.value?.musicApiBase || 'https://api.i
     friendsContact,
     friendsTip,
     musicEnabled,
-    musicSource,
     musicVolume,
     neteasePlaylistId,
-  musicApiBase,
+    musicApiBase,
     ensureLoaded,
     refresh,
     setVisitStats,

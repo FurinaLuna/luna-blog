@@ -89,12 +89,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '资源管理', group: '内容' },
       },
       {
-        path: 'music',
-        name: 'Music',
-        component: () => import('@/pages/MusicPage.vue'),
-        meta: { title: '音乐管理', group: '内容' },
-      },
-      {
         path: 'comments',
         name: 'Comments',
         component: () => import('@/pages/CommentsPage.vue'),

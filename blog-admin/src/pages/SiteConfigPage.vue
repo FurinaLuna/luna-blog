@@ -122,7 +122,6 @@ const form = reactive<SiteConfig>({
   friendsContact: '',
   friendsTip: '',
   musicEnabled: true,
-  musicSource: 'local' as 'local' | 'netease',
   musicVolume: 0.7,
   neteasePlaylistId: '',
   musicApiBase: 'https://api.injahow.cn/meting/',
@@ -174,7 +173,6 @@ function fillForm(data: SiteConfig): void {
   form.friendsContact = data.friendsContact ?? ''
   form.friendsTip = data.friendsTip ?? ''
   form.musicEnabled = data.musicEnabled ?? true
-  form.musicSource = (data.musicSource === 'netease' ? 'netease' : 'local')
   form.musicVolume = typeof data.musicVolume === 'number' ? data.musicVolume : 0.7
   form.neteasePlaylistId = data.neteasePlaylistId ?? ''
   form.musicApiBase = data.musicApiBase ?? 'https://api.injahow.cn/meting/'
@@ -376,7 +374,6 @@ async function save(): Promise<void> {
       friendsContact: form.friendsContact.trim(),
       friendsTip: form.friendsTip.trim(),
     musicEnabled: form.musicEnabled,
-  musicSource: form.musicSource,
   musicVolume: form.musicVolume,
   neteasePlaylistId: form.neteasePlaylistId.trim(),
   musicApiBase: form.musicApiBase.trim(),
@@ -570,7 +567,7 @@ onMounted(load)
               type="info"
               :closable="false"
               show-icon
-              title="前台左下角的唱片球：站内歌单在「音乐管理」里上传；在线歌单走 Meting API（公益实例，无需自建），填网易云歌单 id 即可。"
+              title="前台左下角的唱片球：填一个网易云歌单 id 即可，歌名/歌手/封面/播放地址都通过 Meting API 实时取，不需要自建服务，也不用在这里上传音频。"
               class="mb-4"
             />
             <el-form label-position="top">
@@ -578,21 +575,14 @@ onMounted(load)
                 <el-switch v-model="form.musicEnabled" />
                 <span class="ml-3 text-[12px] text-[var(--text-3)]">关闭后前台不渲染唱片球</span>
               </el-form-item>
-              <el-form-item label="音源">
-                <el-radio-group v-model="form.musicSource">
-                  <el-radio-button value="local">站内歌单</el-radio-button>
-                  <el-radio-button value="netease">网易云歌单</el-radio-button>
-                </el-radio-group>
-              </el-form-item>
               <el-form-item label="网易云歌单 id">
                 <el-input
                   v-model="form.neteasePlaylistId"
                   maxlength="40"
-                  placeholder="例如 24381616，取歌单链接里的数字"
-                  :disabled="form.musicSource !== 'netease'"
+                  placeholder="例如 3778678，取歌单链接里的数字"
                 />
                 <p class="mt-1 text-[12px] text-[var(--text-3)]">
-                  仅「网易云歌单」音源生效；可与站内歌单同时保留，切回来不用重填。
+                  网易云歌单链接里 /playlist?id= 后面那串数字；留空则前台提示「暂无可用音源」。
                 </p>
               </el-form-item>
               <el-form-item label="Meting 接口地址">
@@ -600,10 +590,9 @@ onMounted(load)
                   v-model="form.musicApiBase"
                   maxlength="200"
                   :placeholder="METING_API_PLACEHOLDER"
-                  :disabled="form.musicSource !== 'netease'"
                 />
                 <p class="mt-1 text-[12px] text-[var(--text-3)]">
-                  在线歌单的取数接口，默认公益实例，可换成其它 Meting 兼容地址；返回空列表时前台会提示「暂无可用音源」。
+                  歌单的取数接口，默认公益实例，可换成其它 Meting 兼容地址；实例失效时前台会提示「暂无可用音源」。
                 </p>
               </el-form-item>
               <el-form-item label="默认音量">

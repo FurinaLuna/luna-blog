@@ -375,7 +375,6 @@ export interface SiteConfig {
   welcomeGreetings: string[]
   /** 音乐悬浮球：总开关 / 音源（local = 站内歌单，netease = 网易云歌单）/ 默认音量 / 网易云歌单 id */
   musicEnabled: boolean
-  musicSource: 'local' | 'netease'
   musicVolume: number
   neteasePlaylistId: string
   musicApiBase: string

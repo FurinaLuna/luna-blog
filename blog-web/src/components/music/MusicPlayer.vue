@@ -10,7 +10,7 @@ import {
   VideoPlay,
 } from '@element-plus/icons-vue'
 import CoverImage from '@/components/common/CoverImage.vue'
-import { getLocalTracks, getNeteaseTracks } from '@/api/music'
+import { getNeteaseTracks } from '@/api/music'
 import type { Track } from '@/api/music'
 import { useSiteStore } from '@/stores/site'
 
@@ -59,7 +59,7 @@ const currentIndex = computed(() => {
 const current = computed<Track | null>(() => tracks.value[currentIndex.value] ?? null)
 const progress = computed(() => (duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0))
 const empty = computed(() => loaded.value && tracks.value.length === 0)
-const sourceLabel = computed(() => (site.musicSource === 'netease' ? '在线歌单（网易云）' : '站内歌单'))
+const sourceLabel = '在线歌单（网易云）'
 
 function persist(): void {
   try {
@@ -83,10 +83,7 @@ function resolveUrl(track: Track): string | null {
 
 async function loadTracks(): Promise<void> {
   if (!site.musicEnabled) return
-  const list =
-    site.musicSource === 'netease'
-      ? await getNeteaseTracks(site.neteasePlaylistId, site.musicApiBase)
-      : await getLocalTracks()
+  const list = await getNeteaseTracks(site.neteasePlaylistId, site.musicApiBase)
   tracks.value = list
   loaded.value = true
   if (list.length === 0) return
@@ -190,7 +187,7 @@ watch(volume, (value) => {
 })
 
 watch(
-  () => [site.musicEnabled, site.musicSource, site.neteasePlaylistId] as const,
+  () => [site.musicEnabled, site.neteasePlaylistId, site.musicApiBase] as const,
   () => {
     void loadTracks()
   },

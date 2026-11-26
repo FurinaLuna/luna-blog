@@ -322,9 +322,8 @@ export interface SiteConfig {
   profileBanner?: string
   /** 站点图标（浏览器标签页 favicon），空 = 用 public/favicon.svg */
   favicon?: string
-  /** 音乐悬浮球：总开关 / 音源 / 默认音量 / 网易云歌单 id */
+  /** 音乐悬浮球：总开关 / 默认音量 / 网易云歌单 id */
   musicEnabled?: boolean
-  musicSource?: 'local' | 'netease'
   musicVolume?: number
   neteasePlaylistId?: string
   musicApiBase?: string
