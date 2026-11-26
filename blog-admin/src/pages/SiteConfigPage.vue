@@ -587,7 +587,7 @@ onMounted(load)
                   <el-radio-button value="tencent">QQ 音乐</el-radio-button>
                 </el-radio-group>
               </el-form-item>
-              <el-form-item label="网易云歌单 id">
+              <el-form-item v-if="form.musicServer === 'netease'" label="网易云歌单 id">
                 <el-input
                   v-model="form.neteasePlaylistId"
                   maxlength="40"
@@ -597,7 +597,7 @@ onMounted(load)
                   网易云歌单链接里 /playlist?id= 后面那串数字；留空则前台提示「暂无可用音源」。
                 </p>
               </el-form-item>
-              <el-form-item label="QQ 音乐歌单 id">
+              <el-form-item v-if="form.musicServer === 'tencent'" label="QQ 音乐歌单 id">
                 <el-input
                   v-model="form.qqPlaylistId"
                   maxlength="40"
