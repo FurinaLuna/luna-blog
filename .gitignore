@@ -5,6 +5,7 @@ node_modules/
 # builds
 dist/
 dist-ssr/
+build/
 *.local
 
 # env & secrets
@@ -12,7 +13,7 @@ dist-ssr/
 .env.*
 !.env.example
 
-# uploads (runtime data, not source)
+# runtime data
 blog-server/uploads/
 
 # logs
@@ -28,7 +29,7 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# local reference copy of the original project (never commit)
+# local reference copy of the original project
 _ref/
 .infinite-canvas/
 
@@ -37,18 +38,15 @@ coverage/
 .vite/
 *.tsbuildinfo
 
-# local screenshot / scratch output
+# local screenshots / scratch output
 .shots/
 .tmp-*/
 *.screenshot.png
 
-# 本地提示词草稿（不入库）
+# local draft prompt (not part of the repo)
 vue3-blog重写提示词.md
 *.md.bak
 
-# 本地临时脚本 / 凭据 / 提交信息文件
+# local scratch files
 rmsg*.txt
 *.tmp-token.txt
-
-# 本地构建产物（deploy/ops/build-local.sh 生成）
-build/
