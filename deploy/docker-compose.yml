@@ -1,0 +1,84 @@
+﻿# =============================================================================
+# docker-compose.yml 鈥?Luna Blog 鐢熶骇鏍堬紙MySQL + 鍚庣 API + Nginx 闈欐€?鍙嶄唬锛?#
+# 鐩綍绾﹀畾锛堟湇鍔″櫒锛夛細/var/www/luna-blog
+#   docker-compose.yml   鏈枃浠讹紙root:root 644锛?#   api.env              鍚庣鐜鍙橀噺锛堜粠 docker/api.env.example 澶嶅埗鍚庡～鍐欙紝鍚瘑閽ワ紝鍕垮叆搴擄紝600锛?#   compose.env          浠?compose 鎻掑€肩敤锛圡YSQL_ROOT_PASSWORD / DB_PASSWORD 绛夛紝600锛?#   src/                 浠撳簱婧愮爜锛圕I 鐢?rsync 鍚屾鍒拌繖閲岋紝鏋勫缓涓婁笅鏂囧氨鏄畠锛?#
+# 甯哥敤鍛戒护锛?#   docker compose up -d --build        # 鏋勫缓骞跺惎鍔?鏇存柊
+#   docker compose ps                   # 鏌ョ湅鐘舵€?#   docker compose logs -f api          # 鐪嬪悗绔棩蹇?#   docker compose down                 # 鍋滄锛堜繚鐣欐暟鎹嵎锛?#
+# 鏁版嵁锛?#   mysql-data 鍛藉悕鍗?       鈫?MySQL 鏁版嵁鐩綍
+#   /var/www/luna-blog/data/uploads 鈫?瀹夸富鏈轰笂浼犵洰褰曪紙bind mount锛屽浠借剼鏈户缁彲鐢級
+# =============================================================================
+name: luna-blog
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=200
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?compose.env 閲岀己灏?MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-luna_blog}
+      MYSQL_USER: ${DB_USER:-luna_blog}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?compose.env 閲岀己灏?DB_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    networks: [luna]
+
+  api:
+    build:
+      context: ./src
+      dockerfile: docker/api.Dockerfile
+    image: ${API_IMAGE:-luna-blog-api:local}
+    restart: unless-stopped
+    env_file:
+      - ./api.env
+    environment:
+      # 瑕嗙洊 api.env 閲岀殑鏈満杩炴帴淇℃伅锛氬鍣ㄥ唴璧?compose 缃戠粶
+      DB_HOST: db
+      DB_PORT: "3306"
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - ${UPLOAD_HOST_DIR:-/var/www/luna-blog/data/uploads}:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    networks: [luna]
+
+  web:
+    build:
+      context: ./src
+      dockerfile: docker/web.Dockerfile
+    image: ${WEB_IMAGE:-luna-blog-web:local}
+    restart: unless-stopped
+    ports:
+      # 鍏綉 80锛涘悗鍙伴毀閬撶敤 127.0.0.1:8080锛堝彧鐩戝惉鏈満锛?      - "80:80"
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ${UPLOAD_HOST_DIR:-/var/www/luna-blog/data/uploads}:/data/uploads:ro
+    depends_on:
+      - api
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    networks: [luna]
+
+volumes:
+  mysql-data:
+
+networks:
+  luna:
+    driver: bridge

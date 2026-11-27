@@ -1,0 +1,21 @@
+# 构建上下文排除项（docker build 在仓库根目录执行）
+.git
+.github
+build
+_ref
+.tmp-shots
+*.log
+
+**/node_modules
+**/dist
+**/.shots
+**/.env
+**/.env.*
+!docker/*.env.example
+
+blog-server/uploads
+
+docs/screenshots
+assets
+*.md
+!README.md
