@@ -1,3 +1,4 @@
+// ci: 验证 GitHub Actions 自动发布（push blog-web/** 即上线）
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { PiniaColada } from '@pinia/colada'
