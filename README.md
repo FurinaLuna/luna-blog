@@ -47,7 +47,7 @@ luna-blog/
 │   ├── PROTOTYPE-*.md # 原型考古档案（前台 / 后台逐像素说明，实现依据）
 │   └── reference-*.md # 原项目结构参考（重写前调研留档）
 ├── scripts/smoke-api.mjs  # 端到端接口冒烟（33 项断言）
-└── deploy/            # Nginx / systemd 部署样例
+└── deploy/            # Docker Compose、运维脚本、systemd 单元（宿主部署样例见 RUNBOOK 附录）
 ```
 
 界面截图见 `docs/screenshots/`：`home-hero` / `home-list` / `article` / `albums` / `message-wall` /
@@ -131,45 +131,65 @@ node scripts/smoke-api.mjs
 | blog-web | `pnpm check` | 仅类型检查（TS 7 查 `.ts`、TS 6 + vue-tsc 查 `.vue`） |
 | blog-admin | `pnpm dev` / `pnpm build` | 同上（页面为自建骨架，无第三方后台模板） |
 
-## 生产部署
+## 生产部署（Docker Compose）
 
-### 1. 构建
+现网以 Docker Compose 运行三个容器：`web`（nginx + 前台/后台静态）、`api`（Node/Koa）、`db`（MySQL 8）。
+完整运维手册（发布、回滚、备份恢复、后台隧道、排障）见 [`docs/ops/RUNBOOK.md`](docs/ops/RUNBOOK.md) 第 0 章。
 
-```bash
-pnpm -C blog-web build      # 产物 blog-web/dist
-pnpm -C blog-admin build    # 产物 blog-admin/dist
-```
-
-### 2. 启动 API
+### 1. 首次部署
 
 ```bash
-cd blog-server
-NODE_ENV=production node src/server.js
+# 服务器上，Compose 项目目录 /var/www/luna-blog/
+cp deploy/docker-compose.yml .
+cp docker/api.env.example api.env        # 填 DB / JWT / ADMIN 等（与 blog-server/.env 同键）
+
+# compose.env：MYSQL_ROOT_PASSWORD、DB_NAME、DB_USER、DB_PASSWORD
+docker compose --env-file compose.env up -d
 ```
 
-建议用进程守护（样例见 `deploy/luna-blog.service`，pm2 亦可：`pm2 start src/server.js --name luna-blog`）。
-生产环境需要把 `UPLOAD_DIR` 指向持久化目录（默认 `blog-server/uploads`，已加入 `.gitignore`）。
+- `api.env` 里容器内地址：`DB_HOST=db`、`UPLOAD_DIR=/data/uploads`
+- `uploads` 以 bind mount 挂宿主目录（`/var/www/luna-blog/data/uploads`）；宿主目录 `755`、文件 `644`，`api` 用 `APP_UID/APP_GID` 与宿主属主一致，保证新上传文件可被 nginx 读
+- 首次建库：`pnpm -C blog-server db:init`（本地连库执行）或导入 `backups/db-*.sql.gz`
+- 后台仅内网：容器 nginx 对 `/admin/`、`/api/admin/` 只允许 `127.0.0.1`、`::1`、`172.16.0.0/12`，通过 SSH 隧道访问（见下）
 
-### 3. Nginx 反向代理
+### 2. 日常发布
 
-参考 `deploy/nginx.conf.example`，要点：
+```bash
+git push     # 命中 paths 过滤即触发 .github/workflows/deploy-docker.yml
+```
 
-- **推荐形态：主域放前台、`admin.` 子域放后台**，两边各自在域名根路径，后台 history 不需要 base
-- 同域子路径（`/admin/`）也可行，但后台必须用 `vite build --base=/admin/` 构建（源码已按 `import.meta.env.BASE_URL` 取 base）
-- 前台静态目录指向 `blog-web/dist`，`try_files $uri $uri/ /index.html`（history 路由必须回退）
-- `/api/`、`/uploads/`、`/rss.xml`、`/robots.txt`、`/sitemap.xml` 反代到 `127.0.0.1:3000`
-- **所有安全头写在 server 级**：nginx 的 `add_header` 就近覆盖，location 里只要写了 header 就要把安全头再写一遍
-- `/api/` 必须覆盖 `proxy_set_header X-Forwarded-For $remote_addr;`，否则客户端可伪造 XFF 绕过限频
-- 上传目录建议单独 `client_max_body_size 10m;`
+流水线：`buildx` 构建并推送 `ghcr.io/furinaluna/luna-blog-{api,web}:<日期-运行号>` → SSH 到服务器执行
+`docker-release.sh <tag>`（写 `images.env` → `docker compose pull` → `up -d api web` → 轮询 `/api/health` 60s，失败自动回滚上一组 tag）。
+
+### 3. 手动操作 / 回滚 / 备份 / 后台
+
+```bash
+cd /var/www/luna-blog
+
+# 状态与日志
+sudo docker compose --env-file compose.env --env-file images.env ps
+sudo docker compose --env-file compose.env --env-file images.env logs -f --tail=100 api
+
+# 手动切镜像 tag（等价于 CI 的 deploy 步骤）
+sudo bash src/deploy/ops/docker-release.sh <tag>
+
+# 备份（容器内 mysqldump + uploads tar + SHA256SUMS，每日 03:30 由 systemd timer 自动跑）
+sudo bash src/deploy/ops/backup-docker.sh
+
+# 后台隧道（本机执行，然后浏览器开 http://127.0.0.1:8080/admin/）
+ssh -L 8080:127.0.0.1:8080 ubuntu@43.143.72.12
+```
 
 ### 4. 上线前检查
 
-- [ ] `blog-server/.env` 已配置且**未提交**；`JWT_SECRET` 已换成随机强口令
+- [ ] `api.env` / `compose.env` 已在服务器就位且**未提交**；`JWT_SECRET` 已换成随机强口令
 - [ ] 后台首次登录完成改密，个人中心确认密码已更新
 - [ ] `CORS_ORIGINS` 改成真实域名，`SITE_URL` 同步
 - [ ] 站点配置（站点名 / 头像 / 关于 / 页脚 / 备案号）已在后台填写
 - [ ] `GET /rss.xml` 可访问，文章详情页 URL 与 RSS 中一致
 - [ ] 上传一张图片验证 `/uploads/**` 可访问
+- [ ] `docker compose ps` 三容器均 `healthy`，`images.env` 记录的是 GHCR tag（而非 `*:local`）
+- [ ] `systemctl is-active luna-blog-backup-docker.timer luna-blog-healthcheck-docker.timer` 均为 `active`
 
 ## 安全设计
 
