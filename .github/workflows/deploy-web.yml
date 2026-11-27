@@ -60,10 +60,18 @@ jobs:
 
       - name: Build release tarball
         run: |
-          set -euo pipefail
+          set -uo pipefail
           VERSION="$(TZ=Asia/Shanghai date +%Y%m%d-%H%M)-gh${{ github.run_number }}"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          VERSION="$VERSION" bash deploy/ops/build-local.sh
+          if ! VERSION="$VERSION" bash deploy/ops/build-local.sh 2>&1 | tee /tmp/build.log; then
+            {
+              echo "### 构建失败（build-local.sh）"
+              echo '```'
+              tail -n 120 /tmp/build.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
           test -f "build/release-$VERSION.tgz"
 
       - name: Setup SSH
