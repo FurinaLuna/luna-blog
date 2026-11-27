@@ -311,6 +311,29 @@ sudo systemctl status luna-blog-backup.service --no-pager
 
 ## 3. 日常发布流程
 
+### 3.0 一键部署（Windows 本机，最省事）
+
+把「构建 → 上传 → 切版本 → 健康检查」包成一条命令：
+
+```powershell
+# 在仓库根目录（Git Bash / PowerShell 均可，用 Windows PowerShell 5.1 也行）
+.\deploy\ops\deploy.ps1                 # 等价于 -Target web：发前台 + 后台
+.\deploy\ops\deploy.ps1 -Target server  # 只更新后端（blog-server 源码包 → backend-release.sh）
+.\deploy\ops\deploy.ps1 -DryRun         # 只打印要执行的命令，不落地
+.\deploy\ops\deploy.ps1 -Version 20261127-1200 -Target web
+```
+
+- 它做的就是 3.1 / 3.2 的手工步骤，额外带：健康检查失败即报错、末尾打印回滚命令。
+- 前置条件：本机能跑 `git`/`node`/`pnpm`，且能免密 `ssh ubuntu@43.143.72.12`（本机实际工具链：`node` 在 `D:\Dev\Node\node24`、Git 在 `D:\Dev\Git`）。
+- 脚本会自动把 node 目录注入 PATH，并设置 `MSYS_NO_PATHCONV=1`（否则 Git Bash 会把 `--base=/admin/` 改写成 Windows 路径，后台产物引用全坏）。
+- 如果改了脚本本身：`edit` 工具会写成无 BOM 的 UTF-8，Windows PowerShell 5.1 会按 ANSI 读而报语法错，需要重新加 BOM：
+
+```powershell
+$p='.\deploy\ops\deploy.ps1'
+$t=[IO.File]::ReadAllText($p,(New-Object Text.UTF8Encoding($false)))
+[IO.File]::WriteAllText($p,$t,(New-Object Text.UTF8Encoding($true)))
+```
+
 ### 3.1 前端（改了 blog-web / blog-admin）
 
 ```
