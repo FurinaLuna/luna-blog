@@ -1,4 +1,4 @@
-﻿# =============================================================================
+# =============================================================================
 # docker-compose.yml 鈥?Luna Blog 鐢熶骇鏍堬紙MySQL + 鍚庣 API + Nginx 闈欐€?鍙嶄唬锛?#
 # 鐩綍绾﹀畾锛堟湇鍔″櫒锛夛細/var/www/luna-blog
 #   docker-compose.yml   鏈枃浠讹紙root:root 644锛?#   api.env              鍚庣鐜鍙橀噺锛堜粠 docker/api.env.example 澶嶅埗鍚庡～鍐欙紝鍚瘑閽ワ紝鍕垮叆搴擄紝600锛?#   compose.env          浠?compose 鎻掑€肩敤锛圡YSQL_ROOT_PASSWORD / DB_PASSWORD 绛夛紝600锛?#   src/                 浠撳簱婧愮爜锛圕I 鐢?rsync 鍚屾鍒拌繖閲岋紝鏋勫缓涓婁笅鏂囧氨鏄畠锛?#
@@ -40,6 +40,8 @@ services:
       context: ./src
       dockerfile: docker/api.Dockerfile
     image: ${API_IMAGE:-luna-blog-api:local}
+    # 与宿主机上传目录属主一致（luna-blog），否则容器写 /data/uploads 会 Permission denied
+    user: "${APP_UID:-999}:${APP_GID:-987}"
     restart: unless-stopped
     env_file:
       - ./api.env
