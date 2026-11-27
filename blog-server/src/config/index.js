@@ -29,6 +29,9 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default('uploads'),
   UPLOAD_MAX_IMAGE_MB: z.coerce.number().positive().default(5),
   UPLOAD_MAX_FILE_MB: z.coerce.number().positive().default(10),
+
+  /** 访问记录保留天数：历史数据回填后需要调大，否则会被 90 天清理策略删掉 */
+  VISIT_RETENTION_DAYS: z.coerce.number().int().min(1).max(36500).default(90),
 })
 
 const parsed = envSchema.safeParse(process.env)
@@ -67,5 +70,8 @@ export const config = Object.freeze({
     urlPrefix: '/uploads',
     maxImageBytes: env.UPLOAD_MAX_IMAGE_MB * 1024 * 1024,
     maxFileBytes: env.UPLOAD_MAX_FILE_MB * 1024 * 1024,
+  },
+  visit: {
+    retentionDays: env.VISIT_RETENTION_DAYS,
   },
 })

@@ -5,8 +5,8 @@ import { config } from '../../config/index.js'
 
 /** 统计缓存时长：同一进程内 60 秒内重复读取不再全表 COUNT */
 const STATS_CACHE_TTL_MS = 60 * 1000
-/** 访问记录保留天数：超期数据在每天首次上报时清理 */
-const RETENTION_DAYS = 90
+/** 访问记录保留天数：默认 90 天，可用 VISIT_RETENTION_DAYS 调大以保留历史回填数据 */
+const RETENTION_DAYS = config.visit.retentionDays
 /** 清理间隔：24 小时内最多执行一次，避免每个上报请求都删一遍 */
 const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -41,7 +41,7 @@ function bumpStatsCache() {
 }
 
 /**
- * 删除 90 天前的访问记录，让 visit 表不再无限增长。
+ * 删除超过保留期的访问记录，让 visit 表不再无限增长（默认 90 天）。
  * 模块级时间戳保证 24 小时内最多跑一次；失败只记日志，不影响上报主流程。
  */
 async function cleanupExpiredVisits() {
