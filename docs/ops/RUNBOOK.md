@@ -385,6 +385,38 @@ sudo systemctl restart luna-blog
 发布前：`systemctl is-active luna-blog`、`df -h /var/www/luna-blog`、本机 `pnpm -C blog-web build` 通过。
 发布后：`/api/health` 返回 `{"code":0,...}`、首页 200、`/rss.xml` 200、后台隧道可登录、上一版本仍在 `releases/`。
 
+### 3.4 GitHub Actions 自动发布（push 即上线）
+
+仓库里有两个工作流，push 到 `main` 命中路径时自动构建并发布：
+
+| 工作流 | 触发路径 | 做什么 |
+| --- | --- | --- |
+| `.github/workflows/deploy-web.yml` | `blog-web/**`、`blog-admin/**`、`deploy/ops/{build-local,release,lib}.sh` | ubuntu runner 上 `build-local.sh` 构建 → scp 发布包 → 服务器 `release.sh` 切版本 → 健康检查 |
+| `.github/workflows/deploy-server.yml` | `blog-server/**`、`deploy/ops/{backend-release,lib}.sh` | runner 上 `pnpm install + pnpm build` 自检 → 打源码包 → scp → 服务器 `backend-release.sh` 同步重启 → 健康检查 |
+
+两个都要在 **repo → Settings → Secrets and variables → Actions** 配好（只需一次）：
+
+| Secret | 必填 | 值 |
+| --- | --- | --- |
+| `LUNA_SSH_HOST` | 是 | `43.143.72.12` |
+| `LUNA_SSH_KEY` | 是 | CI 专用私钥全文（含 `-----BEGIN/END OPENSSH PRIVATE KEY-----`，末尾保留换行） |
+| `LUNA_SSH_USER` | 否 | 默认 `ubuntu` |
+| `LUNA_SSH_PORT` | 否 | 默认 `22` |
+
+CI 私钥的公钥已在服务器 `ubuntu:~/.ssh/authorized_keys`（注释 `github-actions@luna-blog`）。轮换方法：
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions@luna-blog" -f ~/.ssh/luna-ci-deploy -N ''
+# 公钥追加到 ubuntu@43.143.72.12:~/.ssh/authorized_keys，私钥贴进 LUNA_SSH_KEY
+```
+
+要点：
+- runner 只需**出站**访问服务器 22 端口，服务器不需要能访问 GitHub（它现在连不上）；
+- 想让服务器也能 `git pull` 才需要额外配代理/SSH-over-443，不配也不影响 Actions；
+- 发布失败不影响线上：`release.sh` 是「解包 → `nginx -t` → 切软链」的原子流程，失败停在旧版本；
+- 手动补发：Actions 页面选 `deploy-web` / `deploy-server` → **Run workflow**；
+- 工作流也用 `concurrency` 串行化，避免两次 push 抢同一个 `current` 软链。
+
 ---
 
 ## 4. 回滚
