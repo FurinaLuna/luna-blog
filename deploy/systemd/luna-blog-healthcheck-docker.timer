@@ -1,0 +1,18 @@
+# =============================================================================
+# luna-blog-healthcheck-docker.timer - probe the Docker stack every minute
+#
+# Install:
+#   sudo cp deploy/systemd/luna-blog-healthcheck-docker.* /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now luna-blog-healthcheck-docker.timer
+# =============================================================================
+[Unit]
+Description=Minute health check for Luna Blog Docker stack
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+Unit=luna-blog-healthcheck-docker.service
+
+[Install]
+WantedBy=timers.target

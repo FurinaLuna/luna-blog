@@ -3,6 +3,123 @@
 > 适用环境：Ubuntu 24.04 / 2 核 4GB / 公网 `43.143.72.12` / 备案进行中（暂用纯 HTTP）。
 > 本手册里的路径、账号、变量名与 `deploy/ops/*.sh`、`deploy/systemd/*`、`deploy/nginx/*` 一一对应。
 > 标注 **待验证** 的条目表示：仓库里无法 100% 确认线上实际值，操作前先在服务器上核对。
+>
+> **2026-11-27 起，生产形态已切换为 Docker Compose（见第 0 章）。**
+> 第 1–11 章保留为「迁移前的宿主机部署」说明（legacy），用于回滚参考与故障对照；日常操作请以第 0 章为准。
+
+---
+
+## 0. 当前生产形态：Docker Compose
+
+### 0.1 栈结构
+
+```
+浏览器 ──HTTP:80──> [web 容器 nginx] ──/api──> [api 容器 koa:3000] ──> [db 容器 mysql:8.0]
+                        │
+                        └─ 静态站点 /usr/share/nginx/html/web
+                           后台     /usr/share/nginx/html/admin（仅内网）
+```
+
+- Compose 项目目录：服务器 `/var/www/luna-blog/`（`docker-compose.yml` + `compose.env` + `api.env` + `images.env`）
+- 服务：`web`（nginx:alpine，发布 `80:80` 与 `127.0.0.1:8080:80`）、`api`（node:22-alpine，仅内网 3000）、`db`（mysql:8.0，仅内网 3306）
+- 数据卷：`db` 用命名卷 `mysql-data`；`uploads` 用宿主目录 `/var/www/luna-blog/data/uploads`（bind mount，`/data/uploads`）
+- 源码：`/var/www/luna-blog/src`（**不是 git 仓库**，由 `git archive` 解包而来，供镜像构建用）
+
+### 0.2 日常发布（CI/CD，推荐）
+
+```bash
+git push            # 命中 paths 过滤即触发 .github/workflows/deploy-docker.yml
+```
+
+工作流：`buildx` 构建 `ghcr.io/furinaluna/luna-blog-{api,web}:<日期-运行号>` 与 `:latest` → SSH 到服务器执行
+`docker-release.sh <tag>`（写 `images.env` → `docker compose pull` → `up -d api web` → 轮询 `/api/health` 60s，
+失败自动回滚到上一组 tag）。
+
+- 查看：<https://github.com/FurinaLuna/luna-blog/actions/workflows/deploy-docker.yml>
+- 首次跑通前服务器用的是本地镜像 tag `*:local`，`images.env` 由首次 CI 部署写入。
+
+### 0.3 手动操作（服务器）
+
+```bash
+cd /var/www/luna-blog
+
+# 状态 / 日志
+sudo docker compose --env-file compose.env --env-file images.env ps
+sudo docker compose --env-file compose.env --env-file images.env logs -f --tail=100 api
+sudo docker compose --env-file compose.env --env-file images.env logs -f --tail=100 web
+
+# 手动切某个镜像 tag（等价于 CI 的 deploy 步骤）
+sudo bash src/deploy/ops/docker-release.sh 20261127-1250-12
+
+# 只重启，不换 tag
+sudo docker compose --env-file compose.env --env-file images.env restart api web
+
+# 停 / 起整栈
+sudo docker compose --env-file compose.env --env-file images.env down
+sudo docker compose --env-file compose.env --env-file images.env up -d
+```
+
+### 0.4 回滚
+
+镜像按 tag 保存在 GHCR，`images.env` 记录当前一组：
+
+```bash
+sudo cat /var/www/luna-blog/images.env        # API_IMAGE / WEB_IMAGE 当前 tag
+sudo cp /var/www/luna-blog/images.env /var/www/luna-blog/images.env.bak
+# 改成上一组 tag 后
+sudo docker compose --env-file compose.env --env-file images.env up -d api web
+```
+
+> `docker-release.sh` 失败时会自动把 `images.env` 还原成上一组，不需要手工回滚。
+> 若 GHCR 不可用，可临时把 `API_IMAGE`/`WEB_IMAGE` 指回服务器本地的 `luna-blog-api:local` / `luna-blog-web:local`。
+
+### 0.5 备份与恢复
+
+```bash
+# 手动备份（容器内 mysqldump + uploads tar + SHA256SUMS）
+sudo bash /var/www/luna-blog/src/deploy/ops/backup-docker.sh
+
+# 产物
+sudo ls -lh /var/www/luna-blog/backups | tail
+
+# 恢复数据库（示例：把备份灌回 db 容器）
+sudo zcat /var/www/luna-blog/backups/db-<时间>.sql.gz \
+  | sudo docker compose --env-file compose.env --env-file images.env exec -T db \
+      sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" luna_blog'
+
+# 恢复上传目录
+sudo tar xzf /var/www/luna-blog/backups/uploads-<时间>.tar.gz -C /var/www/luna-blog/data/
+```
+
+> 宿主目录权限：`/var/www/luna-blog/data/uploads` 必须 `755`、文件 `644`（容器内 nginx 以 uid 101 读）；
+> `api` 容器用 `APP_UID/APP_GID`（默认 999/987，即宿主 `luna-blog`）运行，保证新上传文件可被读。
+
+### 0.6 后台访问（仅内网）
+
+```bash
+# 本机执行：把服务器 127.0.0.1:8080 映射到本机 8080
+ssh -L 8080:127.0.0.1:8080 ubuntu@43.143.72.12
+# 浏览器打开
+http://127.0.0.1:8080/admin/
+```
+
+Nginx 里 `/admin/` 与 `/api/admin/` 仅允许 `127.0.0.1`、`::1`、`172.16.0.0/12`（SSH 隧道经 docker 网关）。
+
+### 0.7 健康检查与排障
+
+```bash
+curl -fsS http://43.143.72.12/api/health
+sudo docker compose --env-file compose.env --env-file images.env ps
+sudo docker inspect --format '{{.State.Health.Status}}' $(sudo docker compose --env-file compose.env --env-file images.env ps -q api)
+sudo docker stats --no-stream
+df -h /   # 镜像与卷都在 /var/lib/docker
+```
+
+### 0.8 迁移前宿主机形态（legacy，仅回滚参考）
+
+宿主 `nginx` + `systemd luna-blog` + 宿主 MySQL 已 `disable --now`，配置仍在：
+`/etc/nginx/sites-enabled/luna-blog`、`/etc/systemd/system/luna-blog.service`、`apt mysql-server`。
+如需紧急回到旧形态：`sudo systemctl enable --now nginx luna-blog mysql`（同时 `docker compose down` 释放 80 端口）。
 
 ---
 

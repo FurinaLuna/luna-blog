@@ -1,0 +1,21 @@
+# =============================================================================
+# luna-blog-healthcheck-docker.service - one-shot health probe for Docker stack
+#
+# Install:
+#   sudo cp deploy/systemd/luna-blog-healthcheck-docker.* /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl disable --now luna-blog-healthcheck.timer   # legacy host timer
+#   sudo systemctl enable --now luna-blog-healthcheck-docker.timer
+# =============================================================================
+[Unit]
+Description=Luna Blog health check (Docker stack, once)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/var/www/luna-blog/src/deploy/ops/healthcheck-docker.sh
+User=root
+Nice=10
+TimeoutStartSec=120

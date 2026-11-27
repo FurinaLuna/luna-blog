@@ -1,0 +1,27 @@
+# =============================================================================
+# luna-blog-backup-docker.service - one-shot backup for the Docker stack
+#   (mysqldump inside db container + tar of uploads dir), triggered daily by
+#   luna-blog-backup-docker.timer at 03:30.
+#
+# Install:
+#   sudo cp deploy/systemd/luna-blog-backup-docker.* /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl disable --now luna-blog-backup.timer   # legacy host timer
+#   sudo systemctl enable --now luna-blog-backup-docker.timer
+#
+# Output: /var/www/luna-blog/backups (root 700), retention handled by the script.
+# =============================================================================
+[Unit]
+Description=Luna Blog backup (Docker stack: MySQL + uploads)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/var/www/luna-blog/src/deploy/ops/backup-docker.sh
+User=root
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutStartSec=1800

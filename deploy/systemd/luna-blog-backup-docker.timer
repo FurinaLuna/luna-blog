@@ -1,0 +1,23 @@
+# =============================================================================
+# luna-blog-backup-docker.timer - daily backup of the Docker stack at 03:30
+#
+# Install:
+#   sudo cp deploy/systemd/luna-blog-backup-docker.* /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now luna-blog-backup-docker.timer
+#
+# Check:
+#   systemctl list-timers 'luna-blog-*'
+#   journalctl -u luna-blog-backup-docker.service -n 50 --no-pager
+#   sudo systemctl start luna-blog-backup-docker.service   # run now
+# =============================================================================
+[Unit]
+Description=Daily Luna Blog Docker backup at 03:30
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+Unit=luna-blog-backup-docker.service
+
+[Install]
+WantedBy=timers.target
