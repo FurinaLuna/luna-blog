@@ -100,8 +100,16 @@ trap cleanup EXIT
 
 export MYSQL_PWD="$DB_PASS"
 
+# Compose needs the project file even when only `exec` is used (systemd runs
+# with cwd=/), so pin the compose file explicitly.
+COMPOSE_FILE="$APP_ROOT/docker-compose.yml"
+[[ -f "$COMPOSE_FILE" ]] || die "compose file not found: $COMPOSE_FILE"
+compose() {
+  docker compose -f "$COMPOSE_FILE" --env-file "$COMPOSE_ENV" "$@"
+}
+
 log "dump database $DB_NAME from container"
-if ! docker compose --env-file "$COMPOSE_ENV" exec -T db \
+if ! compose exec -T db \
   sh -c 'exec mysqldump --single-transaction --routines --triggers --default-character-set=utf8mb4 -u"$0" "$1"' \
   "$DB_USER" "$DB_NAME" 2>"$BACKUP_DIR/.mysqldump.err" | gzip -9 >"$DB_PARTIAL"; then
   log "mysqldump failed:"
