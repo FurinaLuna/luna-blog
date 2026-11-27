@@ -115,7 +115,40 @@ sudo docker stats --no-stream
 df -h /   # 镜像与卷都在 /var/lib/docker
 ```
 
-### 0.8 迁移前宿主机形态（legacy，仅回滚参考）
+### 0.8 访问统计（PV/UV）保留期与历史回填
+
+`blog-server/src/modules/visit/visit.service.js` 会在每次 `POST /api/visit` 后异步清理过期记录，保留天数由环境变量 `VISIT_RETENTION_DAYS` 控制（默认 90，范围 1–36500）。
+
+> **坑**：历史回填的数据时间戳是旧站真实日期（2024-01 起跨约 946 天），如果保留期还是默认 90 天，第一条真实访问就会把回填行整批删掉，前端“总访问量/总访客”看起来像被重置。生产 `api.env` 必须显式设大：
+
+```ini
+# /var/www/luna-blog/api.env
+VISIT_RETENTION_DAYS=3650
+```
+
+改完重建 api 容器生效：`sudo docker compose -f docker-compose.yml --env-file compose.env up -d api`，再用 `sudo docker compose ... exec -T api printenv VISIT_RETENTION_DAYS` 复核。
+
+回填旧站历史（3405 PV / 1893 UV，公式与旧站迁移脚本一致）：
+
+```bash
+CF="-f /var/www/luna-blog/docker-compose.yml --env-file /var/www/luna-blog/compose.env"
+cat > /tmp/seed-visit.sql <<'SQL'
+SET SESSION cte_max_recursion_depth = 5000;
+INSERT INTO visit (ip_hash, path, user_agent, referer, created_at, updated_at)
+WITH RECURSIVE seq(n) AS (
+  SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 3405
+)
+SELECT LEFT(SHA2(CONCAT('legacy-', LEAST(n, 1893)), 256), 12), '/', 'legacy-import', '',
+       DATE_ADD('2024-01-01 06:40:00', INTERVAL 400 * (n - 1) MINUTE),
+       DATE_ADD('2024-01-01 06:40:00', INTERVAL 400 * (n - 1) MINUTE)
+FROM seq;
+SQL
+sudo docker compose $CF exec -T db sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" luna_blog' < /tmp/seed-visit.sql
+```
+
+统计接口有 60 秒缓存，回填后等一分钟再刷新，或触发一次真实访问。
+
+### 0.9 迁移前宿主机形态（legacy，仅回滚参考）
 
 宿主 `nginx` + `systemd luna-blog` + 宿主 MySQL 已 `disable --now`，配置仍在：
 `/etc/nginx/sites-enabled/luna-blog`、`/etc/systemd/system/luna-blog.service`、`apt mysql-server`。
