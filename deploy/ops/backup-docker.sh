@@ -51,6 +51,9 @@ DB_PASS="$(env_value "$API_ENV" DB_PASSWORD || true)"
 DB_PASS="${DB_PASS:-$(env_value "$COMPOSE_ENV" DB_PASSWORD || true)}"
 DB_NAME="${DB_NAME:-luna_blog}"
 DB_USER="${DB_USER:-luna_blog}"
+# Prefer the container root account: mysqldump needs table+dump privileges that
+# the app user may not have, and the root password always lives in compose.env.
+DB_ROOT_PASS="$(env_value "$COMPOSE_ENV" MYSQL_ROOT_PASSWORD || true)"
 
 TS="$(date +%Y%m%d-%H%M%S)"
 DOW="$(date +%u)"
@@ -73,7 +76,15 @@ if [[ "${EUID}" -ne 0 ]]; then
   exec sudo -E env "DRY_RUN=${DRY_RUN:-0}" bash "$0" "$@"
 fi
 
-[[ -n "$DB_PASS" ]] || die "DB_PASSWORD not found in $API_ENV or $COMPOSE_ENV"
+[[ -n "$DB_ROOT_PASS$DB_PASS" ]] || die "no database password found in $COMPOSE_ENV or $API_ENV"
+
+# Root first (full dump privileges), app user as fallback.
+DUMP_USER="root"
+DUMP_PASS="$DB_ROOT_PASS"
+if [[ -z "$DUMP_PASS" ]]; then
+  DUMP_USER="$DB_USER"
+  DUMP_PASS="$DB_PASS"
+fi
 
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
@@ -108,10 +119,10 @@ compose() {
   docker compose -f "$COMPOSE_FILE" --env-file "$COMPOSE_ENV" "$@"
 }
 
-log "dump database $DB_NAME from container"
-if ! compose exec -T db \
+log "dump database $DB_NAME from container (user $DUMP_USER)"
+if ! compose exec -T -e "MYSQL_PWD=$DUMP_PASS" db \
   sh -c 'exec mysqldump --single-transaction --routines --triggers --default-character-set=utf8mb4 -u"$0" "$1"' \
-  "$DB_USER" "$DB_NAME" 2>"$BACKUP_DIR/.mysqldump.err" | gzip -9 >"$DB_PARTIAL"; then
+  "$DUMP_USER" "$DB_NAME" 2>"$BACKUP_DIR/.mysqldump.err" | gzip -9 >"$DB_PARTIAL"; then
   log "mysqldump failed:"
   sed 's/^/  /' "$BACKUP_DIR/.mysqldump.err" >&2 || true
   die "database backup failed"
