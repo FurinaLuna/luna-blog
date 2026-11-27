@@ -120,6 +120,7 @@ ssh -L 8080:127.0.0.1:8080 ubuntu@<server>                                  # �
 | [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉与交互规范：前后台 token、布局、页面结构 |
 | [`docs/PROTOTYPE-web.md`](docs/PROTOTYPE-web.md) · [`docs/PROTOTYPE-admin.md`](docs/PROTOTYPE-admin.md) | 原型档案：尺寸、动画、素材清单 |
 | [`docs/ops/RUNBOOK.md`](docs/ops/RUNBOOK.md) | 生产运维手册（Docker Compose 章节 + 宿主部署 legacy） |
+| [`docs/reference-backend.md`](docs/reference-backend.md) · [`docs/reference-frontend.md`](docs/reference-frontend.md) | 旧站接口与前端实现参考（重写时的对照资料） |
 | [`docs/PROJECT-REVIEW.md`](docs/PROJECT-REVIEW.md) | 项目全面评审与整改记录 |
 
 改接口先改 `docs/API.md`，改样式先改 `docs/DESIGN.md`，再同步实现。
