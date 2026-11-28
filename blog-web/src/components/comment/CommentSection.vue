@@ -219,7 +219,7 @@ watch(
 
     <div class="comment-area__composer">
       <div class="comment-area__avatar" aria-hidden="true">
-        <img v-if="site.avatar" :src="site.avatar" alt="" />
+        <img v-if="site.avatar" :src="site.avatar" :alt="`${site.siteName} 站点头像`" loading="lazy" decoding="async" />
         <span v-else>{{ avatarInitial }}</span>
       </div>
 

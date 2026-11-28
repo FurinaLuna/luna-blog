@@ -4278,3 +4278,54 @@ html.is-danmaku-wall body {
   }
 }
 
+
+/* ========== 移动端可用性（SEO/GEO 检查项：点按区、字号、图片与表格自适应） ========== */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.md-content img,
+.comment-item__content img,
+.talk-content img {
+  height: auto;
+  max-width: 100%;
+}
+
+.md-content table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --global-font-size: 15px;
+  }
+
+  .back-top,
+  .music-ball__trigger,
+  .announce-ball {
+    min-height: 3.2rem;
+    min-width: 3.2rem;
+  }
+
+  .el-pagination .el-pager li,
+  .el-pagination button,
+  .el-pagination.is-background .btn-prev,
+  .el-pagination.is-background .btn-next {
+    height: 3.2rem;
+    line-height: 3.2rem;
+    min-width: 3.2rem;
+  }
+
+  .md-content {
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+
+  .md-content pre,
+  .md-content table {
+    font-size: 0.92rem;
+  }
+}

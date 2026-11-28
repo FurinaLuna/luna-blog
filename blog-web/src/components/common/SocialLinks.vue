@@ -80,7 +80,7 @@ function btnClass(size: 'sm' | 'md'): string {
           </span>
         </template>
         <div class="social-qr">
-          <img :src="item.qrcode" :alt="`${item.link.name} 二维码`" />
+          <img :src="item.qrcode" loading="lazy" decoding="async" :alt="`${item.link.name} 二维码`" />
           <p class="social-qr__name">{{ item.link.name }}</p>
           <p class="social-qr__tip">扫码添加</p>
         </div>

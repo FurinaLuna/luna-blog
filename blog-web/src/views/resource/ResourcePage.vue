@@ -117,6 +117,7 @@ function markIconFailed(id: number): void {
                 :src="item.icon"
                 :alt="`${item.name} 图标`"
                 loading="lazy"
+                decoding="async"
                 @error="markIconFailed(item.id)"
               />
               <span v-else aria-hidden="true">{{ item.name.charAt(0) }}</span>

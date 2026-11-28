@@ -45,7 +45,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="not-found">
-    <img class="not-found__img" :src="img404" alt="404 页面不存在" />
+    <img class="not-found__img" :src="img404" loading="lazy" decoding="async" alt="404 页面不存在" />
     <h1 class="not-found__title">这一页走丢了</h1>
     <p class="not-found__desc">
       链接可能已经失效，或者你想访问的内容被移动到了别处。{{ countdown }} 秒后自动回到首页。

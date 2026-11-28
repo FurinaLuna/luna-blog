@@ -40,6 +40,7 @@ const imageGridClass = computed(() => {
         :src="site.avatar"
         :alt="`${site.author} 的头像`"
         loading="lazy"
+        decoding="async"
         @error="avatarFailed = true"
       />
       <span v-else :style="authorStyle" aria-hidden="true">{{ authorInitial }}</span>

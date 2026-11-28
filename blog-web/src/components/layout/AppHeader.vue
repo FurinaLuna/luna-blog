@@ -146,7 +146,7 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
     <div class="header_inner">
       <div class="header_left">
         <RouterLink to="/" class="header_avatar" aria-label="返回首页">
-          <img v-if="avatarUrl" :src="avatarUrl" alt="" />
+          <img v-if="avatarUrl" :src="avatarUrl" :alt="`${site.siteName} 站点头像`" />
           <span v-else class="header_avatar_text" aria-hidden="true">{{ avatarInitial }}</span>
         </RouterLink>
       </div>
@@ -248,7 +248,7 @@ useEventListener(document, 'keydown', (event: KeyboardEvent) => {
     >
       <div class="drawer_body">
         <div class="drawer_profile">
-          <img v-if="avatarUrl" class="drawer_avatar" :src="avatarUrl" alt="" />
+          <img v-if="avatarUrl" class="drawer_avatar" :src="avatarUrl" :alt="`${site.siteName} 站点头像`" />
           <span v-else class="drawer_avatar drawer_avatar_text" aria-hidden="true">{{ avatarInitial }}</span>
           <div>
             <div class="drawer_name">{{ site.siteName }}</div>

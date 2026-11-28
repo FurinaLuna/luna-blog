@@ -93,6 +93,7 @@ onMounted(() => {
               :src="avatarUrl"
               :alt="`${displayName} 的头像`"
               loading="lazy"
+              decoding="async"
               @error="avatarFailed = true"
             />
             <span v-else aria-hidden="true">{{ avatarInitial }}</span>

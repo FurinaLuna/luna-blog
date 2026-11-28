@@ -105,6 +105,8 @@ const hiddenSocialCount = computed(() =>
           v-if="showAvatar"
           :src="site.avatar"
           :alt="site.siteName"
+          loading="lazy"
+          decoding="async"
           @error="avatarFailed = true"
         />
         <span v-else>{{ initial }}</span>
