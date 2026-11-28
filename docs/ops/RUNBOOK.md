@@ -154,6 +154,29 @@ sudo docker compose $CF exec -T db sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSW
 `/etc/nginx/sites-enabled/luna-blog`、`/etc/systemd/system/luna-blog.service`、`apt mysql-server`。
 如需紧急回到旧形态：`sudo systemctl enable --now nginx luna-blog mysql`（同时 `docker compose down` 释放 80 端口）。
 
+### 0.10 SEO / GEO 机器可读入口
+
+线上由 `blog-server/src/modules/seo/seo.routes.js` 提供，经 `docker/nginx.conf` 反代到 `app-api`：
+
+| 路径 | 作用 |
+| --- | --- |
+| `/robots.txt` | 允许抓取，定向放行 GPTBot / ClaudeBot / PerplexityBot / Google-Extended / CCBot 等 AI 爬虫，禁止 `/admin/`、`/api/admin/` |
+| `/sitemap.xml` | 静态页 + 已发布文章（含封面 `image:image`），提交各搜索引擎 |
+| `/llms.txt` | 站点信息、栏目、最近 50 篇文章清单（供 AI 助手读取） |
+| `/md/<id>` | 单篇 Markdown 全文（HTML 之外的机器可读版本） |
+
+前端在页面 `<head>` 内同时输出 TDK、OG/Twitter、canonical、JSON-LD（`BlogPosting` / `BreadcrumbList` / `WebSite+SearchAction` / `ProfilePage`）与 `link rel="alternate" type="text/markdown"`。
+
+抽查：
+
+```bash
+curl -sI http://<域名或IP>/llms.txt      # text/plain
+curl -s  http://<域名或IP>/md/19         # text/markdown
+curl -s  http://<域名或IP>/robots.txt | head -20
+```
+
+> 纯前端渲染（SPA）不执行 JS 的爬虫只能看到空壳，所以 AI 爬虫侧以 `/llms.txt` + `/md/<id>` 为准；如需让搜索引擎直接读到正文，再考虑预渲染（当前未启用）。
+
 ---
 
 ## 1. 架构与路径总览
