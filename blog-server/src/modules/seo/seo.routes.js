@@ -1,6 +1,7 @@
 import Router from '@koa/router'
 import { Article } from '../../db/models/index.js'
 import { config } from '../../config/index.js'
+import { getSiteConfig } from '../site/site-config.service.js'
 
 /**
  * robots.txt / sitemap.xml / llms.txt —— 不在 /api 下，与 /rss.xml 一样挂在根路径。
@@ -134,27 +135,35 @@ seoRouter.get('/sitemap.xml', async (ctx) => {
  * 只给摘要与链接，正文由爬虫按链接访问；缓存 1 小时，避免每次抓取都查库。
  */
 seoRouter.get('/llms.txt', async (ctx) => {
-  const articles = await Article.findAll({
-    where: { status: 'published' },
-    attributes: ['id', 'title', 'summary', 'updatedAt', 'publishedAt'],
-    order: [
-      ['isTop', 'DESC'],
-      ['publishedAt', 'DESC'],
-      ['id', 'DESC'],
-    ],
-    limit: 50,
-  })
+  const [site, articles] = await Promise.all([
+    getSiteConfig(),
+    Article.findAll({
+      where: { status: 'published' },
+      attributes: ['id', 'title', 'summary', 'updatedAt', 'publishedAt'],
+      order: [
+        ['isTop', 'DESC'],
+        ['publishedAt', 'DESC'],
+        ['id', 'DESC'],
+      ],
+      limit: 50,
+    }),
+  ])
+
+  const siteName = site.siteName || 'Luna Blog'
+  const siteDescription = site.siteDescription || '一个记录技术、生活与思考的数字花园。'
+  const author = site.author || 'Luna'
 
   const lines = [
-    `# ${config.siteName || 'Luna Blog'}`,
+    `# ${siteName}`,
     '',
-    `> ${config.siteDescription || '一个记录技术、生活与思考的数字花园。'}`,
+    `> ${siteDescription}`,
     '',
     `- 站点地址：${config.siteUrl}/`,
-    `- 作者：${config.author || 'Luna'}`,
+    `- 作者：${author}`,
     `- 更新时间：${new Date().toISOString().slice(0, 10)}`,
     `- 全量文章清单：${config.siteUrl}/sitemap.xml`,
     `- RSS 订阅：${config.siteUrl}/rss.xml`,
+    `- 机器可读全文：${config.siteUrl}/md/<文章ID>（Markdown，无需执行 JS）`,
     '',
     '## 主要栏目',
     '',
@@ -168,7 +177,8 @@ seoRouter.get('/llms.txt', async (ctx) => {
         .trim()
         .slice(0, 120)
       const date = iso(article.publishedAt ?? article.updatedAt).slice(0, 10)
-      return `- [${article.title}](${config.siteUrl}/article/${article.id})（${date}）${summary ? `：${summary}` : ''}`
+      const tail = summary ? `：${summary}` : ''
+      return `- [${article.title}](${config.siteUrl}/article/${article.id})（${date}）${tail} ｜ 全文：${config.siteUrl}/md/${article.id}`
     }),
     '',
   ]
@@ -176,4 +186,58 @@ seoRouter.get('/llms.txt', async (ctx) => {
   ctx.type = 'text/plain; charset=utf-8'
   ctx.set('Cache-Control', `public, max-age=${CACHE_SECONDS}`)
   ctx.body = lines.join('\n')
+})
+
+/**
+ * /md/:id —— 机器可读的文章全文（Markdown）。
+ * 纯 CSR 页面里的正文对不执行 JS 的 AI 爬虫不可见，这里直接给一份带元信息的 Markdown，
+ * 与 llms.txt / sitemap.xml 相互配合，满足 GEO「内容可被读取」的要求。
+ */
+seoRouter.get('/md/:id', async (ctx) => {
+  const id = Number(ctx.params.id)
+  if (!Number.isInteger(id) || id <= 0) {
+    ctx.status = 404
+    ctx.type = 'text/plain; charset=utf-8'
+    ctx.body = 'Not Found'
+    return
+  }
+
+  const [article, site] = await Promise.all([
+    Article.findOne({
+      where: { id, status: 'published' },
+      attributes: ['id', 'title', 'content', 'summary', 'readingTime', 'publishedAt', 'updatedAt'],
+    }),
+    getSiteConfig(),
+  ])
+
+  if (!article) {
+    ctx.status = 404
+    ctx.type = 'text/plain; charset=utf-8'
+    ctx.body = 'Not Found'
+    return
+  }
+
+  const sourceUrl = `${config.siteUrl}/article/${article.id}`
+  const published = iso(article.publishedAt ?? article.updatedAt).slice(0, 10)
+  const updated = iso(article.updatedAt).slice(0, 10)
+  const meta = [
+    `- 作者：${site.author || 'Luna'}`,
+    `- 发布：${published}`,
+    `- 更新：${updated}`,
+    `- 原文：${sourceUrl}`,
+  ]
+  if (article.readingTime) meta.push(`- 阅读时长：约 ${article.readingTime} 分钟`)
+
+  ctx.type = 'text/markdown; charset=utf-8'
+  ctx.set('Cache-Control', 'public, max-age=600')
+  ctx.body = [
+    `# ${article.title}`,
+    '',
+    ...meta,
+    '',
+    '---',
+    '',
+    String(article.content || article.summary || '').trim(),
+    '',
+  ].join('\n')
 })

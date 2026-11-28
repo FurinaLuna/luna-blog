@@ -33,6 +33,8 @@ export interface PageMeta {
   section?: string
   /** 不希望被索引的页面（404 等） */
   noindex?: boolean
+  /** 机器可读全文（Markdown）地址，会写成 link[rel=alternate][type=text/markdown]，方便 AI 爬虫取正文 */
+  markdownUrl?: string
   /** JSON-LD 结构化数据：单个对象或对象数组（数组会包成 @graph） */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[]
 }
@@ -106,6 +108,25 @@ function upsertJsonLd(payload: PageMeta['jsonLd']): void {
   if (!existing) document.head.appendChild(script)
 }
 
+/** 写入 / 更新 link[rel=alternate][type=text/markdown]：告诉 AI 爬虫正文还有一份 Markdown 版本 */
+function upsertMarkdownAlternate(href?: string): void {
+  const selector = 'link[rel="alternate"][type="text/markdown"]'
+  const existing = document.head.querySelector<HTMLLinkElement>(selector)
+  if (!href) {
+    existing?.remove()
+    return
+  }
+  const target = absoluteUrl(href)
+  let link = existing
+  if (!link) {
+    link = document.createElement('link')
+    link.rel = 'alternate'
+    link.type = 'text/markdown'
+    document.head.appendChild(link)
+  }
+  if (link.href !== target) link.href = target
+}
+
 /**
  * 用「最近一次页面级元信息 + 站点配置」重新渲染 <head>。
  * 路由切换时由守卫调用；站点配置异步加载完成后由 App.vue 再调用一次。
@@ -160,6 +181,7 @@ export function refreshPageMeta(): void {
   else removeMeta('article:author', 'property')
 
   upsertCanonical(url)
+  upsertMarkdownAlternate(activeMeta.markdownUrl)
   upsertJsonLd(activeMeta.jsonLd)
 }
 

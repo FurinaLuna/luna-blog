@@ -122,6 +122,7 @@ watch(
       publishedAt: published,
       updatedAt: updated,
       section,
+      markdownUrl: `${origin}/md/${current.id}`,
       jsonLd: [
         {
           '@type': 'BlogPosting',
