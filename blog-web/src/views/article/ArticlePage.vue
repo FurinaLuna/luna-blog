@@ -14,6 +14,7 @@ import SkeletonList from '@/components/common/SkeletonList.vue'
 import TagChip from '@/components/common/TagChip.vue'
 import { getArticle, likeArticle } from '@/api/article'
 import type { ArticleDetail } from '@/api/types'
+import { useSiteStore } from '@/stores/site'
 import { useThemeStore } from '@/stores/theme'
 import { formatCompact, formatDateTime } from '@/utils/format'
 import { useLikeTarget } from '@/utils/like'
@@ -22,6 +23,7 @@ import { setPageMeta } from '@/utils/seo'
 const previewId = 'article-preview'
 
 const route = useRoute()
+const site = useSiteStore()
 const theme = useThemeStore()
 const isDesktop = useMediaQuery('(min-width: 1024px)')
 
@@ -40,18 +42,130 @@ const {
 
 const article = computed<ArticleDetail | null>(() => articleData.value ?? null)
 
-/** 文章数据就绪后把真实标题 / 摘要 / 封面写进页面 meta（SEO） */
+/** 把相对路径补成绝对地址（分享图 / 结构化数据里必须是绝对 URL） */
+function absoluteUrl(value: string): string {
+  try {
+    return new URL(value, window.location.origin).href
+  } catch {
+    return value
+  }
+}
+
+/**
+ * 页面本身已用文章标题作为 H1，正文里若再出现一级标题会造成「一页多个 H1」。
+ * 规则：与文章标题重复的首个 H1 直接去掉，其余 H1 降为 H2；代码块内不动。
+ */
+const renderedContent = computed(() => {
+  const current = article.value
+  if (!current?.content) return ''
+  const normalize = (value: string) => value.replace(/[\s#*_`]+/g, '').toLowerCase()
+  const titleKey = normalize(current.title)
+  let inFence = false
+  let dropped = false
+  const lines: string[] = []
+  for (const line of current.content.split('\n')) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence
+      lines.push(line)
+      continue
+    }
+    if (inFence) {
+      lines.push(line)
+      continue
+    }
+    const matched = /^#\s+(.+)$/.exec(line.trim())
+    if (!matched) {
+      lines.push(line)
+      continue
+    }
+    const heading = matched[1].trim()
+    if (!dropped && titleKey && normalize(heading) === titleKey) {
+      dropped = true
+      continue
+    }
+    lines.push(`## ${heading}`)
+  }
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n')
+})
+
+/** 文章数据就绪后写入完整页面 meta（TDK / OG / JSON-LD），供搜索引擎与 AI 爬虫读取 */
 watch(
   article,
   (current) => {
     if (!current) return
-    const plainText = (current.summary || current.content).replace(/\s+/g, ' ').trim()
+    const plain = (current.summary || current.content)
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[#>*_`~-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    const description = plain.slice(0, 150)
+    const cover = current.cover ? absoluteUrl(current.cover) : undefined
+    const origin = window.location.origin
+    const url = `${origin}/article/${current.id}`
+    const published = current.publishedAt ?? current.createdAt
+    const updated = current.updatedAt ?? published
+    const section = current.category?.name
+    const keywords = [
+      ...current.tags.map((tag) => tag.name),
+      ...(section ? [section] : []),
+    ].filter(Boolean)
+
     setPageMeta({
       title: current.title,
-      description: plainText.slice(0, 120),
-      image: current.cover ?? undefined,
+      description,
+      keywords: keywords.join(','),
+      image: cover,
       type: 'article',
-      url: window.location.href,
+      url,
+      author: site.author,
+      publishedAt: published,
+      updatedAt: updated,
+      section,
+      jsonLd: [
+        {
+          '@type': 'BlogPosting',
+          mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+          headline: current.title,
+          description,
+          ...(cover ? { image: [cover] } : {}),
+          datePublished: published,
+          dateModified: updated,
+          author: { '@type': 'Person', name: site.author, url: `${origin}/about` },
+          publisher: {
+            '@type': 'Organization',
+            name: site.siteName,
+            ...(site.avatar ? { logo: { '@type': 'ImageObject', url: absoluteUrl(site.avatar) } } : {}),
+          },
+          ...(section ? { articleSection: section } : {}),
+          keywords: keywords.join(','),
+          inLanguage: 'zh-CN',
+          commentCount: current.commentCount,
+          ...(current.readingTime ? { timeRequired: `PT${current.readingTime}M` } : {}),
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: '首页', item: `${origin}/` },
+            ...(section && current.category
+              ? [
+                  {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: section,
+                    item: `${origin}/category/${current.category.id}`,
+                  },
+                ]
+              : []),
+            {
+              '@type': 'ListItem',
+              position: section ? 3 : 2,
+              name: current.title,
+              item: url,
+            },
+          ],
+        },
+      ],
     })
   },
   { immediate: true },
@@ -155,7 +269,7 @@ function closeCatalog(): void {
               <div class="md-content">
                 <MdPreview
                   :id="previewId"
-                  :model-value="article.content"
+                  :model-value="renderedContent"
                   :theme="mdTheme"
                   preview-theme="github"
                   code-theme="atom"

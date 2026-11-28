@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import { MdPreview } from 'md-editor-v3'
 import { ChatDotRound, Collection, Document, Picture, PriceTag, View } from '@element-plus/icons-vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -8,6 +8,7 @@ import SocialLinks from '@/components/common/SocialLinks.vue'
 import { useSiteStore } from '@/stores/site'
 import { useThemeStore } from '@/stores/theme'
 import { formatCompact } from '@/utils/format'
+import { setPageMeta } from '@/utils/seo'
 
 const site = useSiteStore()
 const theme = useThemeStore()
@@ -20,6 +21,45 @@ const displayName = computed(() => site.author || site.siteName || 'Luna')
 const avatarInitial = computed(() => displayName.value.trim().charAt(0).toUpperCase())
 
 const aboutContent = computed(() => site.config?.about?.trim() ?? '')
+
+/** 关于页结构化数据：ProfilePage + Person，便于搜索引擎理解「谁在写」 */
+watchEffect(() => {
+  const origin = window.location.origin
+  const avatar = site.avatar ? new URL(site.avatar, origin).href : ''
+  const summary = aboutContent.value
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 150)
+  const sameAs = (site.resolvedSocialLinks ?? [])
+    .map((link) => link.url)
+    .filter((url): url is string => Boolean(url) && /^https?:/i.test(url))
+
+  setPageMeta({
+    title: '关于',
+    description: summary || site.siteDescription,
+    keywords: `${site.author},关于本站,站长介绍,联系方式`,
+    image: avatar || undefined,
+    url: `${origin}/about`,
+    author: site.author,
+    jsonLd: [
+      {
+        '@type': 'ProfilePage',
+        mainEntity: {
+          '@type': 'Person',
+          name: site.author,
+          url: `${origin}/about`,
+          description: summary || site.siteDescription,
+          ...(avatar ? { image: avatar } : {}),
+          ...(sameAs.length > 0 ? { sameAs } : {}),
+        },
+      },
+    ],
+  })
+})
 
 const statItems = computed(() => {
   const stats = site.stats

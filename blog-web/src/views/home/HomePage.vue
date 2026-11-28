@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useWindowScroll } from '@vueuse/core'
 import { ArrowDown } from '@element-plus/icons-vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -11,10 +11,48 @@ import HomeSidebar from '@/components/home/HomeSidebar.vue'
 import { getArticles } from '@/api/article'
 import type { Article } from '@/api/types'
 import { useSiteStore } from '@/stores/site'
+import { setPageMeta } from '@/utils/seo'
 
 const PAGE_SIZE = 5
 
 const site = useSiteStore()
+
+/** 首页结构化数据：WebSite（含站内搜索入口）+ 站点作者 Person */
+watchEffect(() => {
+  const origin = window.location.origin
+  const avatar = site.avatar ? new URL(site.avatar, origin).href : ''
+  setPageMeta({
+    title: site.siteDescription ? `${site.siteName} - ${site.siteDescription}` : site.siteName,
+    description: site.siteDescription,
+    keywords: site.siteKeywords,
+    image: avatar || undefined,
+    url: `${origin}/`,
+    jsonLd: [
+      {
+        '@type': 'WebSite',
+        name: site.siteName,
+        alternateName: 'Luna Blog',
+        url: `${origin}/`,
+        description: site.siteDescription,
+        inLanguage: 'zh-CN',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${origin}/search?keyword={search_term_string}`,
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'Person',
+        name: site.author,
+        url: `${origin}/about`,
+        ...(avatar ? { image: avatar } : {}),
+      },
+    ],
+  })
+})
 const { y } = useWindowScroll()
 
 const articles = ref<Article[]>([])
