@@ -337,6 +337,13 @@ export interface SiteConfig {
   neteasePlaylistId?: string
   qqPlaylistId?: string
   musicApiBase?: string
+  /** 文章默认封面（文章自身没有封面时使用），空 = 用渐变占位 */
+  defaultCover?: string
+  /** 页面横幅遮罩深度 0-80（越大越暗），默认 28 */
+  bannerShade?: number
+  /** PV/UV 展示偏移（后台校正历史累计值，不影响真实访问记录） */
+  statsPvOffset?: number
+  statsUvOffset?: number
 }
 
 export interface SiteStats {

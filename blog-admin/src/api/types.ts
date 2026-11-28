@@ -390,6 +390,28 @@ export interface SiteConfig {
   favicon: string
   /** 后台登录页背景图，空 = 用内置蓝色波浪底图 */
   adminLoginBg: string
+  /** 文章默认封面（文章自身没有封面时使用），空 = 用渐变占位 */
+  defaultCover: string
+  /** 页面横幅遮罩深度 0-80（越大越暗），默认 28 */
+  bannerShade: number
+  /** PV/UV 展示偏移（后台校正历史累计值，不影响真实访问记录） */
+  statsPvOffset: number
+  statsUvOffset: number
+}
+
+/* ------------------------------ 站点统计 ------------------------------ */
+
+export interface SiteStats {
+  article: number
+  category: number
+  tag: number
+  comment: number
+  talk: number
+  photo: number
+  message: number
+  views: number
+  words: number
+  visit: { pv: number; uv: number }
 }
 
 /* ------------------------------- 通知 ------------------------------- */

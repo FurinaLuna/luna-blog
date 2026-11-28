@@ -27,6 +27,13 @@ export const SITE_CONFIG_DEFAULTS = Object.freeze({
   // 站点图标（favicon）与后台登录页背景图（空 = 用内置图）
   favicon: '',
   adminLoginBg: '',
+  // 文章默认封面：文章自身没有封面时使用（空 = 继续用渐变占位图）
+  defaultCover: '',
+  // 页面横幅遮罩深度（0-80，越大越暗；默认 28，暗色模式下会自动再深一点）
+  bannerShade: 28,
+  // 访问统计（PV/UV）的展示偏移：用于校正历史累计数字，不影响真实访问记录
+  statsPvOffset: 0,
+  statsUvOffset: 0,
   // 每个页面的横幅图（空字符串 = 使用内置天空渐变默认横幅）
   pageBanners: {
     home: '',
@@ -133,6 +140,10 @@ export const siteConfigSchema = z.object({
   profileBanner: z.string().trim().max(500).optional(),
   favicon: z.string().trim().max(500).optional(),
   adminLoginBg: z.string().trim().max(500).optional(),
+  defaultCover: z.string().trim().max(500).optional(),
+  bannerShade: z.number().int().min(0).max(80).optional(),
+  statsPvOffset: z.number().int().min(-10000000).max(10000000).optional(),
+  statsUvOffset: z.number().int().min(-10000000).max(10000000).optional(),
   pageBanners: z.record(z.string(), z.string().trim().max(500)).optional(),
   pageBannerPositions: z.record(z.string(), z.number().int().min(0).max(100)).optional(),
   pageCardOffsets: z.record(z.string(), z.number().int().min(0).max(400)).optional(),
@@ -215,6 +226,9 @@ export async function getSiteStats() {
   const viewsRow = await Article.sum('views', { where: { status: 'published' } })
   const words = await Article.sum('readingTime', { where: { status: 'published' } })
   const visit = await getVisitStats()
+  const config = await getSiteConfig()
+  const pvOffset = Number(config.statsPvOffset) || 0
+  const uvOffset = Number(config.statsUvOffset) || 0
 
   return {
     article,
@@ -226,6 +240,10 @@ export async function getSiteStats() {
     message,
     views: Number(viewsRow ?? 0),
     words: Number(words ?? 0) * 400,
-    visit,
+    // 展示值 = 真实统计 + 后台校正偏移（偏移只影响展示，不改动 visit 原始记录）
+    visit: {
+      pv: Math.max(0, visit.pv + pvOffset),
+      uv: Math.max(0, visit.uv + uvOffset),
+    },
   }
 }

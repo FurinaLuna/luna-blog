@@ -123,6 +123,7 @@ function flattenYear(year: ArchiveYear): ArchiveArticle[] {
                   <CoverImage
                     class="timeline-cover"
                     :src="article.cover ?? null"
+                    use-site-default
                     :alt="article.title"
                     :seed="article.title"
                     ratio="1 / 1"

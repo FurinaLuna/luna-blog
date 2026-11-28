@@ -80,14 +80,24 @@ const bannerFocus = computed(() => {
   return typeof inherited === 'number' ? inherited : BANNER_DEFAULT_FOCUS
 })
 
-const bannerStyle = computed(() =>
-  bannerUrl.value
-    ? {
-        backgroundImage: `url("${bannerUrl.value}")`,
-        backgroundPosition: `center ${bannerFocus.value}%`,
-      }
-    : undefined,
-)
+/** 横幅遮罩深度：后台可调（0 = 原图，80 = 很暗），默认 28 */
+const BANNER_DEFAULT_SHADE = 28
+
+const bannerShade = computed(() => {
+  const value = site.config?.bannerShade
+  if (typeof value !== 'number' || Number.isNaN(value)) return BANNER_DEFAULT_SHADE
+  return Math.min(80, Math.max(0, value))
+})
+
+const bannerStyle = computed(() => {
+  if (!bannerUrl.value) return undefined
+  return {
+    backgroundImage: `url("${bannerUrl.value}")`,
+    backgroundPosition: `center ${bannerFocus.value}%`,
+    // CSS 变量传成 0-1 的透明度，供 .page-header--custom::before 使用
+    '--banner-shade': (bannerShade.value / 100).toFixed(3),
+  }
+})
 </script>
 
 <template>

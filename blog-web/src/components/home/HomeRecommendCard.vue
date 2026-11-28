@@ -44,6 +44,7 @@ function itemDate(item: Article): string {
           <span class="home-recommend__thumb">
             <CoverImage
               :src="item.cover"
+              use-site-default
               :alt="item.title"
               :seed="item.title"
               ratio="5 / 4"

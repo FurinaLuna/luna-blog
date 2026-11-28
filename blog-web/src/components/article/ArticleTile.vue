@@ -15,6 +15,7 @@ defineProps<{ article: Article }>()
     <CoverImage
       class="article-tile__cover"
       :src="article.cover"
+      use-site-default
       :alt="article.title"
       :seed="article.title"
       ratio="16 / 9"

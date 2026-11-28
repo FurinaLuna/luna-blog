@@ -857,12 +857,14 @@ html.dark #home.home--custom-hero::after {
   background-position: center 30%;
 }
 
-.page-header--custom::before {
-  background-color: rgba(4, 16, 28, 0.38);
+.page-header.page-header--custom::before {
+  /* 遮罩深度由后台「页面横幅 → 横幅遮罩深度」控制，默认 0.28 */
+  background-color: rgba(4, 16, 28, var(--banner-shade, 0.28));
 }
 
-html.dark .page-header--custom::before {
-  background-color: rgba(0, 0, 0, 0.58);
+html.dark .page-header.page-header--custom::before {
+  /* 暗色下图片更亮，遮罩在后台值基础上再加 0.10 */
+  background-color: rgba(0, 0, 0, calc(var(--banner-shade, 0.28) + 0.1));
 }
 
 html.dark .page-header::before {

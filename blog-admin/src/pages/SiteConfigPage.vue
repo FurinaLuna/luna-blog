@@ -5,7 +5,7 @@ import { Delete, Plus } from '@element-plus/icons-vue'
 import { MdEditor } from 'md-editor-v3'
 import PageHeader from '@/components/PageHeader.vue'
 import ImageUpload from '@/components/ImageUpload.vue'
-import { getSiteConfig, updateSiteConfig } from '@/api/siteConfig'
+import { getSiteConfig, getSiteStats, updateSiteConfig } from '@/api/siteConfig'
 import { useThemeStore } from '@/stores/theme'
 import type { NavLinkItem, PageBannerKey, PageBanners, SiteConfig, SocialLink } from '@/api/types'
 
@@ -15,6 +15,11 @@ const loading = ref(false)
 const saving = ref(false)
 const activeTab = ref('basic')
 const loadFailed = ref(false)
+
+/** 站点统计：stats = 当前展示值（含偏移），statsRaw = 真实记录，statsTarget = 后台要展示的目标值 */
+const stats = reactive({ pv: 0, uv: 0 })
+const statsRaw = reactive({ pv: 0, uv: 0 })
+const statsTarget = reactive({ pv: 0, uv: 0 })
 
 /** 页面横幅的展示顺序与中文名（键固定，与后端 pageBanners 一致） */
 const PAGE_BANNER_ITEMS: ReadonlyArray<{ key: PageBannerKey; label: string }> = [
@@ -144,6 +149,10 @@ const form = reactive<SiteConfig>({
   profileBanner: '',
   favicon: '',
   adminLoginBg: '',
+  defaultCover: '',
+  bannerShade: 28,
+  statsPvOffset: 0,
+  statsUvOffset: 0,
   pageBanners: { ...EMPTY_PAGE_BANNERS },
   pageBannerPositions: { ...EMPTY_PAGE_POSITIONS },
   pageCardOffsets: { ...EMPTY_PAGE_CARD_OFFSETS },
@@ -171,6 +180,10 @@ function fillForm(data: SiteConfig): void {
   form.profileBanner = data.profileBanner ?? ''
   form.favicon = data.favicon ?? ''
   form.adminLoginBg = data.adminLoginBg ?? ''
+  form.defaultCover = data.defaultCover ?? ''
+  form.bannerShade = typeof data.bannerShade === 'number' ? data.bannerShade : 28
+  form.statsPvOffset = typeof data.statsPvOffset === 'number' ? data.statsPvOffset : 0
+  form.statsUvOffset = typeof data.statsUvOffset === 'number' ? data.statsUvOffset : 0
   form.friendsTitle = data.friendsTitle ?? ''
   form.friendsLink = data.friendsLink ?? ''
   form.friendsContactLabel = data.friendsContactLabel ?? 'QQ'
@@ -312,11 +325,27 @@ function clearBanner(key: PageBannerKey): void {
   form.pageBannerPositions[key] = DEFAULT_BANNER_FOCUS
 }
 
+/** 读取站点统计，并由「展示值 - 旧偏移」反推真实记录 */
+async function loadStats(): Promise<void> {
+  try {
+    const data = await getSiteStats()
+    stats.pv = data.visit.pv
+    stats.uv = data.visit.uv
+    statsRaw.pv = Math.max(0, stats.pv - form.statsPvOffset)
+    statsRaw.uv = Math.max(0, stats.uv - form.statsUvOffset)
+    statsTarget.pv = stats.pv
+    statsTarget.uv = stats.uv
+  } catch {
+    // 统计接口失败不影响配置编辑
+  }
+}
+
 async function load(): Promise<void> {
   loading.value = true
   loadFailed.value = false
   try {
     fillForm(await getSiteConfig())
+    await loadStats()
   } catch {
     loadFailed.value = true
   } finally {
@@ -365,6 +394,9 @@ async function save(): Promise<void> {
     return
   }
 
+  form.statsPvOffset = Math.round(statsTarget.pv - statsRaw.pv)
+  form.statsUvOffset = Math.round(statsTarget.uv - statsRaw.uv)
+
   saving.value = true
   try {
     await updateSiteConfig({
@@ -392,6 +424,10 @@ async function save(): Promise<void> {
       profileBanner: form.profileBanner.trim(),
       favicon: form.favicon.trim(),
       adminLoginBg: form.adminLoginBg.trim(),
+      defaultCover: form.defaultCover.trim(),
+      bannerShade: form.bannerShade,
+      statsPvOffset: form.statsPvOffset,
+      statsUvOffset: form.statsUvOffset,
       friendsTitle: form.friendsTitle.trim(),
       friendsLink: form.friendsLink.trim(),
       friendsContactLabel: form.friendsContactLabel.trim(),
@@ -467,6 +503,14 @@ onMounted(load)
               </div>
               <el-form-item label="头像">
                 <ImageUpload v-model="form.avatar" :size="96" tip="建议 1:1，用于首页与页脚" />
+              </el-form-item>
+              <el-form-item label="文章默认封面">
+                <ImageUpload
+                  v-model="form.defaultCover"
+                  :size="112"
+                  :limit="1"
+                  tip="建议 16:9；文章自身没有封面时用它替代渐变占位图"
+                />
               </el-form-item>
               <el-form-item label="站点图标（favicon）">
                 <ImageUpload
@@ -667,6 +711,19 @@ onMounted(load)
               class="mb-4 rounded border px-4 py-3"
               :style="{ borderColor: 'var(--border)', background: 'var(--bg-soft)' }"
             >
+              <div class="mb-1 flex items-center justify-between gap-2">
+                <span class="text-[13px] font-medium text-[var(--text)]">横幅遮罩深度</span>
+                <span class="text-[12px] text-[var(--text-3)]">{{ form.bannerShade }}（0 最亮 · 80 最暗）</span>
+              </div>
+              <el-slider v-model="form.bannerShade" :min="0" :max="80" :step="2" show-input />
+              <p class="m-0 mt-1 text-[12px] leading-5 text-[var(--text-3)]">
+                只作用于自定义横幅图；文字压在图片上较难辨认时调大，图片本身偏暗时调小。暗色模式会在此基础上再加 10 的深度。
+              </p>
+            </div>
+            <div
+              class="mb-4 rounded border px-4 py-3"
+              :style="{ borderColor: 'var(--border)', background: 'var(--bg-soft)' }"
+            >
               <div class="mb-2 flex items-center justify-between gap-2">
                 <span class="text-[13px] font-medium text-[var(--text)]">首页资料卡背景（侧栏）</span>
                 <el-tag :type="form.profileBanner ? 'success' : 'info'" size="small" disable-transitions>
@@ -783,6 +840,37 @@ onMounted(load)
               :toolbars-exclude="['github', 'save', 'catalog']"
               style="height: 56vh"
             />
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="站点统计" name="stats">
+          <div class="max-w-[640px] pt-2">
+            <div
+              class="mb-4 rounded border px-4 py-3"
+              :style="{ borderColor: 'var(--border)', background: 'var(--bg-soft)' }"
+            >
+              <p class="m-0 text-[13px] text-[var(--text)]">当前展示</p>
+              <p class="m-0 mt-1 text-[12px] leading-5 text-[var(--text-3)]">
+                总访问量 {{ stats.pv }} 次 · 总访客数 {{ stats.uv }} 人（已包含下面的校正偏移）
+              </p>
+            </div>
+            <el-form label-position="top">
+              <el-form-item label="总访问量（PV）">
+                <el-input-number v-model="statsTarget.pv" :min="0" :max="100000000" :step="1" controls-position="right" />
+                <span class="ml-3 text-[12px] text-[var(--text-3)]">
+                  真实记录 {{ statsRaw.pv }}，保存后前台显示这个数字
+                </span>
+              </el-form-item>
+              <el-form-item label="总访客数（UV）">
+                <el-input-number v-model="statsTarget.uv" :min="0" :max="100000000" :step="1" controls-position="right" />
+                <span class="ml-3 text-[12px] text-[var(--text-3)]">
+                  真实记录 {{ statsRaw.uv }}，保存后前台显示这个数字
+                </span>
+              </el-form-item>
+              <p class="m-0 text-[12px] leading-5 text-[var(--text-3)]">
+                只改展示值，不会修改真实访问记录；把目标改成「真实记录」的数值保存即可恢复原样。
+              </p>
+            </el-form>
           </div>
         </el-tab-pane>
 

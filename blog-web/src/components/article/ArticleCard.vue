@@ -25,6 +25,7 @@ const publishedLabel = computed(() =>
     <RouterLink :to="articleLink" class="post-card__cover" tabindex="-1" aria-hidden="true">
       <CoverImage
         :src="article.cover"
+        use-site-default
         :alt="article.title"
         :seed="article.title"
         ratio="16 / 9"

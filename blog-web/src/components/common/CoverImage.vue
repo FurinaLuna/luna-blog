@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useSiteStore } from '@/stores/site'
 
 interface Props {
   src?: string | null
@@ -12,6 +13,8 @@ interface Props {
   imgClass?: string
   /** 无封面时只保留渐变底，不显示首字占位（当上层还有标题遮罩时用） */
   plainFallback?: boolean
+  /** 文章类封面：自身没图时回退到后台配置的「文章默认封面」 */
+  useSiteDefault?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -21,20 +24,31 @@ const props = withDefaults(defineProps<Props>(), {
   rounded: 'rounded-[8px]',
   imgClass: '',
   plainFallback: false,
+  useSiteDefault: false,
+})
+
+const site = useSiteStore()
+
+/** 实际用于渲染的图片地址：自身封面优先，其次站点默认封面 */
+const effectiveSrc = computed(() => {
+  const own = (props.src ?? '').trim()
+  if (own) return own
+  if (!props.useSiteDefault) return ''
+  return (site.config?.defaultCover ?? '').trim()
 })
 
 const failed = ref(false)
 const loaded = ref(false)
 
 watch(
-  () => props.src,
+  () => effectiveSrc.value,
   () => {
     failed.value = false
     loaded.value = false
   },
 )
 
-const showImage = computed(() => Boolean(props.src) && !failed.value)
+const showImage = computed(() => Boolean(effectiveSrc.value) && !failed.value)
 
 const initial = computed(() => {
   const source = (props.seed || props.alt || 'L').trim()
@@ -69,7 +83,7 @@ const watermark = computed(() => (props.seed || props.alt || '').slice(0, 2))
   >
     <img
       v-if="showImage"
-      :src="src ?? undefined"
+      :src="effectiveSrc"
       :alt="alt"
       loading="lazy"
       decoding="async"
