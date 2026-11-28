@@ -68,10 +68,21 @@ EOF
 mv "$IMAGES_ENV.tmp" "$IMAGES_ENV"
 
 log "pulling: $api_image / $web_image"
-if ! docker compose --env-file "$COMPOSE_ENV" --env-file "$IMAGES_ENV" pull api web; then
-  log "docker compose pull failed (registry auth?)"
-  exit 1
-fi
+# GHCR may answer 403/denied for a freshly pushed tag while the package version
+# is still being propagated, so retry the pull with backoff before giving up.
+pull_attempt=1
+pull_max=6
+until docker compose --env-file "$COMPOSE_ENV" --env-file "$IMAGES_ENV" pull api web; do
+  if (( pull_attempt >= pull_max )); then
+    log "docker compose pull failed after ${pull_attempt} attempts (registry auth or propagation?)"
+    exit 1
+  fi
+  delay=$(( pull_attempt * 10 ))
+  log "pull failed (attempt ${pull_attempt}/${pull_max}); retrying in ${delay}s"
+  sleep "$delay"
+  pull_attempt=$(( pull_attempt + 1 ))
+done
+log "images pulled (tag $TAG)"
 
 log "recreating api + web"
 docker compose --env-file "$COMPOSE_ENV" --env-file "$IMAGES_ENV" up -d api web
